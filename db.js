@@ -1,72 +1,13 @@
-// --- 8-BIT RETRO RIVER DATABASE MODULE ---
-// Handles posts storage in LocalStorage, including validation and seeding.
-// Like auth.js, this uses Promises and async methods to facilitate switching to Supabase/Firestore.
+// --- 8-BIT RETRO RIVER DATABASE MODULE (SUPABASE INTEGRATION) ---
+// Handles link posts storage in Supabase PostgreSQL tables.
+// Automatically validates inputs and filters spam before sending data to the DB.
 
-const LOCAL_STORAGE_POSTS_KEY = "retro_river_posts";
-
-// Helper to simulate network latency
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Default seed data to ensure the river starts populated with interesting links!
-const SEED_POSTS = [
-    {
-        id: "seed_1",
-        username: "ChiptuneHero",
-        text: "My favorite 8-bit synth music creator!",
-        url: "https://beepbox.co",
-        sprite: "log",
-        createdAt: new Date(Date.now() - 3600000 * 5).toISOString() // 5 hours ago
-    },
-    {
-        id: "seed_2",
-        username: "PixelArtFan",
-        text: "Make your own retro pixel art online",
-        url: "https://www.pixilart.com",
-        sprite: "log",
-        createdAt: new Date(Date.now() - 3600000 * 3).toISOString() // 3 hours ago
-    },
-    {
-        id: "seed_3",
-        username: "RetroGamer",
-        text: "Archive of classic retro games!",
-        url: "https://classicreload.com",
-        sprite: "log",
-        createdAt: new Date(Date.now() - 3600000 * 1).toISOString() // 1 hour ago
-    },
-    {
-        id: "seed_4",
-        username: "WebDevKid",
-        text: "Google Fonts for retro styling",
-        url: "https://fonts.google.com/specimen/Press+Start+2P",
-        sprite: "log",
-        createdAt: new Date(Date.now() - 1800000).toISOString() // 30 mins ago
-    }
-];
+import { supabase } from './supabase-config.js';
 
 // Spam Prevention Keyword Blocklist
 const KEYWORD_BLOCKLIST = [
     "spam", "scam", "illegal", "hack", "viagra", "casino", "lottery", "free money", "cryptocurrency", "bitcoin"
 ];
-
-// Read posts from LocalStorage
-function getStoredPosts() {
-    const data = localStorage.getItem(LOCAL_STORAGE_POSTS_KEY);
-    if (!data) {
-        // Initialize with seed data on first load
-        localStorage.setItem(LOCAL_STORAGE_POSTS_KEY, JSON.stringify(SEED_POSTS));
-        return SEED_POSTS;
-    }
-    try {
-        return JSON.parse(data);
-    } catch (e) {
-        return SEED_POSTS;
-    }
-}
-
-// Write posts to LocalStorage
-function savePosts(posts) {
-    localStorage.setItem(LOCAL_STORAGE_POSTS_KEY, JSON.stringify(posts));
-}
 
 // Basic input sanitization to prevent XSS
 function sanitizeHTML(str) {
@@ -89,14 +30,36 @@ function isValidURL(string) {
 }
 
 /**
- * Fetch all posts in the river (ordered by date)
+ * Fetch all posts in the river (ordered by date, oldest first)
  * @returns {Promise<Array>} List of posts
  */
 export async function getPosts() {
-    await delay(300); // Simulate network load
-    const posts = getStoredPosts();
-    // Sort oldest first (so they flow in historical order) or newest first
-    return posts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const { data, error } = await supabase
+        .from('posts')
+        .select(`
+            id,
+            text,
+            url,
+            sprite,
+            created_at,
+            profiles (
+                username
+            )
+        `)
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        throw new Error("DB FETCH ERROR: " + error.message.toUpperCase());
+    }
+
+    return data.map(post => ({
+        id: post.id,
+        username: post.profiles?.username || 'unknown',
+        text: post.text,
+        url: post.url,
+        sprite: post.sprite,
+        createdAt: post.created_at
+    }));
 }
 
 /**
@@ -109,13 +72,17 @@ export async function getPosts() {
  * @returns {Promise<object>} The newly created post
  */
 export async function addPost({ username, text, url, sprite }) {
-    await delay(400); // Simulate write delay
+    // 1. Get the current active user session to confirm login status and ID
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session || !session.user) {
+        throw new Error("MUST BE LOGGED IN TO SUBMIT LINKS");
+    }
+    const userId = session.user.id;
 
-    if (!username || !text || !url) {
+    if (!text || !url) {
         throw new Error("USERNAME, TEXT AND URL ARE REQUIRED");
     }
 
-    const cleanUsername = sanitizeHTML(username.trim().replace(/^@/, ""));
     const cleanText = sanitizeHTML(text.trim());
     let cleanUrl = url.trim();
 
@@ -126,13 +93,10 @@ export async function addPost({ username, text, url, sprite }) {
     if (isBlocked) {
         throw new Error("CONTENT CONTAINS BLOCKED KEYWORDS OR PHRASES");
     }
+
     // If the URL doesn't start with http:// or https://, prepend https://
     if (!/^https?:\/\//i.test(cleanUrl)) {
         cleanUrl = "https://" + cleanUrl;
-    }
-
-    if (cleanUsername.length === 0 || cleanUsername.length > 20) {
-        throw new Error("INVALID USERNAME LENGTH (1-20 CHARS)");
     }
 
     if (cleanText.length === 0 || cleanText.length > 40) {
@@ -143,31 +107,43 @@ export async function addPost({ username, text, url, sprite }) {
         throw new Error("INVALID LINK URL FORMAT. ENTER A VALID WEB ADDRESS.");
     }
 
-    const chosenSprite = "log";
+    const chosenSprite = sprite || "log";
 
-    const posts = getStoredPosts();
+    // Insert the new post into the Supabase database
+    // The database level BEFORE INSERT trigger 'on_post_created' handles 
+    // credit verification and deductions automatically!
+    const { data, error } = await supabase
+        .from('posts')
+        .insert([
+            {
+                user_id: userId,
+                text: cleanText,
+                url: cleanUrl,
+                sprite: chosenSprite
+            }
+        ])
+        .select()
+        .single();
 
-    const newPost = {
-        id: "post_" + Math.random().toString(36).substr(2, 9),
-        username: cleanUsername,
-        text: cleanText,
-        url: cleanUrl,
-        sprite: chosenSprite,
-        createdAt: new Date().toISOString()
+    if (error) {
+        // Capture triggers/RLS error messages from Postgres and raise them to the user
+        throw new Error(error.message.toUpperCase());
+    }
+
+    return {
+        id: data.id,
+        username: username,
+        text: data.text,
+        url: data.url,
+        sprite: data.sprite,
+        createdAt: data.created_at
     };
-
-    posts.push(newPost);
-    savePosts(posts);
-
-    return newPost;
 }
 
 /**
- * Clear all posts and reset to seed data (admin function)
- * @returns {Promise<Array>} Seeded posts list
+ * Clear all posts and reset to seed data (Disabled on live shared site)
+ * @returns {Promise<Array>} Current posts list
  */
 export async function resetDatabase() {
-    await delay(500);
-    localStorage.setItem(LOCAL_STORAGE_POSTS_KEY, JSON.stringify(SEED_POSTS));
-    return SEED_POSTS;
+    return getPosts();
 }

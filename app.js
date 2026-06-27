@@ -1,6 +1,8 @@
 // --- 8-BIT RETRO RIVER MAIN APPLICATION ---
 import * as auth from "./auth.js";
 import * as db from "./db.js";
+import { supabase } from "./supabase-config.js";
+
 
 // --- NO-OP RETRO AUDIO ---
 const sound = {
@@ -532,6 +534,9 @@ function updateAuthStateUI() {
     }
 }
 
+// Listen for authoritative auth state updates from the Supabase client
+window.addEventListener('auth-state-changed', updateAuthStateUI);
+
 function showAuthModal(mode = "login") {
     authModal.classList.remove("hidden");
     authError.classList.add("hidden");
@@ -694,7 +699,7 @@ tossForm.addEventListener("submit", async (e) => {
             throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD TO GET 100 LINKS.");
         }
 
-        // Deduct 1 credit
+        // Deduct 1 credit (handled database-side, but keep call for API compatibility)
         await auth.deductCredit(user.id);
 
         await db.addPost({
@@ -707,8 +712,8 @@ tossForm.addEventListener("submit", async (e) => {
         // Clear only URL field so they can post again with their username
         document.getElementById("post-url").value = "";
         
-        // Refresh auth state UI to update credit display immediately
-        updateAuthStateUI();
+        // Fetch updated credit statistics from database
+        await auth.refreshUserProfile();
 
         // Force database reload
         await syncDatabasePosts();
@@ -779,8 +784,16 @@ async function initApp() {
         if (hudOnlineUsers) hudOnlineUsers.textContent = onlineUsers;
     }, 4000);
 
-    // Poll for updates every 5 seconds to load posts tossed by other users (or simulated users)
-    setInterval(syncDatabasePosts, 5000);
+    // Listen for database changes in real-time to load new logs instantly
+    supabase
+        .channel('public:posts')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, async (payload) => {
+            await syncDatabasePosts();
+        })
+        .subscribe();
+
+    // Fallback sync every 60 seconds just in case of connection fluctuations
+    setInterval(syncDatabasePosts, 60000);
 }
 
 // --- CHECKOUT / MICROTRANSACTION SYSTEM ---
