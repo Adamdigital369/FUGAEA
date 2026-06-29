@@ -827,8 +827,8 @@ function showAuthModal(mode = "login") {
     authModal.classList.remove("hidden");
     authError.classList.add("hidden");
     authSuccess.classList.add("hidden");
-    if (typeof grecaptcha !== "undefined") {
-        grecaptcha.reset();
+    if (typeof turnstile !== "undefined") {
+        turnstile.reset();
     }
     
     if (mode === "login") {
@@ -877,8 +877,8 @@ function closeAuthModal() {
     }
     stopVerificationPolling();
 
-    if (typeof grecaptcha !== "undefined") {
-        grecaptcha.reset();
+    if (typeof turnstile !== "undefined") {
+        turnstile.reset();
     }
 }
 
@@ -1001,8 +1001,8 @@ registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     authError.classList.add("hidden");
 
-    // Check reCAPTCHA verification token
-    const captchaResponse = (typeof grecaptcha !== "undefined") ? grecaptcha.getResponse() : "";
+    // Check Cloudflare Turnstile verification token
+    const captchaResponse = (typeof turnstile !== "undefined") ? turnstile.getResponse() : "";
     if (!captchaResponse) {
         authError.textContent = "PLEASE COMPLETE THE RECAPTCHA CHALLENGE";
         authError.classList.remove("hidden");
@@ -1045,8 +1045,8 @@ registerForm.addEventListener("submit", async (e) => {
     } catch (err) {
         authError.textContent = err.message.toUpperCase();
         authError.classList.remove("hidden");
-        if (typeof grecaptcha !== "undefined") {
-            grecaptcha.reset();
+        if (typeof turnstile !== "undefined") {
+            turnstile.reset();
         }
     }
 });

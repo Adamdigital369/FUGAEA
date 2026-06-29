@@ -11,8 +11,8 @@
     <!-- FontAwesome for some retro-style icons if needed -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=4">
-    <!-- Google reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <!-- Cloudflare Turnstile CAPTCHA -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
     <div class="crt-overlay"></div>
@@ -145,9 +145,9 @@
                         <label for="reg-password">PASSWORD</label>
                         <input type="password" id="reg-password" required placeholder="******" class="retro-input">
                     </div>
-                    <!-- Google reCAPTCHA Widget -->
+                    <!-- Cloudflare Turnstile Widget (Using Cloudflare's always-pass testing key) -->
                     <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
-                        <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" data-theme="dark"></div>
+                         <div class="cf-turnstile" data-sitekey="1x0000000000000000000055" data-theme="dark"></div>
                     </div>
                     <button type="submit" class="retro-btn success-btn full-width-btn">REGISTER</button>
                 </form>
