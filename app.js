@@ -695,6 +695,9 @@ const checkoutSuccess = document.getElementById("checkout-success");
 const checkoutError = document.getElementById("checkout-error");
 const paySubmitBtn = document.getElementById("pay-submit-btn");
 
+let selectedPackageAmount = 0.99;
+let selectedPackageCredits = 100;
+
 const postText = document.getElementById("post-text");
 const tossForm = document.getElementById("toss-form");
 
@@ -1280,12 +1283,50 @@ function showCheckoutModal() {
     checkoutModal.classList.remove("hidden");
     checkoutSuccess.classList.add("hidden");
     checkoutError.classList.add("hidden");
+    
+    // Reset to default package on open
+    selectedPackageAmount = 0.99;
+    selectedPackageCredits = 100;
+    
+    // Update active highlight classes on load
+    const packageOptions = document.querySelectorAll(".retro-package-option");
+    packageOptions.forEach(opt => {
+        const amount = parseFloat(opt.getAttribute("data-amount"));
+        if (amount === 0.99) {
+            opt.classList.add("active");
+            opt.style.borderColor = "var(--text-cyan)";
+        } else {
+            opt.classList.remove("active");
+            opt.style.borderColor = "var(--btn-gray)";
+        }
+    });
+    
+    paySubmitBtn.innerHTML = '<i class="fas fa-lock"></i> SECURE PAY $0.99';
 }
 
 function closeCheckoutModal() {
     checkoutModal.classList.add("hidden");
     paymentForm.reset();
 }
+
+// Wire up package selection option click listeners
+const packageOptions = document.querySelectorAll(".retro-package-option");
+packageOptions.forEach(opt => {
+    opt.addEventListener("click", () => {
+        sound.playBleep();
+        packageOptions.forEach(o => {
+            o.classList.remove("active");
+            o.style.borderColor = "var(--btn-gray)";
+        });
+        opt.classList.add("active");
+        opt.style.borderColor = "var(--text-cyan)";
+        
+        selectedPackageAmount = parseFloat(opt.getAttribute("data-amount"));
+        selectedPackageCredits = parseInt(opt.getAttribute("data-credits"));
+        
+        paySubmitBtn.innerHTML = `<i class="fas fa-lock"></i> SECURE PAY $${selectedPackageAmount.toFixed(2)}`;
+    });
+});
 
 buyCreditsTrigger.addEventListener("click", () => {
     sound.playBleep();
@@ -1315,24 +1356,24 @@ paymentForm.addEventListener("submit", async (e) => {
         paySubmitBtn.disabled = true;
         paySubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESSING...';
         
-        // Call auth layer to add 100 credits
-        await auth.addCredits(user.id, 100);
+        // Call auth layer to add dynamic credits package
+        await auth.addCredits(user.id, selectedPackageCredits, selectedPackageAmount);
         
         sound.playSuccess();
-        checkoutSuccess.textContent = "PAYMENT SUCCESSFUL! 100 LINKS ADDED.";
+        checkoutSuccess.textContent = `PAYMENT SUCCESSFUL! ${selectedPackageCredits} LINKS ADDED.`;
         checkoutSuccess.classList.remove("hidden");
         
         setTimeout(() => {
             closeCheckoutModal();
             updateAuthStateUI();
             paySubmitBtn.disabled = false;
-            paySubmitBtn.innerHTML = '<i class="fas fa-lock"></i> SECURE PAY $0.99';
+            paySubmitBtn.innerHTML = `<i class="fas fa-lock"></i> SECURE PAY $${selectedPackageAmount.toFixed(2)}`;
         }, 1500);
     } catch (err) {
         checkoutError.textContent = err.message.toUpperCase();
         checkoutError.classList.remove("hidden");
         paySubmitBtn.disabled = false;
-        paySubmitBtn.innerHTML = '<i class="fas fa-lock"></i> SECURE PAY $0.99';
+        paySubmitBtn.innerHTML = `<i class="fas fa-lock"></i> SECURE PAY $${selectedPackageAmount.toFixed(2)}`;
     }
 });
 

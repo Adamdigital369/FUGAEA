@@ -182,7 +182,7 @@ export async function deductCredit(userId) {
  * @param {number} amount 
  * @returns {Promise<number>} New credit count
  */
-export async function addCredits(userId, amount) {
+export async function addCredits(userId, creditsAmount, paymentAmount) {
     await delay(600); // Simulate network purchase delay
     
     // Insert purchase record into public.purchases (trigger updates profile credits)
@@ -191,8 +191,8 @@ export async function addCredits(userId, amount) {
         .insert([
             {
                 user_id: userId,
-                amount: amount === 100 ? 0.99 : 0.00,
-                credits: amount,
+                amount: paymentAmount,
+                credits: creditsAmount,
                 stripe_id: 'ch_' + Math.random().toString(36).substring(2, 10)
             }
         ]);
