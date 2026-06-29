@@ -582,6 +582,7 @@ function renderLoop() {
 
 // --- AUTHENTICATION STATE & INTERFACE ---
 const hudUser = document.getElementById("hud-user");
+const hudUserContainer = document.getElementById("hud-user-container");
 const hudItemCount = document.getElementById("hud-item-count");
 const hudOnlineUsers = document.getElementById("hud-online-users");
 const hudTotalViews = document.getElementById("hud-total-views");
@@ -692,6 +693,7 @@ function updateAuthStateUI() {
     }
 
     if (user) {
+        if (hudUserContainer) hudUserContainer.classList.remove("hidden");
         hudUser.textContent = user.username.toUpperCase();
         hudUser.className = "text-green";
         authTriggerBtn.innerHTML = 'LOGOUT';
@@ -711,6 +713,7 @@ function updateAuthStateUI() {
         // Refresh the social media buttons inside the modal (grey out claimed ones)
         updateShareModalUI();
     } else {
+        if (hudUserContainer) hudUserContainer.classList.add("hidden");
         hudUser.textContent = "GUEST";
         hudUser.className = "";
         authTriggerBtn.innerHTML = 'LOGIN / REGISTER';
@@ -719,9 +722,9 @@ function updateAuthStateUI() {
         
         hudCredits.textContent = "0";
 
-        // Hide share button for guests
+        // Keep the HUD share button visible for guests to prompt registration
         if (shareXBtn) {
-            shareXBtn.classList.add("hidden");
+            shareXBtn.classList.remove("hidden");
         }
     }
 }
@@ -1295,7 +1298,12 @@ if (regCheckStatusBtn) {
 if (shareXBtn) {
     shareXBtn.addEventListener("click", () => {
         sound.playBleep();
-        if (shareModal) shareModal.classList.remove("hidden");
+        const user = auth.getCurrentUser();
+        if (user) {
+            if (shareModal) shareModal.classList.remove("hidden");
+        } else {
+            showAuthModal("register");
+        }
     });
 }
 
