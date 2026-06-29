@@ -22,6 +22,7 @@ const canvas = document.getElementById("river-canvas");
 const ctx = canvas.getContext("2d");
 
 let floatingItems = [];
+let collisionParticles = [];
 let databasePosts = [];
 const expiredPostIds = new Set();
 
@@ -207,6 +208,32 @@ class Wave {
 
 // Initial waves (increased for more active current lines)
 const waveParticles = Array.from({ length: 70 }, (_, i) => new Wave(i));
+
+// Collision Splash Particle
+class SplashParticle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 4; // horizontal spray
+        this.vy = -1.5 - Math.random() * 2.5; // upward spray
+        this.size = 2 + Math.random() * 4;
+        this.life = 1.0;
+        this.decay = 0.03 + Math.random() * 0.05;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.15; // gravity pull
+        this.life -= this.decay;
+        if (this.life < 0) this.life = 0;
+    }
+
+    draw() {
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.life * 0.8})`;
+        ctx.fillRect(Math.floor(this.x), Math.floor(this.y), Math.ceil(this.size), Math.ceil(this.size));
+    }
+}
 
 // Floating items class mapping data rows
 class FloatingItem {
@@ -485,6 +512,13 @@ function renderLoop() {
         w.draw();
     });
 
+    // Update & draw collision splash particles
+    collisionParticles.forEach(p => {
+        p.update();
+        p.draw();
+    });
+    collisionParticles = collisionParticles.filter(p => p.life > 0);
+
     // Update floating items
     floatingItems.forEach(item => {
         item.update(now);
@@ -501,6 +535,13 @@ function renderLoop() {
             const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
             
             if (overlapX > 0 && overlapY > 0) {
+                // Spawn pixelated water splash particles at contact point
+                const contactX = (Math.max(a.x, b.x) + Math.min(a.x + a.width, b.x + b.width)) / 2;
+                const contactY = (Math.max(a.y, b.y) + Math.min(a.y + a.height, b.y + b.height)) / 2;
+                for (let k = 0; k < 6; k++) {
+                    collisionParticles.push(new SplashParticle(contactX, contactY));
+                }
+
                 // Determine collision resolution direction (push on the axis of least overlap)
                 if (overlapX < overlapY) {
                     const push = overlapX / 2;
