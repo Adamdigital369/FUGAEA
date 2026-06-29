@@ -1485,5 +1485,31 @@ function showDailyBonusToast(message) {
     }, 3500);
 }
 
+// --- VISUAL PHYSICS SIMULATION UTILITY ---
+// Call window.simulateLogs(count) in the browser console to inject mock logs and test collisions.
+window.simulateLogs = function(count = 20) {
+    console.log(`[Simulation] Injecting ${count} physical logs into the river...`);
+    const mockSprites = ["log", "log_mossy", "log_flowering"];
+    const usernames = ["PixelGamer", "RetroFan", "8BitMaster", "RiverRider", "FugaeaFan", "ArcadeKing", "ChipTune", "PixelArt", "WaterLog", "Drippy"];
+    
+    const now = Date.now();
+    for (let i = 0; i < count; i++) {
+        const mockPost = {
+            id: `mock_post_${i}_${Math.random().toString(36).substr(2, 5)}`,
+            username: usernames[i % usernames.length] + Math.floor(Math.random() * 100),
+            sprite: mockSprites[i % mockSprites.length],
+            createdAt: new Date(now - Math.random() * 15000).toISOString(),
+            clicks: Math.floor(Math.random() * 50)
+        };
+        
+        const newItem = new FloatingItem(mockPost);
+        // Spawn them staggered across the visible screen area to trigger immediate bounces
+        newItem.x = Math.random() * (canvas.width - 250) + 50;
+        newItem.vx = -1.2 * newItem.speedFactor; // start drift velocity
+        
+        floatingItems.push(newItem);
+    }
+};
+
 initApp();
 renderLoop();
