@@ -298,7 +298,7 @@ class FloatingItem {
         const targetY = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.height - 8);
         
         // Slowly float back to original vertical lane and restore horizontal drift speed
-        this.vx += (this.targetVx - this.vx) * 0.03;
+        this.vx += (this.targetVx - this.vx) * 0.09;
         this.y += (targetY - this.y) * 0.02;
         this.vy += (0 - this.vy) * 0.03;
         
@@ -549,17 +549,20 @@ function renderLoop() {
                         a.x -= push;
                         b.x += push;
                         
-                        // Bounce velocities (elastic response with damping)
-                        const temp = a.vx;
-                        a.vx = b.vx * 0.6;
-                        b.vx = temp * 0.6;
+                        // Slip them vertically into separate lanes to slide past each other
+                        a.vy += 0.35;
+                        b.vy -= 0.35;
+                        
+                        // Nudge them forward leftward to escape the collision zone quickly
+                        a.vx = Math.min(a.vx, b.vx) - 0.25;
                     } else {
                         a.x += push;
                         b.x -= push;
                         
-                        const temp = a.vx;
-                        a.vx = b.vx * 0.6;
-                        b.vx = temp * 0.6;
+                        a.vy -= 0.35;
+                        b.vy += 0.35;
+                        
+                        b.vx = Math.min(a.vx, b.vx) - 0.25;
                     }
                 } else {
                     const push = overlapY / 2;
