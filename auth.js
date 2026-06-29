@@ -80,7 +80,7 @@ supabase.auth.onAuthStateChange((event, session) => {
  * @param {string} username 
  * @returns {Promise<object>} Current session details
  */
-export async function signUp(email, password, username) {
+export async function signUp(email, password, username, captchaToken) {
     if (!email || !password || !username) {
         throw new Error("ALL FIELDS REQUIRED FOR REGISTRATION");
     }
@@ -97,6 +97,7 @@ export async function signUp(email, password, username) {
         password: password,
         options: {
             emailRedirectTo: window.location.origin,
+            captchaToken: captchaToken,
             data: {
                 username: trimmedUsername
             }
@@ -184,35 +185,28 @@ export async function deductCredit(userId) {
 export async function addCredits(userId, amount) {
     await delay(600); // Simulate network purchase delay
     
-    // Fetch current credits
-    const { data: profile, error: selectError } = await supabase
-        .from('profiles')
-        .select('credits')
-        .eq('id', userId)
-        .single();
+    // Insert purchase record into public.purchases (trigger updates profile credits)
+    const { error: insertError } = await supabase
+        .from('purchases')
+        .insert([
+            {
+                user_id: userId,
+                amount: amount === 100 ? 0.99 : 0.00,
+                credits: amount,
+                stripe_id: 'ch_' + Math.random().toString(36).substring(2, 10)
+            }
+        ]);
         
-    if (selectError) {
-        throw new Error("USER PROFILE NOT FOUND");
+    if (insertError) {
+        throw new Error("SECURE TRANSACTION FAILED: " + insertError.message.toUpperCase());
     }
     
-    const newCredits = (profile?.credits || 0) + amount;
+    // Wait briefly for DB trigger to complete
+    await delay(200);
     
-    // Update public.profiles table (requires active auth token match)
-    const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ credits: newCredits })
-        .eq('id', userId);
-        
-    if (updateError) {
-        throw new Error("CREDIT UPDATE FAILED: " + updateError.message.toUpperCase());
-    }
-    
-    // Update the local cached cache immediately for UI responsiveness
-    if (currentUser && currentUser.id === userId) {
-        currentUser.credits = newCredits;
-    }
-    
-    return newCredits;
+    // authoritatively refresh profile stats
+    const updatedUser = await refreshUserProfile();
+    return updatedUser ? updatedUser.credits : 0;
 }
 
 /**
@@ -276,5 +270,51 @@ export async function checkEmailExists(email) {
         throw new Error("DB EMAIL CHECK FAILED: " + error.message.toUpperCase());
     }
     return !!data;
+}
+
+/**
+ * Check if user already claimed a sharing reward for a platform in the database
+ * @param {string} userId 
+ * @param {string} platform 
+ * @returns {Promise<boolean>}
+ */
+export async function checkShareClaimed(userId, platform) {
+    const { data, error } = await supabase
+        .from('claimed_shares')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('platform', platform)
+        .maybeSingle();
+        
+    if (error) {
+        console.error("[Auth] Error checking share claim:", error);
+        return false;
+    }
+    return !!data;
+}
+
+/**
+ * Log a share claim reward in the database (trigger updates profile credits)
+ * @param {string} userId 
+ * @param {string} platform 
+ * @returns {Promise<boolean>}
+ */
+export async function logShareClaim(userId, platform) {
+    const { error } = await supabase
+        .from('claimed_shares')
+        .insert([
+            {
+                user_id: userId,
+                platform: platform
+            }
+        ]);
+        
+    if (error) {
+        throw new Error("CLAIM FAILED: " + error.message.toUpperCase());
+    }
+    
+    await delay(200);
+    await refreshUserProfile();
+    return true;
 }
 

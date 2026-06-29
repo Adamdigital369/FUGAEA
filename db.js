@@ -162,3 +162,21 @@ export async function incrementClicks(postId) {
         console.error("Error incrementing clicks:", error);
     }
 }
+
+/**
+ * Fetch total accumulative clicks from global statistics
+ * @returns {Promise<number>} Global clicks count
+ */
+export async function getTotalClicks() {
+    const { data, error } = await supabase
+        .from('statistics')
+        .select('value')
+        .eq('key', 'total_clicks')
+        .single();
+        
+    if (error) {
+        console.error("Failed to fetch global statistics:", error);
+        return 0;
+    }
+    return data ? Number(data.value) : 0;
+}

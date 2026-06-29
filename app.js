@@ -698,7 +698,47 @@ const paySubmitBtn = document.getElementById("pay-submit-btn");
 const postText = document.getElementById("post-text");
 const tossForm = document.getElementById("toss-form");
 
-function updateShareModalUI() {
+let presenceChannel = null;
+
+async function trackPresence() {
+    const user = auth.getCurrentUser();
+    const presenceKey = user ? user.username : 'guest_' + Math.random().toString(36).substring(2, 6);
+    
+    if (presenceChannel) {
+        try {
+            await presenceChannel.unsubscribe();
+        } catch (e) {
+            console.error("Presence unsubscribe failed:", e);
+        }
+    }
+    
+    presenceChannel = supabase.channel('online_users', {
+        config: {
+            presence: {
+                key: presenceKey
+            }
+        }
+    });
+
+    presenceChannel
+        .on('presence', { event: 'sync' }, () => {
+            const state = presenceChannel.presenceState();
+            const count = Object.keys(state).length;
+            if (hudOnlineUsers) {
+                hudOnlineUsers.textContent = count;
+            }
+        });
+
+    presenceChannel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+            await presenceChannel.track({
+                online_at: new Date().toISOString()
+            });
+        }
+    });
+}
+
+async function updateShareModalUI() {
     const user = auth.getCurrentUser();
     if (!user) return;
     
@@ -711,10 +751,10 @@ function updateShareModalUI() {
         { id: 'share-tiktok', name: 'TikTok', originalHtml: '<i class="fab fa-tiktok"></i> TIKTOK' }
     ];
     
-    platforms.forEach(p => {
+    for (const p of platforms) {
         const el = document.getElementById(p.id);
         if (el) {
-            const claimed = localStorage.getItem(`shared_${p.name}_${user.id}`);
+            const claimed = await auth.checkShareClaimed(user.id, p.name);
             if (claimed) {
                 el.innerHTML = `<i class="fas fa-check-circle"></i> ${p.name.toUpperCase()} (CLAIMED)`;
                 el.style.opacity = "0.4";
@@ -729,7 +769,7 @@ function updateShareModalUI() {
                 el.style.cursor = "pointer";
             }
         }
-    });
+    }
 }
 
 function updateAuthStateUI() {
@@ -739,6 +779,9 @@ function updateAuthStateUI() {
     if (hudCreditsContainer) {
         hudCreditsContainer.classList.remove("hidden");
     }
+
+    // Refresh presence tracking key
+    trackPresence();
 
     if (user) {
         if (hudUserContainer) hudUserContainer.classList.remove("hidden");
@@ -977,7 +1020,7 @@ registerForm.addEventListener("submit", async (e) => {
             throw new Error("EMAIL ALREADY IN USE");
         }
 
-        const result = await auth.signUp(email, pass, username);
+        const result = await auth.signUp(email, pass, username, captchaResponse);
         if (!result.session) {
             // Hide normal inputs and tab controls, but keep close button visible
             document.querySelector(".tab-container").classList.add("hidden");
@@ -1029,11 +1072,8 @@ async function syncDatabasePosts() {
         const posts = await db.getPosts();
         databasePosts = posts;
         
-        // Sum up total clicks across all posts
-        let totalClicks = 0;
-        posts.forEach(post => {
-            totalClicks += post.clicks || 0;
-        });
+        // Fetch global accumulative clicks directly from DB statistics table
+        const totalClicks = await db.getTotalClicks();
         if (hudTotalViews) {
             hudTotalViews.textContent = totalClicks.toLocaleString();
         }
@@ -1208,22 +1248,26 @@ async function initApp() {
     // Initial sync
     await syncDatabasePosts();
     
-    // Handle Fluctuation of Online Users
-    let onlineUsers = Math.floor(Math.random() * 5) + 3; // Start between 3 and 7
-    if (hudOnlineUsers) hudOnlineUsers.textContent = onlineUsers;
-
-    setInterval(() => {
-        // Change online count slightly by -1, 0, or +1
-        const delta = Math.floor(Math.random() * 3) - 1;
-        onlineUsers = Math.max(2, Math.min(15, onlineUsers + delta)); // keep between 2 and 15
-        if (hudOnlineUsers) hudOnlineUsers.textContent = onlineUsers;
-    }, 4000);
+    // Initialize presence tracking for online users
+    await trackPresence();
 
     // Listen for database changes in real-time to load new logs instantly (inserts, updates, etc.)
     supabase
         .channel('public:posts')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, async (payload) => {
             await syncDatabasePosts();
+        })
+        .subscribe();
+
+    // Listen for statistics changes (for real-time total clicks counter updates)
+    supabase
+        .channel('public:statistics')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'statistics', filter: 'key=eq.total_clicks' }, (payload) => {
+            console.log("[Realtime Statistics Update] Payload:", payload);
+            const val = payload.new ? Number(payload.new.value) : 0;
+            if (hudTotalViews) {
+                hudTotalViews.textContent = val.toLocaleString();
+            }
         })
         .subscribe();
 
@@ -1366,9 +1410,14 @@ async function executeShare(platform, shareUrl, element, isCopyAction = false) {
     const user = auth.getCurrentUser();
     if (!user) return;
     
-    // Check if user already claimed this platform reward to prevent duplicates
-    if (localStorage.getItem(`shared_${platform}_${user.id}`)) {
-        return;
+    try {
+        const claimed = await auth.checkShareClaimed(user.id, platform);
+        if (claimed) {
+            alert("REWARD ALREADY CLAIMED FOR THIS PLATFORM!");
+            return;
+        }
+    } catch (err) {
+        console.error("[Share] Pre-claim check failed:", err);
     }
     
     sound.playCoin();
@@ -1396,12 +1445,11 @@ async function executeShare(platform, shareUrl, element, isCopyAction = false) {
         window.open(shareUrl, "_blank");
         
         try {
-            // Add 10 credits persistently to the user's database profile
-            await auth.addCredits(user.id, 10);
-            localStorage.setItem(`shared_${platform}_${user.id}`, 'true');
+            // Log claim to database (trigger automatically awards +10 credits)
+            await auth.logShareClaim(user.id, platform);
             
             // Refresh UI to change to CLAIMED state permanently
-            updateAuthStateUI();
+            await updateAuthStateUI();
             
             // Hide modal
             if (shareModal) shareModal.classList.add("hidden");
@@ -1411,7 +1459,7 @@ async function executeShare(platform, shareUrl, element, isCopyAction = false) {
         } catch (err) {
             alert("COULD NOT ADD SHARE CREDITS: " + err.message.toUpperCase());
             // Re-enable/restore buttons if error occurs
-            updateAuthStateUI();
+            await updateShareModalUI();
         }
     }, 1200);
 }
