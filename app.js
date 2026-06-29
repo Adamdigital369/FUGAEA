@@ -36,6 +36,91 @@ authChannel.onmessage = (event) => {
     }
 };
 
+// --- AUTO-PILOT WEB WORKER TIMER (Bypasses background tab sleep throttling) ---
+const workerCode = `
+    let timer = null;
+    self.onmessage = function(e) {
+        if (e.data.action === 'start') {
+            if (timer) clearInterval(timer);
+            timer = setInterval(() => {
+                self.postMessage('tick');
+            }, e.data.interval);
+        } else if (e.data.action === 'stop') {
+            if (timer) clearInterval(timer);
+            timer = null;
+        }
+    };
+`;
+const blob = new Blob([workerCode], { type: 'application/javascript' });
+const autoPilotWorker = new Worker(URL.createObjectURL(blob));
+
+autoPilotWorker.onmessage = (e) => {
+    if (e.data === 'tick') {
+        triggerAutoRepost();
+    }
+};
+
+async function triggerAutoRepost() {
+    const user = auth.getCurrentUser();
+    const autoRepostToggle = document.getElementById("auto-repost-toggle");
+    
+    // Check if toggle is still checked
+    if (!autoRepostToggle || !autoRepostToggle.checked) {
+        autoPilotWorker.postMessage({ action: 'stop' });
+        return;
+    }
+    
+    // Check if user has logged out
+    if (!user) {
+        autoRepostToggle.checked = false;
+        autoPilotWorker.postMessage({ action: 'stop' });
+        showDailyBonusToast("AUTO-PILOT DEACTIVATED: NOT LOGGED IN");
+        return;
+    }
+    
+    // Check credits
+    if (user.credits < 1) {
+        autoRepostToggle.checked = false;
+        autoPilotWorker.postMessage({ action: 'stop' });
+        showDailyBonusToast("AUTO-PILOT STOPPED: OUT OF CREDITS!");
+        return;
+    }
+    
+    const textVal = postText.value;
+    const urlVal = document.getElementById("post-url").value;
+    
+    if (!textVal || !urlVal) {
+        autoRepostToggle.checked = false;
+        autoPilotWorker.postMessage({ action: 'stop' });
+        showDailyBonusToast("AUTO-PILOT STOPPED: INVALID INPUTS");
+        return;
+    }
+    
+    try {
+        // Submit post programmatically
+        await db.addPost({
+            username: user.username,
+            text: textVal,
+            url: urlVal,
+            sprite: "log"
+        });
+        
+        // Refresh credit stats from DB
+        await auth.refreshUserProfile();
+        
+        // Force list reload
+        await syncDatabasePosts();
+        
+        sound.playCoin();
+        showDailyBonusToast("AUTO-PILOT: LINK REPOSTED!");
+    } catch (err) {
+        console.error("Auto-pilot repost failed:", err);
+        autoRepostToggle.checked = false;
+        autoPilotWorker.postMessage({ action: 'stop' });
+        showDailyBonusToast("AUTO-PILOT STOPPED: " + err.message.toUpperCase());
+    }
+}
+
 let mouseX = 0;
 let mouseY = 0;
 let hoveredItem = null;
@@ -820,6 +905,13 @@ function updateAuthStateUI() {
         if (shareXBtn) {
             shareXBtn.classList.remove("hidden");
         }
+
+        // Clean up Auto-Pilot on logout
+        const autoRepostToggle = document.getElementById("auto-repost-toggle");
+        if (autoRepostToggle) {
+            autoRepostToggle.checked = false;
+        }
+        autoPilotWorker.postMessage({ action: 'stop' });
     }
 }
 
@@ -1120,6 +1212,7 @@ tossForm.addEventListener("submit", async (e) => {
     const textVal = postText.value;
     const urlVal = document.getElementById("post-url").value;
     const spriteVal = "log"; // Only logs allowed for link posts
+    const autoRepostToggle = document.getElementById("auto-repost-toggle");
     
     try {
         const user = auth.getCurrentUser();
@@ -1149,10 +1242,34 @@ tossForm.addEventListener("submit", async (e) => {
 
         // Force database reload
         await syncDatabasePosts();
+
+        // If AUTO-REPOST is checked, start the Web Worker background timer
+        if (autoRepostToggle && autoRepostToggle.checked) {
+            autoPilotWorker.postMessage({ action: 'start', interval: 22000 });
+            showDailyBonusToast("AUTO-PILOT DEPLOYED: RUNNING...");
+        } else {
+            autoPilotWorker.postMessage({ action: 'stop' });
+        }
     } catch (err) {
         alert(err.message.toUpperCase());
+        if (autoRepostToggle) autoRepostToggle.checked = false;
+        autoPilotWorker.postMessage({ action: 'stop' });
     }
 });
+
+// Auto-Pilot manual checkbox change listener
+const autoRepostToggle = document.getElementById("auto-repost-toggle");
+if (autoRepostToggle) {
+    autoRepostToggle.addEventListener("change", () => {
+        sound.playBleep();
+        if (!autoRepostToggle.checked) {
+            autoPilotWorker.postMessage({ action: 'stop' });
+            showDailyBonusToast("AUTO-PILOT DEACTIVATED");
+        } else {
+            showDailyBonusToast("AUTO-PILOT ARMED: SUBMIT POST TO START");
+        }
+    });
+}
 
 
 
