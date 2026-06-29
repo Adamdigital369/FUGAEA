@@ -120,16 +120,22 @@ export async function signUp(email, password, username, captchaToken) {
  * @param {string} password 
  * @returns {Promise<object>} Current session details
  */
-export async function signIn(email, password) {
+export async function signIn(email, password, captchaToken = "") {
     if (!email || !password) {
         throw new Error("EMAIL AND PASSWORD REQUIRED");
     }
 
     console.log("[Auth] Calling supabase.auth.signInWithPassword for:", email);
     try {
+        const options = {};
+        if (captchaToken) {
+            options.captchaToken = captchaToken;
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email.trim().toLowerCase(),
-            password: password
+            password: password,
+            options: options
         });
         console.log("[Auth] supabase.auth.signInWithPassword returned. Data:", data, "Error:", error);
 

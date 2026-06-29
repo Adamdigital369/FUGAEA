@@ -923,7 +923,10 @@ function showAuthModal(mode = "login") {
     authError.classList.add("hidden");
     authSuccess.classList.add("hidden");
     if (typeof turnstile !== "undefined") {
-        turnstile.reset();
+        const loginCaptcha = document.getElementById("login-captcha");
+        const regCaptcha = document.getElementById("register-captcha");
+        if (loginCaptcha) turnstile.reset(loginCaptcha);
+        if (regCaptcha) turnstile.reset(regCaptcha);
     }
     
     if (mode === "login") {
@@ -973,7 +976,10 @@ function closeAuthModal() {
     stopVerificationPolling();
 
     if (typeof turnstile !== "undefined") {
-        turnstile.reset();
+        const loginCaptcha = document.getElementById("login-captcha");
+        const regCaptcha = document.getElementById("register-captcha");
+        if (loginCaptcha) turnstile.reset(loginCaptcha);
+        if (regCaptcha) turnstile.reset(regCaptcha);
     }
 }
 
@@ -1019,6 +1025,16 @@ loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     authError.classList.add("hidden");
     
+    // Check Cloudflare Turnstile token for Login form specifically
+    const loginFormEl = document.getElementById("login-form");
+    const captchaInput = loginFormEl.querySelector("[name='cf-turnstile-response']");
+    const captchaResponse = captchaInput ? captchaInput.value : "";
+    if (!captchaResponse) {
+        authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE";
+        authError.classList.remove("hidden");
+        return;
+    }
+    
     const email = document.getElementById("login-email").value;
     const pass = document.getElementById("login-password").value;
 
@@ -1032,7 +1048,7 @@ loginForm.addEventListener("submit", async (e) => {
 
     try {
         console.log("[Login] Calling auth.signIn...");
-        const session = await auth.signIn(email, pass);
+        const session = await auth.signIn(email, pass, captchaResponse);
         console.log("[Login] auth.signIn succeeded! Session:", session);
         
         if (diagAction) {
@@ -1056,6 +1072,10 @@ loginForm.addEventListener("submit", async (e) => {
         }
         authError.textContent = err.message.toUpperCase();
         authError.classList.remove("hidden");
+        if (typeof turnstile !== "undefined") {
+            const loginCaptcha = document.getElementById("login-captcha");
+            if (loginCaptcha) turnstile.reset(loginCaptcha);
+        }
     }
 });
 
@@ -1096,10 +1116,12 @@ registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     authError.classList.add("hidden");
 
-    // Check Cloudflare Turnstile verification token
-    const captchaResponse = (typeof turnstile !== "undefined") ? turnstile.getResponse() : "";
+    // Check Cloudflare Turnstile verification token for Register form specifically
+    const registerFormEl = document.getElementById("register-form");
+    const captchaInput = registerFormEl.querySelector("[name='cf-turnstile-response']");
+    const captchaResponse = captchaInput ? captchaInput.value : "";
     if (!captchaResponse) {
-        authError.textContent = "PLEASE COMPLETE THE RECAPTCHA CHALLENGE";
+        authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE";
         authError.classList.remove("hidden");
         return;
     }
@@ -1141,7 +1163,8 @@ registerForm.addEventListener("submit", async (e) => {
         authError.textContent = err.message.toUpperCase();
         authError.classList.remove("hidden");
         if (typeof turnstile !== "undefined") {
-            turnstile.reset();
+            const regCaptcha = document.getElementById("register-captcha");
+            if (regCaptcha) turnstile.reset(regCaptcha);
         }
     }
 });

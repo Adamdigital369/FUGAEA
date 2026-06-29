@@ -134,6 +134,10 @@
                         <label for="login-password">PASSWORD</label>
                         <input type="password" id="login-password" required placeholder="******" class="retro-input">
                     </div>
+                    <!-- Cloudflare Turnstile Widget (For Login) -->
+                    <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
+                         <div class="cf-turnstile" id="login-captcha" data-sitekey="0x4AAAAAADsrEww6iRqbmRap" data-theme="dark"></div>
+                    </div>
                     <button type="submit" class="retro-btn success-btn full-width-btn">LOG IN</button>
                 </form>
 
@@ -151,9 +155,9 @@
                         <label for="reg-password">PASSWORD</label>
                         <input type="password" id="reg-password" required placeholder="******" class="retro-input">
                     </div>
-                    <!-- Cloudflare Turnstile Widget -->
+                    <!-- Cloudflare Turnstile Widget (For Register) -->
                     <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
-                         <div class="cf-turnstile" data-sitekey="0x4AAAAAADsrEww6iRqbmRap" data-theme="dark"></div>
+                         <div class="cf-turnstile" id="register-captcha" data-sitekey="0x4AAAAAADsrEww6iRqbmRap" data-theme="dark"></div>
                     </div>
                     <button type="submit" class="retro-btn success-btn full-width-btn">REGISTER</button>
                 </form>
