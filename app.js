@@ -214,8 +214,8 @@ class SplashParticle {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.vx = (Math.random() - 0.5) * 2; // horizontal spray (reduced 50%)
-        this.vy = -0.75 - Math.random() * 1.25; // upward spray (reduced 50%)
+        this.vx = (Math.random() - 0.5) * 4; // horizontal spray
+        this.vy = -1.5 - Math.random() * 2.5; // upward spray
         this.size = 2 + Math.random() * 4;
         this.life = 1.0;
         this.decay = 0.03 + Math.random() * 0.05;
@@ -538,7 +538,7 @@ function renderLoop() {
                 // Spawn pixelated water splash particles at contact point
                 const contactX = (Math.max(a.x, b.x) + Math.min(a.x + a.width, b.x + b.width)) / 2;
                 const contactY = (Math.max(a.y, b.y) + Math.min(a.y + a.height, b.y + b.height)) / 2;
-                for (let k = 0; k < 3; k++) {
+                for (let k = 0; k < 6; k++) {
                     collisionParticles.push(new SplashParticle(contactX, contactY));
                 }
 
