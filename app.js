@@ -227,38 +227,53 @@ class FloatingItem {
         this.speedFactor = 0.8 + rand() * 0.4;   // Speed variation (0.8x to 1.2x)
         this.hasBranch = true;
 
-        // Position - computed dynamically in update()
-        this.virtualX = 2000;
-        this.x = canvas.width + 100;
-        this.y = 0;
+        // Position - computed dynamically based on age at spawn time to distribute logs across river
+        const ageOnSpawn = Math.max(0, Date.now() - this.createdAtTime);
+        const VIRTUAL_WIDTH = 2000;
+        const travelSpan = VIRTUAL_WIDTH + 300;
+        const baseSpeed = 0.09;
+        const progress = (ageOnSpawn * baseSpeed * this.speedFactor) / travelSpan;
+        
+        if (progress >= 1.0) {
+            this.isExpired = true;
+        }
+
+        const initialVirtualX = VIRTUAL_WIDTH - progress * travelSpan;
+        this.x = (initialVirtualX / VIRTUAL_WIDTH) * canvas.width;
+        
+        const riverTop = Math.floor(canvas.height * 0.46);
+        const riverBottom = Math.floor(canvas.height * 0.72);
+        this.y = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.height - 8);
+        
+        // Physical state vectors
+        this.targetVx = -1.2 * this.speedFactor;
+        this.vx = this.targetVx;
+        this.vy = 0;
+        
         this.currentBob = 0;
         this.isHovered = false;
 
         // Splash effect for brand new logs dropped in
-        // If created in the last 2.5 seconds, display a splash
         this.splashProgress = (Date.now() - this.createdAtTime < 2500) ? 0.0 : 1.0;
         
         this.hasEnteredScreen = false;
-        this.isExpired = false;
+        this.isExpired = this.isExpired || false;
     }
 
     update(t) {
-        const VIRTUAL_WIDTH = 2000;
-        const travelSpan = VIRTUAL_WIDTH + 300; // starts at 2000, goes to -100
-        const baseSpeed = 0.09; // virtual units per millisecond (about 90px/sec)
+        // Move incrementally
+        this.x += this.vx;
+        this.y += this.vy;
         
-        let age = t - this.createdAtTime;
-        if (age < 0) age = 0;
+        // Calculate target y dynamically to support canvas resizes
+        const riverTop = Math.floor(canvas.height * 0.46);
+        const riverBottom = Math.floor(canvas.height * 0.72);
+        const targetY = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.height - 8);
         
-        const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
-        if (progress >= 1.0) {
-            this.isExpired = true;
-            console.log(`[FloatingItem.update] Expired! ID: ${this.post.id.slice(0,8)}, age: ${Math.round(age)}, progress: ${progress}`);
-        }
-        const newVirtualX = VIRTUAL_WIDTH - progress * travelSpan;
-        
-        this.virtualX = newVirtualX;
-        this.x = (this.virtualX / VIRTUAL_WIDTH) * canvas.width;
+        // Slowly float back to original vertical lane and restore horizontal drift speed
+        this.vx += (this.targetVx - this.vx) * 0.03;
+        this.y += (targetY - this.y) * 0.02;
+        this.vy += (0 - this.vy) * 0.03;
         
         // Bobbing animation based on absolute time
         const currentBobPhase = this.bobOffset + (t * this.bobSpeed);
@@ -268,25 +283,37 @@ class FloatingItem {
             this.splashProgress += 0.04;
         }
 
-        // Calculate actual y position dynamically to keep logs in river bounds on resize
-        const riverTop = Math.floor(canvas.height * 0.46);
-        const riverBottom = Math.floor(canvas.height * 0.72);
-        this.y = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.height - 8);
+        // Keep inside vertical river boundary (bounce off top/bottom)
+        const minVal = riverTop + 4;
+        const maxVal = riverBottom - this.height - 8;
+        if (this.y < minVal) {
+            this.y = minVal;
+            this.vy = Math.abs(this.vy) * 0.5 + 0.15; // push down
+        } else if (this.y > maxVal) {
+            this.y = maxVal;
+            this.vy = -Math.abs(this.vy) * 0.5 - 0.15; // push up
+        }
 
-        // Trigger positive sound when it slides into the screen from the right
-        if (!this.hasEnteredScreen && this.x <= canvas.width) {
+        // Trigger entrance sound
+        if (!this.hasEnteredScreen && this.x <= canvas.width && this.x + this.width >= 0) {
             this.hasEnteredScreen = true;
             if (isPageLoaded) {
                 sound.playRightEnter();
             }
         }
 
-        // Trigger left exit sound when it exits the left of the screen
-        if (this.hasEnteredScreen && this.x + this.width < 0) {
+        // Trigger exit / expiration when off screen to the left
+        if (this.hasEnteredScreen && this.x + this.width < -100) {
             this.hasEnteredScreen = false;
+            this.isExpired = true;
             if (isPageLoaded) {
                 sound.playLeftExit();
             }
+        }
+
+        // Hard expiration boundary
+        if (this.x + this.width < -200) {
+            this.isExpired = true;
         }
     }
 
@@ -462,6 +489,59 @@ function renderLoop() {
     floatingItems.forEach(item => {
         item.update(now);
     });
+
+    // Pairwise collision detection and response (bouncing logs)
+    for (let i = 0; i < floatingItems.length; i++) {
+        for (let j = i + 1; j < floatingItems.length; j++) {
+            const a = floatingItems[i];
+            const b = floatingItems[j];
+            
+            // Check box overlap
+            const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+            const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+            
+            if (overlapX > 0 && overlapY > 0) {
+                // Determine collision resolution direction (push on the axis of least overlap)
+                if (overlapX < overlapY) {
+                    const push = overlapX / 2;
+                    if (a.x < b.x) {
+                        a.x -= push;
+                        b.x += push;
+                        
+                        // Bounce velocities (elastic response with damping)
+                        const temp = a.vx;
+                        a.vx = b.vx * 0.6;
+                        b.vx = temp * 0.6;
+                    } else {
+                        a.x += push;
+                        b.x -= push;
+                        
+                        const temp = a.vx;
+                        a.vx = b.vx * 0.6;
+                        b.vx = temp * 0.6;
+                    }
+                } else {
+                    const push = overlapY / 2;
+                    if (a.y < b.y) {
+                        a.y -= push;
+                        b.y += push;
+                        
+                        // Bounce vertical velocities and add slight nudge to separate
+                        const temp = a.vy;
+                        a.vy = b.vy * -0.4 + 0.15;
+                        b.vy = temp * -0.4 - 0.15;
+                    } else {
+                        a.y += push;
+                        b.y -= push;
+                        
+                        const temp = a.vy;
+                        a.vy = b.vy * -0.4 - 0.15;
+                        b.vy = temp * -0.4 + 0.15;
+                    }
+                }
+            }
+        }
+    }
 
     // Filter out expired items
     floatingItems = floatingItems.filter(item => {
