@@ -6,7 +6,7 @@ import { supabase } from './supabase-config.js';
 
 // Spam Prevention Keyword Blocklist
 const KEYWORD_BLOCKLIST = [
-    "spam", "scam", "illegal", "hack", "viagra", "casino", "lottery", "free money", "cryptocurrency", "bitcoin"
+    "spam", "scam", "illegal", "hack", "viagra", "casino", "lottery", "free money"
 ];
 
 // Basic input sanitization to prevent XSS
@@ -42,6 +42,7 @@ export async function getPosts() {
             url,
             sprite,
             created_at,
+            clicks,
             profiles (
                 username
             )
@@ -58,7 +59,8 @@ export async function getPosts() {
         text: post.text,
         url: post.url,
         sprite: post.sprite,
-        createdAt: post.created_at
+        createdAt: post.created_at,
+        clicks: post.clicks || 0
     }));
 }
 
@@ -146,4 +148,17 @@ export async function addPost({ username, text, url, sprite }) {
  */
 export async function resetDatabase() {
     return getPosts();
+}
+
+/**
+ * Increment click count of a post in database
+ * @param {string} postId 
+ * @returns {Promise<void>}
+ */
+export async function incrementClicks(postId) {
+    if (!postId) return;
+    const { error } = await supabase.rpc('increment_post_clicks', { post_id: postId });
+    if (error) {
+        console.error("Error incrementing clicks:", error);
+    }
 }

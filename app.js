@@ -23,6 +23,18 @@ const ctx = canvas.getContext("2d");
 
 let floatingItems = [];
 let databasePosts = [];
+const expiredPostIds = new Set();
+
+const authChannel = new BroadcastChannel("auth_channel");
+authChannel.onmessage = (event) => {
+    if (event.data.type === "CLOSE_OLD_TABS") {
+        window.close();
+        setTimeout(() => {
+            window.location.href = "about:blank";
+        }, 300);
+    }
+};
+
 let mouseX = 0;
 let mouseY = 0;
 let hoveredItem = null;
@@ -227,6 +239,7 @@ class FloatingItem {
         this.splashProgress = (Date.now() - this.createdAtTime < 2500) ? 0.0 : 1.0;
         
         this.hasEnteredScreen = false;
+        this.isExpired = false;
     }
 
     update(t) {
@@ -237,16 +250,12 @@ class FloatingItem {
         let age = t - this.createdAtTime;
         if (age < 0) age = 0;
         
-        const progress = ( (age * baseSpeed * this.speedFactor) / travelSpan ) % 1.0;
-        const newVirtualX = VIRTUAL_WIDTH - progress * travelSpan;
-        
-        // Detect wrap-around to play exit sound and reset entry flag
-        if (newVirtualX > this.virtualX + 100) {
-            this.hasEnteredScreen = false;
-            if (isPageLoaded) {
-                sound.playLeftExit();
-            }
+        const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
+        if (progress >= 1.0) {
+            this.isExpired = true;
+            console.log(`[FloatingItem.update] Expired! ID: ${this.post.id.slice(0,8)}, age: ${Math.round(age)}, progress: ${progress}`);
         }
+        const newVirtualX = VIRTUAL_WIDTH - progress * travelSpan;
         
         this.virtualX = newVirtualX;
         this.x = (this.virtualX / VIRTUAL_WIDTH) * canvas.width;
@@ -269,6 +278,14 @@ class FloatingItem {
             this.hasEnteredScreen = true;
             if (isPageLoaded) {
                 sound.playRightEnter();
+            }
+        }
+
+        // Trigger left exit sound when it exits the left of the screen
+        if (this.hasEnteredScreen && this.x + this.width < 0) {
+            this.hasEnteredScreen = false;
+            if (isPageLoaded) {
+                sound.playLeftExit();
             }
         }
     }
@@ -441,7 +458,20 @@ function renderLoop() {
         w.draw();
     });
 
-    // Update & draw floating items
+    // Update floating items
+    floatingItems.forEach(item => {
+        item.update(now);
+    });
+
+    // Filter out expired items
+    floatingItems = floatingItems.filter(item => {
+        if (item.isExpired) {
+            expiredPostIds.add(item.post.id);
+            return false;
+        }
+        return true;
+    });
+
     let currentHover = null;
     for (let i = floatingItems.length - 1; i >= 0; i--) {
         if (floatingItems[i].checkCollision(mouseX, mouseY)) {
@@ -452,7 +482,6 @@ function renderLoop() {
 
     floatingItems.forEach(item => {
         item.isHovered = (item === currentHover);
-        item.update(now);
         item.draw();
     });
 
@@ -479,6 +508,15 @@ const hudTotalViews = document.getElementById("hud-total-views");
 const hudCreditsContainer = document.getElementById("hud-credits-container");
 const hudCredits = document.getElementById("hud-credits");
 const buyCreditsTrigger = document.getElementById("buy-credits-trigger");
+const shareXBtn = document.getElementById("share-x-btn");
+const shareModal = document.getElementById("share-modal");
+const shareClose = document.getElementById("share-close");
+const shareX = document.getElementById("share-x");
+const shareFacebook = document.getElementById("share-facebook");
+const shareLinkedin = document.getElementById("share-linkedin");
+const shareReddit = document.getElementById("share-reddit");
+const shareInstagram = document.getElementById("share-instagram");
+const shareTiktok = document.getElementById("share-tiktok");
 
 const authTriggerBtn = document.getElementById("auth-trigger-btn");
 const submitSection = document.getElementById("submit-section");
@@ -494,6 +532,33 @@ const registerForm = document.getElementById("register-form");
 const authError = document.getElementById("auth-error");
 const authSuccess = document.getElementById("auth-success");
 
+const verificationPendingSection = document.getElementById("verification-pending-section");
+const regResendEmailBtn = document.getElementById("reg-resend-email-btn");
+const regCheckStatusBtn = document.getElementById("reg-check-status-btn");
+
+let verificationPollInterval = null;
+
+function startVerificationPolling() {
+    if (verificationPollInterval) clearInterval(verificationPollInterval);
+    verificationPollInterval = setInterval(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user) {
+            stopVerificationPolling();
+            await auth.refreshUserProfile();
+            closeAuthModal();
+            updateAuthStateUI();
+            sound.playSuccess();
+        }
+    }, 3000);
+}
+
+function stopVerificationPolling() {
+    if (verificationPollInterval) {
+        clearInterval(verificationPollInterval);
+        verificationPollInterval = null;
+    }
+}
+
 const checkoutModal = document.getElementById("checkout-modal");
 const checkoutClose = document.getElementById("checkout-close");
 const paymentForm = document.getElementById("payment-form");
@@ -503,6 +568,40 @@ const paySubmitBtn = document.getElementById("pay-submit-btn");
 
 const postText = document.getElementById("post-text");
 const tossForm = document.getElementById("toss-form");
+
+function updateShareModalUI() {
+    const user = auth.getCurrentUser();
+    if (!user) return;
+    
+    const platforms = [
+        { id: 'share-x', name: 'X', originalHtml: '<i class="fab fa-twitter"></i> X (TWITTER)' },
+        { id: 'share-facebook', name: 'Facebook', originalHtml: '<i class="fab fa-facebook-f"></i> FACEBOOK' },
+        { id: 'share-linkedin', name: 'LinkedIn', originalHtml: '<i class="fab fa-linkedin-in"></i> LINKEDIN' },
+        { id: 'share-reddit', name: 'Reddit', originalHtml: '<i class="fab fa-reddit-alien"></i> REDDIT' },
+        { id: 'share-instagram', name: 'Instagram', originalHtml: '<i class="fab fa-instagram"></i> INSTAGRAM' },
+        { id: 'share-tiktok', name: 'TikTok', originalHtml: '<i class="fab fa-tiktok"></i> TIKTOK' }
+    ];
+    
+    platforms.forEach(p => {
+        const el = document.getElementById(p.id);
+        if (el) {
+            const claimed = localStorage.getItem(`shared_${p.name}_${user.id}`);
+            if (claimed) {
+                el.innerHTML = `<i class="fas fa-check-circle"></i> ${p.name.toUpperCase()} (CLAIMED)`;
+                el.style.opacity = "0.4";
+                el.style.filter = "grayscale(1)";
+                el.style.pointerEvents = "none";
+                el.style.cursor = "not-allowed";
+            } else {
+                el.innerHTML = p.originalHtml;
+                el.style.opacity = "1";
+                el.style.filter = "none";
+                el.style.pointerEvents = "auto";
+                el.style.cursor = "pointer";
+            }
+        }
+    });
+}
 
 function updateAuthStateUI() {
     const user = auth.getCurrentUser();
@@ -523,6 +622,14 @@ function updateAuthStateUI() {
 
         // Auto-fill username in text box
         postText.value = `@${user.username}`;
+
+        // Keep the HUD share button permanently visible for logged-in users
+        if (shareXBtn) {
+            shareXBtn.classList.remove("hidden");
+        }
+        
+        // Refresh the social media buttons inside the modal (grey out claimed ones)
+        updateShareModalUI();
     } else {
         hudUser.textContent = "GUEST";
         hudUser.className = "";
@@ -531,6 +638,11 @@ function updateAuthStateUI() {
         if (guestPromptSection) guestPromptSection.classList.remove("hidden");
         
         hudCredits.textContent = "0";
+
+        // Hide share button for guests
+        if (shareXBtn) {
+            shareXBtn.classList.add("hidden");
+        }
     }
 }
 
@@ -551,12 +663,30 @@ function showAuthModal(mode = "login") {
         tabRegister.classList.remove("active");
         loginForm.classList.remove("hidden");
         registerForm.classList.add("hidden");
+        
+        // Auto-focus email input and place cursor at the start
+        const loginEmail = document.getElementById("login-email");
+        if (loginEmail) {
+            setTimeout(() => {
+                loginEmail.focus();
+                loginEmail.setSelectionRange(0, 0);
+            }, 50); // Small timeout to ensure browser paints and layout finishes before focus
+        }
     } else {
         modalTitle.textContent = "CREATE USER";
         tabLogin.classList.remove("active");
         tabRegister.classList.add("active");
         loginForm.classList.add("hidden");
         registerForm.classList.remove("hidden");
+        
+        // Auto-focus username input and place cursor at the start
+        const regUsername = document.getElementById("reg-username");
+        if (regUsername) {
+            setTimeout(() => {
+                regUsername.focus();
+                regUsername.setSelectionRange(0, 0);
+            }, 50);
+        }
     }
 }
 
@@ -564,6 +694,15 @@ function closeAuthModal() {
     authModal.classList.add("hidden");
     loginForm.reset();
     registerForm.reset();
+    
+    // Reset verification pending screen and restore layout
+    document.querySelector(".tab-container").classList.remove("hidden");
+    modalClose.classList.remove("hidden");
+    if (verificationPendingSection) {
+        verificationPendingSection.classList.add("hidden");
+    }
+    stopVerificationPolling();
+
     if (typeof grecaptcha !== "undefined") {
         grecaptcha.reset();
     }
@@ -597,6 +736,15 @@ modalClose.addEventListener("click", () => {
     closeAuthModal();
 });
 
+if (authModal) {
+    authModal.addEventListener("click", (e) => {
+        if (e.target === authModal) {
+            sound.playBleep();
+            closeAuthModal();
+        }
+    });
+}
+
 // Submit login
 loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -605,20 +753,74 @@ loginForm.addEventListener("submit", async (e) => {
     const email = document.getElementById("login-email").value;
     const pass = document.getElementById("login-password").value;
 
+    console.log("[Login] Submit event triggered. Email:", email);
+
+    const diagAction = document.getElementById("diag-action");
+    if (diagAction) {
+        diagAction.textContent = "SENDING LOGIN REQUEST...";
+        diagAction.style.color = "#ffff00";
+    }
+
     try {
-        await auth.signIn(email, pass);
+        console.log("[Login] Calling auth.signIn...");
+        const session = await auth.signIn(email, pass);
+        console.log("[Login] auth.signIn succeeded! Session:", session);
+        
+        if (diagAction) {
+            diagAction.textContent = "LOGIN SUCCESSFUL!";
+            diagAction.style.color = "#00ff00";
+        }
+        
         authSuccess.textContent = "LOGGED IN! LOADING STAGE...";
         authSuccess.classList.remove("hidden");
         sound.playSuccess();
         setTimeout(() => {
             closeAuthModal();
             updateAuthStateUI();
+            runDiagnostics();
         }, 1000);
     } catch (err) {
+        console.error("[Login] Error encountered during login:", err);
+        if (diagAction) {
+            diagAction.textContent = "LOGIN ERROR: " + err.message.toUpperCase();
+            diagAction.style.color = "#ff0000";
+        }
         authError.textContent = err.message.toUpperCase();
         authError.classList.remove("hidden");
     }
 });
+
+const resendEmailBtn = document.getElementById("resend-email-btn");
+if (resendEmailBtn) {
+    resendEmailBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        sound.playBleep();
+        authError.classList.add("hidden");
+        authSuccess.classList.add("hidden");
+
+        const email = document.getElementById("login-email").value;
+        if (!email) {
+            authError.textContent = "ENTER EMAIL ADDRESS FIRST!";
+            authError.classList.remove("hidden");
+            return;
+        }
+
+        try {
+            resendEmailBtn.style.pointerEvents = "none";
+            resendEmailBtn.textContent = "SENDING...";
+            await auth.resendVerification(email);
+            authSuccess.textContent = "VERIFICATION EMAIL RESENT! CHECK YOUR INBOX.";
+            authSuccess.classList.remove("hidden");
+            sound.playSuccess();
+        } catch (err) {
+            authError.textContent = err.message.toUpperCase();
+            authError.classList.remove("hidden");
+        } finally {
+            resendEmailBtn.style.pointerEvents = "auto";
+            resendEmailBtn.textContent = "RESEND VERIFICATION EMAIL";
+        }
+    });
+}
 
 // Submit registration
 registerForm.addEventListener("submit", async (e) => {
@@ -638,14 +840,34 @@ registerForm.addEventListener("submit", async (e) => {
     const pass = document.getElementById("reg-password").value;
 
     try {
-        await auth.signUp(email, pass, username);
-        authSuccess.textContent = "ACCOUNT CREATED! ENTERING STAGE...";
-        authSuccess.classList.remove("hidden");
-        sound.playSuccess();
-        setTimeout(() => {
-            closeAuthModal();
-            updateAuthStateUI();
-        }, 1000);
+        // Check if email already in use using custom RPC
+        const exists = await auth.checkEmailExists(email);
+        if (exists) {
+            throw new Error("EMAIL ALREADY IN USE");
+        }
+
+        const result = await auth.signUp(email, pass, username);
+        if (!result.session) {
+            // Hide normal inputs and tab controls, but keep close button visible
+            document.querySelector(".tab-container").classList.add("hidden");
+            loginForm.classList.add("hidden");
+            registerForm.classList.add("hidden");
+            authError.classList.add("hidden");
+            authSuccess.classList.add("hidden");
+            
+            // Show verification screen and start polling
+            verificationPendingSection.classList.remove("hidden");
+            sound.playSuccess();
+            startVerificationPolling();
+        } else {
+            authSuccess.textContent = "ACCOUNT CREATED! ENTERING STAGE...";
+            authSuccess.classList.remove("hidden");
+            sound.playSuccess();
+            setTimeout(() => {
+                closeAuthModal();
+                updateAuthStateUI();
+            }, 1000);
+        }
     } catch (err) {
         authError.textContent = err.message.toUpperCase();
         authError.classList.remove("hidden");
@@ -656,17 +878,51 @@ registerForm.addEventListener("submit", async (e) => {
 });
 
 // --- POPULATE FLOATING ITEMS ---
+function isPostCompleted(post) {
+    const rand = seededRandom(post.id);
+    rand(); // yPercent
+    rand(); // bobOffset
+    rand(); // bobSpeed
+    const speedFactor = 0.8 + rand() * 0.4;
+    const travelSpan = 2300;
+    const baseSpeed = 0.09;
+    const travelTime = travelSpan / (baseSpeed * speedFactor);
+    const age = Date.now() - new Date(post.createdAt).getTime();
+    const completed = age >= travelTime;
+    console.log(`[isPostCompleted] ID: ${post.id.slice(0,8)}, age: ${Math.round(age)}, travelTime: ${Math.round(travelTime)}, completed: ${completed}`);
+    return completed;
+}
+
 async function syncDatabasePosts() {
     try {
         const posts = await db.getPosts();
         databasePosts = posts;
-        hudItemCount.textContent = posts.length;
         
-        // Remove any floating items that are no longer present in databasePosts
-        floatingItems = floatingItems.filter(item => posts.some(post => post.id === item.post.id));
+        // Sum up total clicks across all posts
+        let totalClicks = 0;
+        posts.forEach(post => {
+            totalClicks += post.clicks || 0;
+        });
+        if (hudTotalViews) {
+            hudTotalViews.textContent = totalClicks.toLocaleString();
+        }
 
-        // Re-align floatingItems array: add any logs that are present in databasePosts but missing on screen
-        posts.forEach((post) => {
+        // Add completed posts to expiredPostIds
+        posts.forEach(post => {
+            if (isPostCompleted(post)) {
+                expiredPostIds.add(post.id);
+            }
+        });
+        
+        // Filter active posts (that are not yet completed/expired)
+        const activePosts = posts.filter(post => !expiredPostIds.has(post.id));
+        hudItemCount.textContent = activePosts.length;
+        
+        // Remove any floating items that are no longer present in activePosts
+        floatingItems = floatingItems.filter(item => activePosts.some(post => post.id === item.post.id));
+
+        // Re-align floatingItems array: add any logs that are present in activePosts but missing on screen
+        activePosts.forEach((post) => {
             const exists = floatingItems.some(item => item.post.id === post.id);
             if (!exists) {
                 const newItem = new FloatingItem(post);
@@ -709,8 +965,10 @@ tossForm.addEventListener("submit", async (e) => {
             sprite: spriteVal
         });
 
-        // Clear only URL field so they can post again with their username
-        document.getElementById("post-url").value = "";
+        // Keep the URL filled and highlight it so they can easily re-submit or type over it
+        const urlInput = document.getElementById("post-url");
+        urlInput.select();
+        urlInput.focus();
         
         // Fetch updated credit statistics from database
         await auth.refreshUserProfile();
@@ -737,10 +995,15 @@ canvas.addEventListener("mousemove", (e) => {
     mouseY = e.clientY - rect.top;
 });
 
-canvas.addEventListener("click", () => {
+canvas.addEventListener("click", async () => {
     // If we click a hovered item, navigate directly to its link in a new tab
     if (hoveredItem) {
         sound.playCoin();
+        
+        // Increment click count in the database
+        const clickedPostId = hoveredItem.post.id;
+        await db.incrementClicks(clickedPostId);
+        
         window.open(hoveredItem.post.url, "_blank");
     }
 });
@@ -760,19 +1023,60 @@ inspectLink.addEventListener("click", () => {
 
 
 
+// --- DIAGNOSTICS LOGIC ---
+async function runDiagnostics() {
+    const connectedSpan = document.getElementById("diag-connected");
+    const sessionSpan = document.getElementById("diag-session");
+    if (!connectedSpan || !sessionSpan) return;
+
+    try {
+        const { data, count, error } = await supabase
+            .from('posts')
+            .select('id', { count: 'exact', head: true });
+            
+        if (error) throw error;
+        connectedSpan.textContent = "CONNECTED (OK)";
+        connectedSpan.style.color = "#00ff00";
+    } catch (err) {
+        connectedSpan.textContent = "FAILED: " + err.message.toUpperCase();
+        connectedSpan.style.color = "#ff0000";
+    }
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        sessionSpan.textContent = session ? `LOGGED IN (${session.user.email.toUpperCase()})` : "NOT LOGGED IN";
+        sessionSpan.style.color = session ? "#00ff00" : "#ffcc00";
+    } catch (err) {
+        sessionSpan.textContent = "ERROR: " + err.message.toUpperCase();
+        sessionSpan.style.color = "#ff0000";
+    }
+}
+
+// --- REDIRECT WINDOW HANDLER ---
+async function handleAuthRedirect() {
+    const hash = window.location.hash;
+    if (hash && (hash.includes("access_token") || hash.includes("error"))) {
+        // Wait a brief moment to ensure Supabase client parses the hash and writes to localStorage
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Tell the old tab to close itself or redirect
+        authChannel.postMessage({ type: "CLOSE_OLD_TABS" });
+        
+        // Do NOT close this tab, let it initialize the app normally
+        console.log("Auth redirect detected. Signal sent to close other tabs. Loading site in this window.");
+    }
+}
+
 // --- INITIALIZATION ---
 async function initApp() {
+    await handleAuthRedirect();
+    
     updateAuthStateUI();
+    runDiagnostics();
     
     // Initial sync
     await syncDatabasePosts();
     
-    // Handle Total Views
-    let totalViews = parseInt(localStorage.getItem("retro_river_views") || "0", 10);
-    totalViews += 1;
-    localStorage.setItem("retro_river_views", totalViews.toString());
-    if (hudTotalViews) hudTotalViews.textContent = totalViews;
-
     // Handle Fluctuation of Online Users
     let onlineUsers = Math.floor(Math.random() * 5) + 3; // Start between 3 and 7
     if (hudOnlineUsers) hudOnlineUsers.textContent = onlineUsers;
@@ -784,10 +1088,10 @@ async function initApp() {
         if (hudOnlineUsers) hudOnlineUsers.textContent = onlineUsers;
     }, 4000);
 
-    // Listen for database changes in real-time to load new logs instantly
+    // Listen for database changes in real-time to load new logs instantly (inserts, updates, etc.)
     supabase
         .channel('public:posts')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, async (payload) => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, async (payload) => {
             await syncDatabasePosts();
         })
         .subscribe();
@@ -856,6 +1160,242 @@ paymentForm.addEventListener("submit", async (e) => {
         paySubmitBtn.innerHTML = '<i class="fas fa-lock"></i> SECURE PAY $0.99';
     }
 });
+
+// --- NEW BUTTON EVENT LISTENERS ---
+
+if (regResendEmailBtn) {
+    regResendEmailBtn.addEventListener("click", async () => {
+        sound.playBleep();
+        const email = document.getElementById("reg-email").value;
+        if (!email) {
+            alert("EMAIL IS REQUIRED TO RESEND VERIFICATION!");
+            return;
+        }
+        try {
+            regResendEmailBtn.disabled = true;
+            regResendEmailBtn.textContent = "SENDING...";
+            await auth.resendVerification(email);
+            alert("VERIFICATION EMAIL RESENT! CHECK YOUR INBOX.");
+            sound.playSuccess();
+        } catch (err) {
+            alert(err.message.toUpperCase());
+        } finally {
+            regResendEmailBtn.disabled = false;
+            regResendEmailBtn.textContent = "RESEND CONFIRMATION EMAIL";
+        }
+    });
+}
+
+if (regCheckStatusBtn) {
+    regCheckStatusBtn.addEventListener("click", async () => {
+        sound.playBleep();
+        regCheckStatusBtn.disabled = true;
+        regCheckStatusBtn.textContent = "CHECKING...";
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session && session.user) {
+                stopVerificationPolling();
+                await auth.refreshUserProfile();
+                closeAuthModal();
+                updateAuthStateUI();
+                sound.playSuccess();
+            } else {
+                alert("EMAIL NOT YET VERIFIED. PLEASE CHECK YOUR INBOX AND CLICK THE CONFIRMATION LINK.");
+            }
+        } catch (err) {
+            alert(err.message.toUpperCase());
+        } finally {
+            regCheckStatusBtn.disabled = false;
+            regCheckStatusBtn.textContent = "I'VE CONFIRMED MY EMAIL";
+        }
+    });
+}
+
+// --- SOCIAL SHARE REWARD SYSTEM ---
+if (shareXBtn) {
+    shareXBtn.addEventListener("click", () => {
+        sound.playBleep();
+        if (shareModal) shareModal.classList.remove("hidden");
+    });
+}
+
+if (shareClose) {
+    shareClose.addEventListener("click", () => {
+        sound.playBleep();
+        if (shareModal) shareModal.classList.add("hidden");
+    });
+}
+
+async function executeShare(platform, shareUrl, element, isCopyAction = false) {
+    const user = auth.getCurrentUser();
+    if (!user) return;
+    
+    // Check if user already claimed this platform reward to prevent duplicates
+    if (localStorage.getItem(`shared_${platform}_${user.id}`)) {
+        return;
+    }
+    
+    sound.playCoin();
+    
+    // 1. Immediately grey out the button inside the modal and show claiming status
+    if (element) {
+        element.innerHTML = `<i class="fas fa-spinner fa-spin"></i> CLAIMING...`;
+        element.style.opacity = "0.4";
+        element.style.filter = "grayscale(1)";
+        element.style.pointerEvents = "none";
+        element.style.cursor = "not-allowed";
+    }
+    
+    // 2. Wait 1.2 seconds (1200ms) before opening the link, saving, and adding credits
+    setTimeout(async () => {
+        if (isCopyAction) {
+            try {
+                await navigator.clipboard.writeText(window.location.origin);
+                console.log("[Share] Link copied to clipboard");
+            } catch (err) {
+                console.error("[Share] Failed to copy link to clipboard:", err);
+            }
+        }
+        
+        window.open(shareUrl, "_blank");
+        
+        try {
+            // Add 10 credits persistently to the user's database profile
+            await auth.addCredits(user.id, 10);
+            localStorage.setItem(`shared_${platform}_${user.id}`, 'true');
+            
+            // Refresh UI to change to CLAIMED state permanently
+            updateAuthStateUI();
+            
+            // Hide modal
+            if (shareModal) shareModal.classList.add("hidden");
+            
+            const msg = isCopyAction ? `LINK COPIED! OPENING ${platform.toUpperCase()}! +10 CREDITS!` : `SHARED ON ${platform.toUpperCase()}! +10 CREDITS!`;
+            showDailyBonusToast(msg);
+        } catch (err) {
+            alert("COULD NOT ADD SHARE CREDITS: " + err.message.toUpperCase());
+            // Re-enable/restore buttons if error occurs
+            updateAuthStateUI();
+        }
+    }, 1200);
+}
+
+if (shareX) {
+    shareX.addEventListener("click", (e) => {
+        e.preventDefault();
+        const shareText = encodeURIComponent("Welcome to Fugaea. Register for 10 free links!");
+        const shareUrl = encodeURIComponent(window.location.origin);
+        executeShare("X", `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`, shareX);
+    });
+}
+
+if (shareFacebook) {
+    shareFacebook.addEventListener("click", (e) => {
+        e.preventDefault();
+        const shareUrl = encodeURIComponent(window.location.origin);
+        executeShare("Facebook", `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, shareFacebook);
+    });
+}
+
+if (shareLinkedin) {
+    shareLinkedin.addEventListener("click", (e) => {
+        e.preventDefault();
+        const shareUrl = encodeURIComponent(window.location.origin);
+        executeShare("LinkedIn", `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`, shareLinkedin);
+    });
+}
+
+if (shareReddit) {
+    shareReddit.addEventListener("click", (e) => {
+        e.preventDefault();
+        const shareTitle = encodeURIComponent("Welcome to Fugaea. Register for 10 free links!");
+        const shareUrl = encodeURIComponent(window.location.origin);
+        executeShare("Reddit", `https://www.reddit.com/submit?url=${shareUrl}&title=${shareTitle}`, shareReddit);
+    });
+}
+
+if (shareInstagram) {
+    shareInstagram.addEventListener("click", (e) => {
+        e.preventDefault();
+        executeShare("Instagram", "https://www.instagram.com/", shareInstagram, true);
+    });
+}
+
+if (shareTiktok) {
+    shareTiktok.addEventListener("click", (e) => {
+        e.preventDefault();
+        executeShare("TikTok", "https://www.tiktok.com/", shareTiktok, true);
+    });
+}
+
+// --- DAILY CHECK-IN REWARD SYSTEM ---
+window.addEventListener('daily-claim-check', async (e) => {
+    const userId = e.detail.userId;
+    const user = auth.getCurrentUser();
+    if (!user || user.id !== userId) return;
+
+    // Get today's local date string (YYYY-MM-DD)
+    const today = new Date().toLocaleDateString('en-CA');
+    const lastClaim = localStorage.getItem(`daily_claim_date_${userId}`);
+
+    if (lastClaim !== today) {
+        console.log(`[Daily Claim] Adding daily login credit for user ${userId}. Last claim: ${lastClaim}`);
+        try {
+            // Add 1 credit persistently
+            await auth.addCredits(userId, 1);
+            localStorage.setItem(`daily_claim_date_${userId}`, today);
+            
+            // Show retro pixelated toast message
+            showDailyBonusToast("DAILY REWARD: +1 FREE LINK CREDIT!");
+            updateAuthStateUI();
+        } catch (err) {
+            console.error("Daily claim failed:", err);
+        }
+    }
+});
+
+// --- RETRO TOAST POPUP HELPER ---
+function showDailyBonusToast(message) {
+    sound.playSuccess();
+    
+    let toast = document.getElementById("retro-toast");
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "retro-toast";
+        toast.style.cssText = `
+            position: fixed;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(0, 0, 0, 0.95);
+            color: #ffd700;
+            border: 4px solid #ffd700;
+            padding: 16px 24px;
+            font-family: 'VT323', monospace;
+            font-size: 24px;
+            text-align: center;
+            z-index: 99999;
+            box-shadow: 8px 8px 0px #000;
+            image-rendering: pixelated;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        `;
+        document.body.appendChild(toast);
+    }
+    
+    toast.textContent = message;
+    toast.style.opacity = "1";
+    toast.style.transform = "translate(-50%, -50%) scale(1.05)";
+    
+    setTimeout(() => {
+        toast.style.transform = "translate(-50%, -50%) scale(1)";
+    }, 150);
+    
+    setTimeout(() => {
+        toast.style.opacity = "0";
+    }, 3500);
+}
 
 initApp();
 renderLoop();

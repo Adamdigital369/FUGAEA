@@ -10,35 +10,67 @@ let currentUser = null;
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Listen to auth state changes to keep currentUser in sync in real-time
-supabase.auth.onAuthStateChange(async (event, session) => {
+supabase.auth.onAuthStateChange((event, session) => {
+    console.log("[Auth] onAuthStateChange triggered. Event:", event, "Session:", session);
     if (session && session.user) {
-        try {
-            // Fetch public profile details (credits and username) from database
-            const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('username, credits')
-                .eq('id', session.user.id)
-                .single();
+        // Set temporary user metadata instantly so the UI can update immediately
+        currentUser = {
+            id: session.user.id,
+            email: session.user.email,
+            username: session.user.raw_user_meta_data?.username || 'unknown',
+            credits: 10 // Temporary default before database fetch completes (increased from 5 to 10)
+        };
+        
+        // Dispatch event immediately to unblock UI transitions
+        window.dispatchEvent(new CustomEvent('auth-state-changed'));
 
-            if (error && error.code !== 'PGRST116') {
-                console.error("Error fetching user profile:", error);
+        // Query the profiles table in a non-blocking background task to prevent client header deadlocks
+        (async () => {
+            try {
+                console.log("[Auth] Background fetching user profile for ID:", session.user.id);
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('username, credits')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (error) {
+                    if (error.code !== 'PGRST116') {
+                        console.error("Error fetching user profile:", error);
+                    }
+                } else if (profile) {
+                    let userCredits = profile.credits !== undefined ? profile.credits : 10;
+                    
+                    // Migrate users with 5 credits to 10 credits
+                    if (userCredits === 5 && !localStorage.getItem(`migrated_5_to_10_${session.user.id}`)) {
+                        userCredits = 10;
+                        console.log("[Auth] Upgrading credits from 5 to 10 for user:", session.user.id);
+                        supabase.from('profiles').update({ credits: 10 }).eq('id', session.user.id).then(({ error }) => {
+                            if (!error) {
+                                localStorage.setItem(`migrated_5_to_10_${session.user.id}`, 'true');
+                                currentUser.credits = 10;
+                                window.dispatchEvent(new CustomEvent('auth-state-changed'));
+                            }
+                        });
+                    }
+
+                    currentUser.username = profile.username || currentUser.username;
+                    currentUser.credits = userCredits;
+                    console.log("[Auth] Background profile loaded successfully:", currentUser);
+                    window.dispatchEvent(new CustomEvent('auth-state-changed'));
+                    
+                    // Dispatch custom event to trigger daily free credit check in app.js
+                    window.dispatchEvent(new CustomEvent('daily-claim-check', { detail: { userId: session.user.id } }));
+                }
+            } catch (err) {
+                console.error("Background auth state change sync failed:", err);
             }
-
-            currentUser = {
-                id: session.user.id,
-                email: session.user.email,
-                username: profile?.username || session.user.raw_user_meta_data?.username || 'unknown',
-                credits: profile?.credits !== undefined ? profile.credits : 5
-            };
-        } catch (err) {
-            console.error("Auth state change sync failed:", err);
-        }
+        })();
     } else {
         currentUser = null;
+        console.log("[Auth] Current user set to null (logged out)");
+        window.dispatchEvent(new CustomEvent('auth-state-changed'));
     }
-    
-    // Dispatch a custom event to notify app.js to update the HUD/UI elements
-    window.dispatchEvent(new CustomEvent('auth-state-changed'));
 });
 
 /**
@@ -64,6 +96,7 @@ export async function signUp(email, password, username) {
         email: email.trim().toLowerCase(),
         password: password,
         options: {
+            emailRedirectTo: window.location.origin,
             data: {
                 username: trimmedUsername
             }
@@ -74,12 +107,10 @@ export async function signUp(email, password, username) {
         throw new Error(error.message.toUpperCase());
     }
 
-    // If signup is successful and requires verification or auto-logs in
-    if (!data.session) {
-        throw new Error("REGISTRATION SUCCESSFUL! PLEASE CHECK YOUR EMAIL TO CONFIRM YOUR ACCOUNT.");
-    }
-
-    return data.session;
+    return {
+        session: data.session,
+        user: data.user
+    };
 }
 
 /**
@@ -93,16 +124,23 @@ export async function signIn(email, password) {
         throw new Error("EMAIL AND PASSWORD REQUIRED");
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password: password
-    });
+    console.log("[Auth] Calling supabase.auth.signInWithPassword for:", email);
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email.trim().toLowerCase(),
+            password: password
+        });
+        console.log("[Auth] supabase.auth.signInWithPassword returned. Data:", data, "Error:", error);
 
-    if (error) {
-        throw new Error(error.message.toUpperCase());
+        if (error) {
+            throw new Error(error.message.toUpperCase());
+        }
+
+        return data.session;
+    } catch (e) {
+        console.error("[Auth] Exception in signIn function:", e);
+        throw e;
     }
-
-    return data.session;
 }
 
 /**
@@ -201,5 +239,42 @@ export async function refreshUserProfile() {
     
     window.dispatchEvent(new CustomEvent('auth-state-changed'));
     return currentUser;
+}
+
+/**
+ * Resend confirmation email for signup
+ * @param {string} email 
+ * @returns {Promise<void>}
+ */
+export async function resendVerification(email) {
+    if (!email) {
+        throw new Error("EMAIL IS REQUIRED");
+    }
+
+    const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim().toLowerCase(),
+        options: {
+            emailRedirectTo: window.location.origin
+        }
+    });
+
+    if (error) {
+        throw new Error(error.message.toUpperCase());
+    }
+}
+
+/**
+ * Check if email is already registered using a secure RPC
+ * @param {string} email 
+ * @returns {Promise<boolean>}
+ */
+export async function checkEmailExists(email) {
+    if (!email) return false;
+    const { data, error } = await supabase.rpc('check_email_exists', { email_to_check: email.trim().toLowerCase() });
+    if (error) {
+        throw new Error("DB EMAIL CHECK FAILED: " + error.message.toUpperCase());
+    }
+    return !!data;
 }
 

@@ -26,7 +26,7 @@
             </div>
             <div class="hud-item stats-container">
                 <div>LOGGED IN: <span id="hud-user">GUEST</span></div>
-                <div id="hud-credits-container" style="display: inline-flex; align-items: center; vertical-align: middle;">CREDITS: <span id="hud-credits" class="text-cyan" style="margin-right: 10px;">0</span> <button id="buy-credits-trigger" class="retro-btn" style="padding: 0 6px; font-size: 8px; line-height: 1; height: 18px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; background-color: #ffd700; color: #000000 !important; border-color: #ffffff;">+BUY</button></div>
+                <div id="hud-credits-container" style="display: inline-flex; align-items: center; vertical-align: middle;">CREDITS: <span id="hud-credits" class="text-cyan" style="margin-right: 10px;">0</span> <button id="buy-credits-trigger" class="retro-btn" style="padding: 0 6px; font-size: 8px; line-height: 1; height: 18px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; background-color: #ff6600; color: #ffffff !important; border-color: #ffffff;">+BUY</button> <button id="share-x-btn" class="retro-btn hidden" style="padding: 0 6px; font-size: 8px; line-height: 1; height: 18px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; background-color: #00ff66; color: #000000 !important; border-color: #ffffff; margin-left: 8px;"><i class="fas fa-share-alt" style="margin-right: 4px;"></i>SHARE (+10)</button></div>
                 <div>LINKS: <span id="hud-item-count" class="text-yellow">0</span></div>
             </div>
             <div class="hud-item controls-container">
@@ -78,7 +78,7 @@
                         </div>
                         <div class="form-group button-group">
                             <label>&nbsp;</label>
-                            <button type="submit" class="retro-btn action-btn">
+                            <button type="submit" class="retro-btn" style="background-color: #0080ff; color: #ffffff !important; border-color: #ffffff;">
                                 POST LINK (1 CREDIT)
                             </button>
                         </div>
@@ -95,7 +95,7 @@
                 <div class="settings-stats">
                     USERS ONLINE: <span id="hud-online-users" class="text-green">1</span>
                     &nbsp;&nbsp;&nbsp;&nbsp;
-                    TOTAL VIEWS: <span id="hud-total-views" class="text-cyan">0</span>
+                    TOTAL LINK CLICKS: <span id="hud-total-views" class="text-cyan">0</span>
                 </div>
             </div>
         </footer>
@@ -151,6 +151,15 @@
                     </div>
                     <button type="submit" class="retro-btn success-btn full-width-btn">REGISTER</button>
                 </form>
+
+                <!-- VERIFICATION PENDING SECTION -->
+                <div id="verification-pending-section" class="hidden" style="text-align: center; display: flex; flex-direction: column; gap: 16px;">
+                    <div class="auth-message success" style="margin-bottom: 8px;">
+                        REGISTRATION SUCCESSFUL! PLEASE CHECK YOUR EMAIL TO CONFIRM YOUR ACCOUNT.
+                    </div>
+                    <button id="reg-resend-email-btn" type="button" class="retro-btn success-btn full-width-btn">RESEND CONFIRMATION EMAIL</button>
+                    <button id="reg-check-status-btn" type="button" class="retro-btn full-width-btn">I'VE CONFIRMED MY EMAIL</button>
+                </div>
             </div>
         </div>
     </div>
@@ -195,7 +204,49 @@
         </div>
     </div>
 
+    <!-- SOCIAL SHARE MODAL -->
+    <div id="share-modal" class="modal-overlay hidden">
+        <div class="modal-box retro-border">
+            <div class="modal-header">
+                <h3 style="font-size: 11px;">SHARE & GET +10 CREDITS</h3>
+                <button id="share-close" class="retro-btn close-btn">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; text-align: center;">
+                <p style="font-family: 'Press Start 2P', cursive; font-size: 9px; line-height: 1.5; color: #ffd700;">CHOOSE A PLATFORM TO SHARE THE SITE AND AUTOMATICALLY CLAIM YOUR +10 LINK CREDITS!</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                    <a href="#" id="share-x" class="retro-btn share-network-btn" style="background-color: #1da1f2; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-twitter"></i> X (TWITTER)
+                    </a>
+                    <a href="#" id="share-facebook" class="retro-btn share-network-btn" style="background-color: #1877f2; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-facebook-f"></i> FACEBOOK
+                    </a>
+                    <a href="#" id="share-linkedin" class="retro-btn share-network-btn" style="background-color: #0077b5; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-linkedin-in"></i> LINKEDIN
+                    </a>
+                    <a href="#" id="share-reddit" class="retro-btn share-network-btn" style="background-color: #ff4500; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-reddit-alien"></i> REDDIT
+                    </a>
+                    <a href="#" id="share-instagram" class="retro-btn share-network-btn" style="background-color: #e1306c; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-instagram"></i> INSTAGRAM
+                    </a>
+                    <a href="#" id="share-tiktok" class="retro-btn share-network-btn" style="background-color: #010101; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-tiktok"></i> TIKTOK
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIAGNOSTICS OVERLAY PANEL -->
+    <div id="diagnostics-panel" style="display: none; position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); color: #00ff00; padding: 12px; font-family: 'VT323', monospace; font-size: 16px; z-index: 10000; border: 3px solid #00ff00; box-shadow: 4px 4px 0px #000; pointer-events: none;">
+        <div style="font-weight: bold; text-decoration: underline; margin-bottom: 6px;">SYSTEM DIAGNOSTICS:</div>
+        - DB CONNECTION: <span id="diag-connected" style="color: #ffff00;">CHECKING...</span><br>
+        - SESSION STATUS: <span id="diag-session" style="color: #ffff00;">CHECKING...</span><br>
+        - LAST AUTH ACTION: <span id="diag-action" style="color: #ffffff;">NONE</span>
+    </div>
+
     <!-- Scripts -->
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?v=24"></script>
 </body>
 </html>
