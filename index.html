@@ -12,7 +12,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=4">
     <!-- Cloudflare Turnstile CAPTCHA -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+        window.onloadTurnstileCallback = function() {
+            window.turnstileReady = true;
+            if (window.onTurnstileLoad) {
+                window.onTurnstileLoad();
+            }
+        };
+    </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" async defer></script>
 </head>
 <body>
     <div class="crt-overlay"></div>
@@ -136,7 +144,7 @@
                     </div>
                     <!-- Cloudflare Turnstile Widget (For Login) -->
                     <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
-                         <div class="cf-turnstile" id="login-captcha" data-sitekey="0x4AAAAAADsrEww6iRqbmRap" data-theme="dark"></div>
+                         <div id="login-captcha"></div>
                     </div>
                     <button type="submit" class="retro-btn success-btn full-width-btn">LOG IN</button>
                 </form>
@@ -157,7 +165,7 @@
                     </div>
                     <!-- Cloudflare Turnstile Widget (For Register) -->
                     <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
-                         <div class="cf-turnstile" id="register-captcha" data-sitekey="0x4AAAAAADsrEww6iRqbmRap" data-theme="dark"></div>
+                         <div id="register-captcha"></div>
                     </div>
                     <button type="submit" class="retro-btn success-btn full-width-btn">REGISTER</button>
                 </form>
@@ -203,21 +211,9 @@
                 <div id="checkout-error" class="auth-message error hidden"></div>
 
                 <form id="payment-form" class="auth-form">
-                    <div class="form-group">
-                        <label for="card-number">CARD NUMBER</label>
-                        <input type="text" id="card-number" required placeholder="4242 4242 4242 4242" class="retro-input">
+                    <div style="font-family: 'Press Start 2P', cursive; font-size: 7px; color: var(--text-gray); margin-bottom: 8px; line-height: 1.5; text-align: center;">
+                        YOU WILL BE REDIRECTED TO STRIPE'S SECURE CHECKOUT PAGE TO COMPLETE YOUR PURCHASE.
                     </div>
-                    <div class="form-row" style="display: flex; gap: 10px;">
-                        <div class="form-group" style="flex: 1;">
-                            <label for="card-expiry">EXPIRY</label>
-                            <input type="text" id="card-expiry" required placeholder="MM/YY" maxlength="5" class="retro-input">
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label for="card-cvc">CVC</label>
-                            <input type="text" id="card-cvc" required placeholder="123" maxlength="4" class="retro-input">
-                        </div>
-                    </div>
-                    
                     <button type="submit" class="retro-btn success-btn full-width-btn" id="pay-submit-btn">
                         <i class="fas fa-lock"></i> SECURE PAY $0.99
                     </button>

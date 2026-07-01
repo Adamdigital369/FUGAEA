@@ -918,15 +918,57 @@ function updateAuthStateUI() {
 // Listen for authoritative auth state updates from the Supabase client
 window.addEventListener('auth-state-changed', updateAuthStateUI);
 
+let loginWidgetId = null;
+let regWidgetId = null;
+
+function renderCaptchas() {
+    if (typeof turnstile !== "undefined") {
+        const siteKey = "0x4AAAAAADsrEww6iRqbmRap";
+        
+        const loginCaptchaEl = document.getElementById("login-captcha");
+        if (loginCaptchaEl && loginCaptchaEl.children.length === 0) {
+            try {
+                loginWidgetId = turnstile.render(loginCaptchaEl, {
+                    sitekey: siteKey,
+                    theme: "dark"
+                });
+            } catch (err) {
+                console.error("Failed to render login captcha:", err);
+            }
+        }
+        
+        const regCaptchaEl = document.getElementById("register-captcha");
+        if (regCaptchaEl && regCaptchaEl.children.length === 0) {
+            try {
+                regWidgetId = turnstile.render(regCaptchaEl, {
+                    sitekey: siteKey,
+                    theme: "dark"
+                });
+            } catch (err) {
+                console.error("Failed to render register captcha:", err);
+            }
+        }
+    }
+}
+
+window.onTurnstileLoad = renderCaptchas;
+if (window.turnstileReady) {
+    renderCaptchas();
+}
+
 function showAuthModal(mode = "login") {
     authModal.classList.remove("hidden");
     authError.classList.add("hidden");
     authSuccess.classList.add("hidden");
     if (typeof turnstile !== "undefined") {
-        const loginCaptcha = document.getElementById("login-captcha");
-        const regCaptcha = document.getElementById("register-captcha");
-        if (loginCaptcha) turnstile.reset(loginCaptcha);
-        if (regCaptcha) turnstile.reset(regCaptcha);
+        try {
+            const loginCaptcha = document.getElementById("login-captcha");
+            const regCaptcha = document.getElementById("register-captcha");
+            if (loginCaptcha && loginCaptcha.children.length > 0) turnstile.reset(loginCaptcha);
+            if (regCaptcha && regCaptcha.children.length > 0) turnstile.reset(regCaptcha);
+        } catch (err) {
+            console.error("Failed to reset turnstile:", err);
+        }
     }
     
     if (mode === "login") {
@@ -1029,10 +1071,12 @@ loginForm.addEventListener("submit", async (e) => {
     const loginFormEl = document.getElementById("login-form");
     const captchaInput = loginFormEl.querySelector("[name='cf-turnstile-response']");
     const captchaResponse = captchaInput ? captchaInput.value : "";
-    if (!captchaResponse) {
-        authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE";
-        authError.classList.remove("hidden");
-        return;
+    if (typeof turnstile !== "undefined") {
+        if (!captchaResponse) {
+            authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE";
+            authError.classList.remove("hidden");
+            return;
+        }
     }
     
     const email = document.getElementById("login-email").value;
@@ -1120,10 +1164,12 @@ registerForm.addEventListener("submit", async (e) => {
     const registerFormEl = document.getElementById("register-form");
     const captchaInput = registerFormEl.querySelector("[name='cf-turnstile-response']");
     const captchaResponse = captchaInput ? captchaInput.value : "";
-    if (!captchaResponse) {
-        authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE";
-        authError.classList.remove("hidden");
-        return;
+    if (typeof turnstile !== "undefined") {
+        if (!captchaResponse) {
+            authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE";
+            authError.classList.remove("hidden");
+            return;
+        }
     }
 
     const username = document.getElementById("reg-username").value;
@@ -1312,8 +1358,6 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("click", async () => {
     // If we click a hovered item, navigate directly to its link in a new tab
     if (hoveredItem) {
-        sound.playCoin();
-        
         // Increment click count in the database
         const clickedPostId = hoveredItem.post.id;
         await db.incrementClicks(clickedPostId);
@@ -1334,6 +1378,7 @@ inspectLink.addEventListener("click", () => {
     inspectHud.classList.add("hidden");
     selectedItem = null;
 });
+
 
 
 
@@ -1494,21 +1539,27 @@ paymentForm.addEventListener("submit", async (e) => {
         if (!user) throw new Error("MUST BE LOGGED IN TO BUY CREDITS");
         
         paySubmitBtn.disabled = true;
-        paySubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESSING...';
+        paySubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REDIRECTING...';
         
-        // Call auth layer to add dynamic credits package
-        await auth.addCredits(user.id, selectedPackageCredits, selectedPackageAmount);
+        // Stripe Payment Links mapped by package amount
+        const stripePaymentLinks = {
+            "0.99": "https://buy.stripe.com/4gM3cngOvcWs2H240Ed7q00",
+            "1.98": "https://buy.stripe.com/00w9AL8hZ3lS1CYap2d7q01",
+            "9.90": "https://buy.stripe.com/8x2aEP9m39Kgbdybt6d7q02"
+        };
         
-        sound.playSuccess();
-        checkoutSuccess.textContent = `PAYMENT SUCCESSFUL! ${selectedPackageCredits} LINKS ADDED.`;
-        checkoutSuccess.classList.remove("hidden");
+        const amountKey = selectedPackageAmount.toFixed(2);
+        const paymentLink = stripePaymentLinks[amountKey];
         
-        setTimeout(() => {
-            closeCheckoutModal();
-            updateAuthStateUI();
-            paySubmitBtn.disabled = false;
-            paySubmitBtn.innerHTML = `<i class="fas fa-lock"></i> SECURE PAY $${selectedPackageAmount.toFixed(2)}`;
-        }, 1500);
+        if (!paymentLink) {
+            throw new Error("INVALID SELECTION. CHOOSE ANOTHER PACKAGE.");
+        }
+        
+        // Append client_reference_id (user UUID) for database credit mapping
+        const redirectUrl = `${paymentLink}?client_reference_id=${user.id}`;
+        
+        // Redirect to Stripe Secure Checkout
+        window.location.href = redirectUrl;
     } catch (err) {
         checkoutError.textContent = err.message.toUpperCase();
         checkoutError.classList.remove("hidden");
