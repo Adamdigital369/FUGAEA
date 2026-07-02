@@ -780,6 +780,16 @@ const checkoutSuccess = document.getElementById("checkout-success");
 const checkoutError = document.getElementById("checkout-error");
 const paySubmitBtn = document.getElementById("pay-submit-btn");
 
+// Legal Modal DOM elements
+const legalModal = document.getElementById("legal-modal");
+const legalClose = document.getElementById("legal-close");
+const legalTosLink = document.getElementById("legal-tos-link");
+const legalPrivacyLink = document.getElementById("legal-privacy-link");
+const tabTos = document.getElementById("tab-tos");
+const tabPrivacy = document.getElementById("tab-privacy");
+const tosTextContent = document.getElementById("tos-text-content");
+const privacyTextContent = document.getElementById("privacy-text-content");
+
 let selectedPackageAmount = 0.99;
 let selectedPackageCredits = 100;
 
@@ -1838,6 +1848,77 @@ window.simulateLogs = function(count = 20) {
         floatingItems.push(newItem);
     }
 };
+
+// --- LEGAL MODAL LOGIC (TOS & PRIVACY) ---
+function showLegalModal(tab) {
+    legalModal.classList.remove("hidden");
+    switchLegalTab(tab);
+}
+
+function closeLegalModal() {
+    legalModal.classList.add("hidden");
+}
+
+function switchLegalTab(tab) {
+    if (tab === 'tos') {
+        tabTos.classList.add("active");
+        tabPrivacy.classList.remove("active");
+        tosTextContent.classList.remove("hidden");
+        privacyTextContent.classList.add("hidden");
+    } else {
+        tabTos.classList.remove("active");
+        tabPrivacy.classList.add("active");
+        tosTextContent.classList.add("hidden");
+        privacyTextContent.classList.remove("hidden");
+    }
+}
+
+if (legalTosLink) {
+    legalTosLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        sound.playBleep();
+        showLegalModal('tos');
+    });
+}
+
+if (legalPrivacyLink) {
+    legalPrivacyLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        sound.playBleep();
+        showLegalModal('privacy');
+    });
+}
+
+if (tabTos) {
+    tabTos.addEventListener("click", () => {
+        sound.playBleep();
+        switchLegalTab('tos');
+    });
+}
+
+if (tabPrivacy) {
+    tabPrivacy.addEventListener("click", () => {
+        sound.playBleep();
+        switchLegalTab('privacy');
+    });
+}
+
+if (legalClose) {
+    legalClose.addEventListener("click", () => {
+        sound.playBleep();
+        closeLegalModal();
+    });
+}
+
+// Close legal modal if clicking outside the modal box
+if (legalModal) {
+    legalModal.addEventListener("click", (e) => {
+        if (e.target === legalModal) {
+            sound.playBleep();
+            closeLegalModal();
+        }
+    });
+}
 
 initApp();
 renderLoop();

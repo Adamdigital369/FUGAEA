@@ -442,6 +442,16 @@ body {
     }
 }
 
+.footer-link {
+    color: #888888;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.footer-link:hover {
+    color: #ffffff;
+}
+
 /* Modals */
 .modal-overlay {
     position: fixed;
