@@ -432,7 +432,7 @@ body {
 .footer-disclaimer {
     color: #ff5555;
     font-family: 'Press Start 2P', cursive;
-    font-size: 8px;
+    font-size: 10px;
 }
 
 @media (max-width: 768px) {
