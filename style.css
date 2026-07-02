@@ -422,6 +422,19 @@ body {
     gap: 12px;
 }
 
+.footer-disclaimer {
+    color: #ff5555;
+    margin-left: 20px;
+}
+
+@media (max-width: 768px) {
+    .footer-disclaimer {
+        margin-left: 0;
+        display: block;
+        margin-top: 4px;
+    }
+}
+
 /* Modals */
 .modal-overlay {
     position: fixed;
