@@ -26,6 +26,11 @@ let collisionParticles = [];
 let databasePosts = [];
 const expiredPostIds = new Set();
 
+// --- FIXED TIMESTEP PHYSICS CLOCK ---
+let lastPhysicsTime = Date.now();
+let physicsAccumulator = 0;
+const PHYSICS_TIMESTEP = 1000 / 60; // 16.666 ms
+
 const authChannel = new BroadcastChannel("auth_channel");
 authChannel.onmessage = (event) => {
     if (event.data.type === "CLOSE_OLD_TABS") {
@@ -254,6 +259,16 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        floatingItems.forEach(item => {
+            item.realign();
+        });
+        lastPhysicsTime = Date.now();
+        physicsAccumulator = 0;
+    }
+});
+
 // Wave Crest Particle Definition
 class Wave {
     constructor(index) {
@@ -326,10 +341,11 @@ class FloatingItem {
         this.post = post;
         this.createdAtTime = new Date(post.createdAt).getTime();
         
-        // Size
+        // Virtual Size (constant in virtual coordinate space)
         const spriteMeta = SPRITES[post.sprite] || SPRITES.log;
-        this.width = spriteMeta.width * SPRITE_PIXEL_SCALE;
-        this.height = spriteMeta.height * SPRITE_PIXEL_SCALE;
+        const VIRTUAL_PIXEL_SCALE = 6.0;
+        this.virtualWidth = spriteMeta.width * VIRTUAL_PIXEL_SCALE;
+        this.virtualHeight = spriteMeta.height * VIRTUAL_PIXEL_SCALE;
 
         // Seeded random for deterministic attributes per log
         const rand = seededRandom(post.id);
@@ -343,50 +359,83 @@ class FloatingItem {
         const ageOnSpawn = Math.max(0, Date.now() - this.createdAtTime);
         const VIRTUAL_WIDTH = 2000;
         const travelSpan = VIRTUAL_WIDTH + 300;
-        const baseSpeed = 0.09;
+        const baseSpeed = 0.12; // Virtual base speed units per millisecond (matches physics vx)
         const progress = (ageOnSpawn * baseSpeed * this.speedFactor) / travelSpan;
         
         if (progress >= 1.0) {
             this.isExpired = true;
         }
 
-        const initialVirtualX = VIRTUAL_WIDTH - progress * travelSpan;
-        this.x = (initialVirtualX / VIRTUAL_WIDTH) * canvas.width;
+        this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
         
-        const riverTop = Math.floor(canvas.height * 0.46);
-        const riverBottom = Math.floor(canvas.height * 0.72);
-        this.y = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.height - 8);
+        const riverTop = 460;
+        const riverBottom = 720;
+        this.virtualY = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.virtualHeight - 8);
         
-        // Physical state vectors
-        this.targetVx = -1.2 * this.speedFactor;
-        this.vx = this.targetVx;
-        this.vy = 0;
+        // Physical state vectors in virtual coordinate space
+        this.virtualTargetVx = -2.0 * this.speedFactor;
+        this.virtualVx = this.virtualTargetVx;
+        this.virtualVy = 0;
         
         this.currentBob = 0;
         this.isHovered = false;
 
         // Splash effect for brand new logs dropped in
         this.splashProgress = (Date.now() - this.createdAtTime < 2500) ? 0.0 : 1.0;
-        
         this.hasEnteredScreen = false;
-        this.isExpired = this.isExpired || false;
+    }
+
+    realign() {
+        const age = Math.max(0, Date.now() - this.createdAtTime);
+        const VIRTUAL_WIDTH = 2000;
+        const travelSpan = VIRTUAL_WIDTH + 300;
+        const baseSpeed = 0.12;
+        const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
+        
+        this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
+        
+        const riverTop = 460;
+        const riverBottom = 720;
+        this.virtualY = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.virtualHeight - 8);
+        
+        this.virtualVx = this.virtualTargetVx;
+        this.virtualVy = 0;
+        this.isHovered = false;
+        this.splashProgress = (Date.now() - this.createdAtTime < 2500) ? 0.0 : 1.0;
+    }
+
+    updatePhysics() {
+        // Move incrementally in virtual coordinates
+        this.virtualX += this.virtualVx;
+        this.virtualY += this.virtualVy;
+        
+        const riverTop = 460;
+        const riverBottom = 720;
+        const targetY = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.virtualHeight - 8);
+        
+        // Slowly float back to original vertical lane and restore horizontal drift speed
+        this.virtualVx += (this.virtualTargetVx - this.virtualVx) * 0.06;
+        this.virtualY += (targetY - this.virtualY) * 0.02;
+        this.virtualVy += (0 - this.virtualVy) * 0.03;
+
+        // Keep inside vertical river boundary (bounce off top/bottom)
+        const minVal = riverTop + 4;
+        const maxVal = riverBottom - this.virtualHeight - 8;
+        if (this.virtualY < minVal) {
+            this.virtualY = minVal;
+            this.virtualVy = Math.abs(this.virtualVy) * 0.5 + 0.25; // push down in virtual units
+        } else if (this.virtualY > maxVal) {
+            this.virtualY = maxVal;
+            this.virtualVy = -Math.abs(this.virtualVy) * 0.5 - 0.25; // push up in virtual units
+        }
+
+        // Trigger exit / expiration when off screen to the left
+        if (this.virtualX + this.virtualWidth < -200) {
+            this.isExpired = true;
+        }
     }
 
     update(t) {
-        // Move incrementally
-        this.x += this.vx;
-        this.y += this.vy;
-        
-        // Calculate target y dynamically to support canvas resizes
-        const riverTop = Math.floor(canvas.height * 0.46);
-        const riverBottom = Math.floor(canvas.height * 0.72);
-        const targetY = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.height - 8);
-        
-        // Slowly float back to original vertical lane and restore horizontal drift speed
-        this.vx += (this.targetVx - this.vx) * 0.06;
-        this.y += (targetY - this.y) * 0.02;
-        this.vy += (0 - this.vy) * 0.03;
-        
         // Bobbing animation based on absolute time
         const currentBobPhase = this.bobOffset + (t * this.bobSpeed);
         this.currentBob = Math.sin(currentBobPhase) * 6;
@@ -395,43 +444,28 @@ class FloatingItem {
             this.splashProgress += 0.04;
         }
 
-        // Keep inside vertical river boundary (bounce off top/bottom)
-        const minVal = riverTop + 4;
-        const maxVal = riverBottom - this.height - 8;
-        if (this.y < minVal) {
-            this.y = minVal;
-            this.vy = Math.abs(this.vy) * 0.5 + 0.15; // push down
-        } else if (this.y > maxVal) {
-            this.y = maxVal;
-            this.vy = -Math.abs(this.vy) * 0.5 - 0.15; // push up
-        }
-
-        // Trigger entrance sound
-        if (!this.hasEnteredScreen && this.x <= canvas.width && this.x + this.width >= 0) {
+        // Trigger entrance sound using scaled coordinates
+        const scaleX = canvas.width / 2000;
+        const screenX = this.virtualX * scaleX;
+        const screenWidth = this.virtualWidth * scaleX;
+        if (!this.hasEnteredScreen && screenX <= canvas.width && screenX + screenWidth >= 0) {
             this.hasEnteredScreen = true;
             if (isPageLoaded) {
                 sound.playRightEnter();
             }
         }
-
-        // Trigger exit / expiration when off screen to the left
-        if (this.hasEnteredScreen && this.x + this.width < -100) {
-            this.hasEnteredScreen = false;
-            this.isExpired = true;
-            if (isPageLoaded) {
-                sound.playLeftExit();
-            }
-        }
-
-        // Hard expiration boundary
-        if (this.x + this.width < -200) {
-            this.isExpired = true;
-        }
     }
 
     draw() {
-        const drawX = Math.floor(this.x);
-        const drawY = Math.floor(this.y + this.currentBob);
+        const scaleX = canvas.width / 2000;
+        const scaleY = canvas.height / 1000;
+
+        const drawX = Math.floor(this.virtualX * scaleX);
+        const drawY = Math.floor((this.virtualY + this.currentBob) * scaleY);
+        const drawWidth = this.virtualWidth * scaleX;
+        const drawHeight = this.virtualHeight * scaleY;
+        const renderPixelScale = 6.0 * scaleX; // Proportional sprite scale
+
         const spriteMeta = SPRITES[this.post.sprite] || SPRITES.log;
 
         // Draw selection box outline if hovered
@@ -440,24 +474,24 @@ class FloatingItem {
             ctx.lineWidth = 3;
             
             // Expand selection boundary to cover username, branch, and log with a buffer
-            const topOffset = this.hasBranch ? 49 : 32;
-            const bottomOffset = 8;
-            const sideOffset = 15;
+            const topOffset = (this.hasBranch ? 49 : 32) * scaleY;
+            const bottomOffset = 8 * scaleY;
+            const sideOffset = 15 * scaleX;
             
-            ctx.strokeRect(drawX - sideOffset, drawY - topOffset, this.width + sideOffset * 2, this.height + topOffset + bottomOffset);
+            ctx.strokeRect(drawX - sideOffset, drawY - topOffset, drawWidth + sideOffset * 2, drawHeight + topOffset + bottomOffset);
             
             ctx.fillStyle = "rgba(0, 255, 255, 0.1)";
-            ctx.fillRect(drawX - sideOffset, drawY - topOffset, this.width + sideOffset * 2, this.height + topOffset + bottomOffset);
+            ctx.fillRect(drawX - sideOffset, drawY - topOffset, drawWidth + sideOffset * 2, drawHeight + topOffset + bottomOffset);
         }
 
         // Splash effect for brand new logs dropped in
         if (this.splashProgress < 1.0) {
             ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-            const radius = (1 - this.splashProgress) * 40;
-            ctx.fillRect(drawX + this.width/2 - radius/2, drawY + this.height/2 - radius/2, radius, radius);
+            const radius = (1 - this.splashProgress) * 40 * scaleX;
+            ctx.fillRect(drawX + drawWidth/2 - radius/2, drawY + drawHeight/2 - radius/2, radius, radius);
         }
 
-        // Render the 8-bit sprite matrix (straight)
+        // Render the 8-bit sprite matrix
         const grid = spriteMeta.grid;
         for (let r = 0; r < grid.length; r++) {
             for (let c = 0; c < grid[r].length; c++) {
@@ -465,10 +499,10 @@ class FloatingItem {
                 if (colorCode !== 0) {
                     ctx.fillStyle = spriteMeta.palette[colorCode];
                     ctx.fillRect(
-                        drawX + c * SPRITE_PIXEL_SCALE, 
-                        drawY + r * SPRITE_PIXEL_SCALE, 
-                        Math.ceil(SPRITE_PIXEL_SCALE), 
-                        Math.ceil(SPRITE_PIXEL_SCALE)
+                        drawX + c * renderPixelScale, 
+                        drawY + r * renderPixelScale, 
+                        Math.ceil(renderPixelScale), 
+                        Math.ceil(renderPixelScale)
                     );
                 }
             }
@@ -481,10 +515,10 @@ class FloatingItem {
             const branchStems = [[10,-1], [11,-2], [12,-3], [13,-3]];
             branchStems.forEach(([bx, by]) => {
                 ctx.fillRect(
-                    drawX + bx * SPRITE_PIXEL_SCALE,
-                    drawY + by * SPRITE_PIXEL_SCALE,
-                    Math.ceil(SPRITE_PIXEL_SCALE),
-                    Math.ceil(SPRITE_PIXEL_SCALE)
+                    drawX + bx * renderPixelScale,
+                    drawY + by * renderPixelScale,
+                    Math.ceil(renderPixelScale),
+                    Math.ceil(renderPixelScale)
                 );
             });
 
@@ -493,10 +527,10 @@ class FloatingItem {
             const medLeaves = [[9,-2], [9,-3], [10,-3], [14,-3], [14,-4], [15,-3]];
             medLeaves.forEach(([bx, by]) => {
                 ctx.fillRect(
-                    drawX + bx * SPRITE_PIXEL_SCALE,
-                    drawY + by * SPRITE_PIXEL_SCALE,
-                    Math.ceil(SPRITE_PIXEL_SCALE),
-                    Math.ceil(SPRITE_PIXEL_SCALE)
+                    drawX + bx * renderPixelScale,
+                    drawY + by * renderPixelScale,
+                    Math.ceil(renderPixelScale),
+                    Math.ceil(renderPixelScale)
                 );
             });
 
@@ -505,23 +539,23 @@ class FloatingItem {
             const lightLeaves = [[11,-4], [12,-4], [13,-4], [12,-5]];
             lightLeaves.forEach(([bx, by]) => {
                 ctx.fillRect(
-                    drawX + bx * SPRITE_PIXEL_SCALE,
-                    drawY + by * SPRITE_PIXEL_SCALE,
-                    Math.ceil(SPRITE_PIXEL_SCALE),
-                    Math.ceil(SPRITE_PIXEL_SCALE)
+                    drawX + bx * renderPixelScale,
+                    drawY + by * renderPixelScale,
+                    Math.ceil(renderPixelScale),
+                    Math.ceil(renderPixelScale)
                 );
             });
         }
 
         // Draw username text tag above the item (push higher if log has branches to avoid overlap)
         ctx.fillStyle = this.isHovered ? "#ffcc00" : "#ffffff";
-        ctx.font = "18px VT323";
+        ctx.font = `${Math.max(12, Math.floor(18 * scaleX))}px VT323`;
         ctx.textAlign = "center";
         
         // Draw black border around text for readability
         const label = `@${this.post.username}`;
-        const textX = Math.floor(drawX + this.width / 2);
-        const textY = drawY - (this.hasBranch ? 25 : 8);
+        const textX = Math.floor(drawX + drawWidth / 2);
+        const textY = drawY - (this.hasBranch ? 25 : 8) * scaleY;
         
         ctx.fillStyle = "#000000";
         ctx.fillText(label, textX - 2, textY - 2);
@@ -534,18 +568,110 @@ class FloatingItem {
     }
 
     checkCollision(mx, my) {
-        const drawY = this.y + this.currentBob;
-        const topOffset = this.hasBranch ? 49 : 32;
-        const bottomOffset = 8;
-        const sideOffset = 15;
+        const scaleX = canvas.width / 2000;
+        const scaleY = canvas.height / 1000;
+
+        const drawX = this.virtualX * scaleX;
+        const drawY = (this.virtualY + this.currentBob) * scaleY;
+        const drawWidth = this.virtualWidth * scaleX;
+        const drawHeight = this.virtualHeight * scaleY;
+
+        const topOffset = (this.hasBranch ? 49 : 32) * scaleY;
+        const bottomOffset = 8 * scaleY;
+        const sideOffset = 15 * scaleX;
         
         return (
-            mx >= this.x - sideOffset && 
-            mx <= this.x + this.width + sideOffset && 
+            mx >= drawX - sideOffset && 
+            mx <= drawX + drawWidth + sideOffset && 
             my >= drawY - topOffset && 
-            my <= drawY + this.height + bottomOffset
+            my <= drawY + drawHeight + bottomOffset
         );
     }
+}
+
+// --- RIVER ANIMATION LOOP ---
+function updatePhysics() {
+    floatingItems.forEach(item => {
+        item.updatePhysics();
+    });
+
+    // Pairwise collision detection and response in virtual coordinates (0-2000, 0-1000)
+    for (let i = 0; i < floatingItems.length; i++) {
+        for (let j = i + 1; j < floatingItems.length; j++) {
+            const a = floatingItems[i];
+            const b = floatingItems[j];
+            
+            // Check box overlap in virtual coordinates
+            const overlapX = Math.min(a.virtualX + a.virtualWidth, b.virtualX + b.virtualWidth) - Math.max(a.virtualX, b.virtualX);
+            const overlapY = Math.min(a.virtualY + a.virtualHeight, b.virtualY + b.virtualHeight) - Math.max(a.virtualY, b.virtualY);
+            
+            if (overlapX > 0 && overlapY > 0) {
+                // Spawn pixelated water splash particles at screen contact point
+                const scaleX = canvas.width / 2000;
+                const scaleY = canvas.height / 1000;
+                const contactX = ((Math.max(a.virtualX, b.virtualX) + Math.min(a.virtualX + a.virtualWidth, b.virtualX + b.virtualWidth)) / 2) * scaleX;
+                const contactY = ((Math.max(a.virtualY, b.virtualY) + Math.min(a.virtualY + a.virtualHeight, b.virtualY + b.virtualHeight)) / 2) * scaleY;
+                for (let k = 0; k < 6; k++) {
+                    collisionParticles.push(new SplashParticle(contactX, contactY));
+                }
+
+                // Determine collision resolution direction (push on the axis of least overlap)
+                if (overlapX < overlapY) {
+                    const push = overlapX / 2;
+                    if (a.virtualX < b.virtualX) {
+                        a.virtualX -= push;
+                        b.virtualX += push;
+                        
+                        // Mild vertical lane slide nudge to help them eventually clear each other
+                        a.virtualVy += 0.3;
+                        b.virtualVy -= 0.3;
+                        
+                        // Bounce velocities (elastic response with mild damping to allow realistic grouping/jamming)
+                        const temp = a.virtualVx;
+                        a.virtualVx = b.virtualVx * 0.8;
+                        b.virtualVx = temp * 0.8;
+                    } else {
+                        a.virtualX += push;
+                        b.virtualX -= push;
+                        
+                        a.virtualVy -= 0.3;
+                        b.virtualVy += 0.3;
+                        
+                        const temp = a.virtualVx;
+                        a.virtualVx = b.virtualVx * 0.8;
+                        b.virtualVx = temp * 0.8;
+                    }
+                } else {
+                    const push = overlapY / 2;
+                    if (a.virtualY < b.virtualY) {
+                        a.virtualY -= push;
+                        b.virtualY += push;
+                        
+                        // Bounce vertical velocities and add slight nudge to separate
+                        const temp = a.virtualVy;
+                        a.virtualVy = b.virtualVy * -0.4 + 0.25;
+                        b.virtualVy = temp * -0.4 - 0.25;
+                    } else {
+                        a.virtualY += push;
+                        b.virtualY -= push;
+                        
+                        const temp = a.virtualVy;
+                        a.virtualVy = b.virtualVy * -0.4 - 0.25;
+                        b.virtualVy = temp * -0.4 + 0.25;
+                    }
+                }
+            }
+        }
+    }
+
+    // Filter out expired items
+    floatingItems = floatingItems.filter(item => {
+        if (item.isExpired) {
+            expiredPostIds.add(item.post.id);
+            return false;
+        }
+        return true;
+    });
 }
 
 // --- RIVER ANIMATION LOOP ---
@@ -591,6 +717,18 @@ function renderLoop() {
 
     const now = Date.now();
 
+    // Run fixed timestep physics catch up
+    let elapsed = now - lastPhysicsTime;
+    lastPhysicsTime = now;
+    if (elapsed > 1000) {
+        elapsed = 1000;
+    }
+    physicsAccumulator += elapsed;
+    while (physicsAccumulator >= PHYSICS_TIMESTEP) {
+        updatePhysics();
+        physicsAccumulator -= PHYSICS_TIMESTEP;
+    }
+
     // Update & draw waves
     waveParticles.forEach(w => {
         w.update(now);
@@ -604,85 +742,9 @@ function renderLoop() {
     });
     collisionParticles = collisionParticles.filter(p => p.life > 0);
 
-    // Update floating items
+    // Update rendering state of floating items
     floatingItems.forEach(item => {
         item.update(now);
-    });
-
-    // Pairwise collision detection and response (bouncing logs)
-    for (let i = 0; i < floatingItems.length; i++) {
-        for (let j = i + 1; j < floatingItems.length; j++) {
-            const a = floatingItems[i];
-            const b = floatingItems[j];
-            
-            // Check box overlap
-            const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
-            const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
-            
-            if (overlapX > 0 && overlapY > 0) {
-                // Spawn pixelated water splash particles at contact point
-                const contactX = (Math.max(a.x, b.x) + Math.min(a.x + a.width, b.x + b.width)) / 2;
-                const contactY = (Math.max(a.y, b.y) + Math.min(a.y + a.height, b.y + b.height)) / 2;
-                for (let k = 0; k < 6; k++) {
-                    collisionParticles.push(new SplashParticle(contactX, contactY));
-                }
-
-                // Determine collision resolution direction (push on the axis of least overlap)
-                if (overlapX < overlapY) {
-                    const push = overlapX / 2;
-                    if (a.x < b.x) {
-                        a.x -= push;
-                        b.x += push;
-                        
-                        // Mild vertical lane slide nudge to help them eventually clear each other
-                        a.vy += 0.18;
-                        b.vy -= 0.18;
-                        
-                        // Bounce velocities (elastic response with mild damping to allow realistic grouping/jamming)
-                        const temp = a.vx;
-                        a.vx = b.vx * 0.8;
-                        b.vx = temp * 0.8;
-                    } else {
-                        a.x += push;
-                        b.x -= push;
-                        
-                        a.vy -= 0.18;
-                        b.vy += 0.18;
-                        
-                        const temp = a.vx;
-                        a.vx = b.vx * 0.8;
-                        b.vx = temp * 0.8;
-                    }
-                } else {
-                    const push = overlapY / 2;
-                    if (a.y < b.y) {
-                        a.y -= push;
-                        b.y += push;
-                        
-                        // Bounce vertical velocities and add slight nudge to separate
-                        const temp = a.vy;
-                        a.vy = b.vy * -0.4 + 0.15;
-                        b.vy = temp * -0.4 - 0.15;
-                    } else {
-                        a.y += push;
-                        b.y -= push;
-                        
-                        const temp = a.vy;
-                        a.vy = b.vy * -0.4 - 0.15;
-                        b.vy = temp * -0.4 + 0.15;
-                    }
-                }
-            }
-        }
-    }
-
-    // Filter out expired items
-    floatingItems = floatingItems.filter(item => {
-        if (item.isExpired) {
-            expiredPostIds.add(item.post.id);
-            return false;
-        }
-        return true;
     });
 
     let currentHover = null;
@@ -1854,8 +1916,8 @@ window.simulateLogs = function(count = 20) {
         
         const newItem = new FloatingItem(mockPost);
         // Spawn them staggered across the visible screen area to trigger immediate bounces
-        newItem.x = Math.random() * (canvas.width - 250) + 50;
-        newItem.vx = -1.2 * newItem.speedFactor; // start drift velocity
+        newItem.virtualX = Math.random() * (2000 - 250) + 50;
+        newItem.virtualVx = -2.0 * newItem.speedFactor; // start drift velocity
         
         floatingItems.push(newItem);
     }
