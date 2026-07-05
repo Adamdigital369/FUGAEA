@@ -823,7 +823,7 @@ async function trackPresence() {
             const state = presenceChannel.presenceState();
             const count = Object.keys(state).length;
             if (hudOnlineUsers) {
-                hudOnlineUsers.textContent = count;
+                hudOnlineUsers.textContent = count.toLocaleString();
             }
         });
 
@@ -886,10 +886,13 @@ function updateAuthStateUI() {
         hudUser.textContent = user.username.toUpperCase();
         hudUser.className = "text-green";
         authTriggerBtn.innerHTML = 'LOGOUT';
+        authTriggerBtn.classList.remove("hidden");
+        authTriggerBtn.style.backgroundColor = '';
+        authTriggerBtn.style.color = '';
         submitSection.classList.remove("hidden");
         if (guestPromptSection) guestPromptSection.classList.add("hidden");
         
-        hudCredits.textContent = user.credits;
+        hudCredits.textContent = user.credits.toLocaleString();
 
         // Auto-fill username in text box
         postText.value = `@${user.username}`;
@@ -906,6 +909,9 @@ function updateAuthStateUI() {
         hudUser.textContent = "GUEST";
         hudUser.className = "";
         authTriggerBtn.innerHTML = 'LOGIN / REGISTER';
+        authTriggerBtn.classList.add("hidden");
+        authTriggerBtn.style.backgroundColor = '';
+        authTriggerBtn.style.color = '';
         submitSection.classList.add("hidden");
         if (guestPromptSection) guestPromptSection.classList.remove("hidden");
         
@@ -1261,7 +1267,7 @@ async function syncDatabasePosts() {
         
         // Filter active posts (that are not yet completed/expired)
         const activePosts = posts.filter(post => !expiredPostIds.has(post.id));
-        hudItemCount.textContent = activePosts.length;
+        if (hudItemCount) hudItemCount.textContent = activePosts.length;
         
         // Remove any floating items that are no longer present in activePosts
         floatingItems = floatingItems.filter(item => activePosts.some(post => post.id === item.post.id));

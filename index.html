@@ -34,11 +34,10 @@
             </div>
             <div class="hud-item stats-container">
                 <div id="hud-user-container" class="hidden">LOGGED IN: <span id="hud-user">GUEST</span></div>
-                <div id="hud-credits-container" style="display: inline-flex; align-items: center; vertical-align: middle;">CREDITS: <span id="hud-credits" class="text-cyan" style="margin-right: 10px;">0</span> <button id="buy-credits-trigger" class="retro-btn" style="padding: 0 6px; font-size: 8px; line-height: 1; height: 18px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; background-color: #ff6600; color: #ffffff !important; border-color: #ffffff;">+BUY</button> <button id="share-x-btn" class="retro-btn" style="padding: 0 6px; font-size: 8px; line-height: 1; height: 18px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; background-color: #00ff66; color: #000000 !important; border-color: #ffffff; margin-left: 8px;"><i class="fas fa-share-alt" style="margin-right: 4px;"></i>SHARE (+10)</button></div>
-                <div>LINKS: <span id="hud-item-count" class="text-yellow">0</span></div>
+                <div id="hud-credits-container" style="display: inline-flex; align-items: center; vertical-align: middle;">CREDITS: <span id="hud-credits" class="text-cyan" style="margin-right: 10px;">0</span> <button id="buy-credits-trigger" class="retro-btn" style="padding: 0 8px; font-size: 9px; line-height: 1; height: 21px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; background-color: #00ff66; color: #000000 !important; border-color: #ffffff;">+BUY</button> <button id="share-x-btn" class="retro-btn" style="padding: 0 8px; font-size: 9px; line-height: 1; height: 21px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; background-color: #00ff66; color: #000000 !important; border-color: #ffffff; margin-left: 8px;"><i class="fas fa-share-alt" style="margin-right: 4px;"></i>SHARE (+10)</button></div>
             </div>
             <div class="hud-item controls-container">
-                <button id="auth-trigger-btn" class="retro-btn">
+                <button id="auth-trigger-btn" class="retro-btn hidden">
                     LOGIN / REGISTER
                 </button>
             </div>
@@ -86,7 +85,7 @@
                         </div>
                         <div class="form-group button-group">
                             <label>&nbsp;</label>
-                            <button type="submit" class="retro-btn" style="background-color: #0080ff; color: #ffffff !important; border-color: #ffffff;">
+                            <button type="submit" class="retro-btn" style="background-color: #00ff66; color: #000000 !important; border-color: #ffffff;">
                                 POST LINK (1 CREDIT)
                             </button>
                         </div>
@@ -94,6 +93,39 @@
                             <label for="auto-repost-toggle" style="font-size: 8px; color: var(--text-yellow); text-align: center; font-family: 'Press Start 2P', cursive; line-height: 1;">AUTO-REPOST</label>
                             <div style="display: flex; align-items: center; justify-content: center; height: 38px;">
                                 <input type="checkbox" id="auto-repost-toggle" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--text-cyan);">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- GUEST PROMPT SECTION (SHOWS GREYED OUT FORM WITH LOGIN CTA) -->
+            <div id="guest-prompt-section" class="submit-wrapper" style="position: relative;">
+                <div class="guest-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.3); pointer-events: auto; z-index: 5;">
+                    <button id="prompt-login-btn" class="retro-btn success-btn" style="font-family: 'Press Start 2P', cursive; font-size: 10px; padding: 10px 16px; border: 3px solid #fff; background-color: #00ff66; color: #000000 !important; cursor: pointer; pointer-events: auto; box-shadow: var(--pixel-shadow);">
+                        <i class="fas fa-lock" style="margin-right: 6px;"></i> LOGIN / REGISTER TO POST LINKS
+                    </button>
+                </div>
+                <form class="retro-form" style="user-select: none; pointer-events: none;">
+                    <div class="form-row" style="filter: blur(0.5px); opacity: 0.75;">
+                        <div class="form-group flex-grow-2">
+                            <label>USERNAME</label>
+                            <input type="text" placeholder="@Testuser" disabled class="retro-input" style="background-color: #222; color: #999; border-color: #444;">
+                        </div>
+                        <div class="form-group flex-grow-3">
+                            <label>LINK</label>
+                            <input type="text" placeholder="e.g., google.com" disabled class="retro-input" style="background-color: #222; color: #999; border-color: #444;">
+                        </div>
+                        <div class="form-group button-group">
+                            <label>&nbsp;</label>
+                            <button type="button" disabled class="retro-btn" style="background-color: #777; color: #bbb !important; border-color: #444;">
+                                POST LINK (1 CREDIT)
+                            </button>
+                        </div>
+                        <div class="form-group auto-repost-group" style="display: flex; flex-direction: column; gap: 4px; justify-content: flex-end;">
+                            <label style="font-size: 8px; color: #999; text-align: center; font-family: 'Press Start 2P', cursive; line-height: 1;">AUTO-REPOST</label>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 38px;">
+                                <input type="checkbox" disabled style="width: 20px; height: 20px; cursor: not-allowed;">
                             </div>
                         </div>
                     </div>
@@ -112,7 +144,7 @@
                     </div>
                 </div>
                 <div class="settings-stats">
-                    USERS ONLINE: <span id="hud-online-users" class="text-green">1</span>
+                    VIEWERS ONLINE: <span id="hud-online-users" class="text-green">1</span>
                     &nbsp;&nbsp;&nbsp;&nbsp;
                     TOTAL LINK CLICKS: <span id="hud-total-views" class="text-cyan">0</span>
                 </div>
