@@ -889,6 +889,9 @@ function updateAuthStateUI() {
         authTriggerBtn.classList.remove("hidden");
         authTriggerBtn.style.backgroundColor = '';
         authTriggerBtn.style.color = '';
+        authTriggerBtn.style.padding = '0 8px';
+        authTriggerBtn.style.fontSize = '9px';
+        authTriggerBtn.style.height = '21px';
         submitSection.classList.remove("hidden");
         if (guestPromptSection) guestPromptSection.classList.add("hidden");
         
@@ -912,6 +915,9 @@ function updateAuthStateUI() {
         authTriggerBtn.classList.add("hidden");
         authTriggerBtn.style.backgroundColor = '';
         authTriggerBtn.style.color = '';
+        authTriggerBtn.style.padding = '';
+        authTriggerBtn.style.fontSize = '';
+        authTriggerBtn.style.height = '';
         submitSection.classList.add("hidden");
         if (guestPromptSection) guestPromptSection.classList.remove("hidden");
         
