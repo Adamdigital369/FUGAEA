@@ -1619,8 +1619,74 @@ async function initApp() {
     // Listen for database changes in real-time to load new logs instantly (inserts, updates, etc.)
     supabase
         .channel('public:posts')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, async (payload) => {
-            await syncDatabasePosts();
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, async (payload) => {
+            console.log("[Realtime Insert] Payload:", payload);
+            try {
+                // Fetch the username of the poster (1 quick indexed query instead of rebuilding everything)
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('username')
+                    .eq('id', payload.new.user_id)
+                    .single();
+                
+                if (error) throw error;
+                
+                const post = {
+                    id: payload.new.id,
+                    username: profile?.username || 'unknown',
+                    text: payload.new.text,
+                    url: payload.new.url,
+                    sprite: payload.new.sprite,
+                    createdAt: payload.new.created_at,
+                    clicks: payload.new.clicks || 0
+                };
+                
+                // Add to databasePosts if it doesn't exist
+                if (!databasePosts.some(p => p.id === post.id)) {
+                    databasePosts.push(post);
+                    
+                    // Filter and render if not completed
+                    if (!expiredPostIds.has(post.id) && !isPostCompleted(post)) {
+                        const existsOnScreen = floatingItems.some(item => item.post.id === post.id);
+                        if (!existsOnScreen) {
+                            const newItem = new FloatingItem(post);
+                            floatingItems.push(newItem);
+                            
+                            if (hudItemCount) {
+                                const activeCount = floatingItems.filter(item => !item.post.id.startsWith("local_")).length;
+                                hudItemCount.textContent = activeCount;
+                            }
+                            
+                            // Play splash sound if page is loaded
+                            if (isPageLoaded) {
+                                sound.playSplash();
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to process realtime insert:", err);
+                // Fallback to full sync on failure
+                await syncDatabasePosts();
+            }
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, async (payload) => {
+            console.log("[Realtime Update] Payload:", payload);
+            // On updates (like click increments), update the click count inside databasePosts locally
+            const post = databasePosts.find(p => p.id === payload.new.id);
+            if (post) {
+                post.clicks = payload.new.clicks || 0;
+            }
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'posts' }, async (payload) => {
+            console.log("[Realtime Delete] Payload:", payload);
+            // Remove from screen on delete
+            databasePosts = databasePosts.filter(p => p.id !== payload.old.id);
+            floatingItems = floatingItems.filter(item => item.post.id !== payload.old.id);
+            if (hudItemCount) {
+                const activeCount = floatingItems.filter(item => !item.post.id.startsWith("local_")).length;
+                hudItemCount.textContent = activeCount;
+            }
         })
         .subscribe();
 
