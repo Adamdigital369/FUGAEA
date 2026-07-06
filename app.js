@@ -361,7 +361,7 @@ class FloatingItem {
         this.bobOffset = rand() * Math.PI * 2;
         this.bobSpeed = 0.001 + rand() * 0.0015; // Slow bob speed for time-based animation
         this.speedFactor = 0.8 + rand() * 0.4;   // Speed variation (0.8x to 1.2x)
-        this.hasBranch = true;
+        this.hasBranch = (rand() > 0.6);         // 40% chance of spawning branches
 
         // Position - computed dynamically based on age at spawn time to distribute logs across river
         const ageOnSpawn = Math.max(0, Date.now() - this.createdAtTime);
@@ -1345,8 +1345,8 @@ async function syncDatabasePosts() {
         const activePosts = posts.filter(post => !expiredPostIds.has(post.id));
         if (hudItemCount) hudItemCount.textContent = activePosts.length;
         
-        // Remove any floating items that are no longer present in activePosts
-        floatingItems = floatingItems.filter(item => activePosts.some(post => post.id === item.post.id));
+        // Remove any floating items that are no longer present in activePosts (keep local mock logs)
+        floatingItems = floatingItems.filter(item => item.post.id.startsWith("local_") || activePosts.some(post => post.id === item.post.id));
 
         // Re-align floatingItems array: add any logs that are present in activePosts but missing on screen
         activePosts.forEach((post) => {
@@ -1451,9 +1451,11 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("click", async () => {
     // If we click a hovered item, navigate directly to its link in a new tab
     if (hoveredItem) {
-        // Increment click count in the database
+        // Increment click count in the database (bypass for local simulated logs)
         const clickedPostId = hoveredItem.post.id;
-        await db.incrementClicks(clickedPostId);
+        if (!clickedPostId.startsWith("local_")) {
+            await db.incrementClicks(clickedPostId);
+        }
         
         window.open(hoveredItem.post.url, "_blank");
     }
@@ -2002,5 +2004,24 @@ if (legalModal) {
     });
 }
 
+// --- AUTO-SPAWN FUGAEA ADVERTISEMENT LOG ---
+function spawnFugaeaLog() {
+    const post = {
+        id: `local_fugaea_${Date.now()}`,
+        username: "fugaea",
+        sprite: "log_flowering", // flowering log for official highlight
+        createdAt: new Date().toISOString(),
+        clicks: 0,
+        text: "welcome to fugaea. see and share website links.",
+        url: "https://fugaea.com"
+    };
+    const newItem = new FloatingItem(post);
+    floatingItems.push(newItem);
+}
+
 initApp();
 renderLoop();
+
+// Auto-spawn first fugaea log after 3 seconds, then every 22 seconds
+setTimeout(spawnFugaeaLog, 3000);
+setInterval(spawnFugaeaLog, 22000);
