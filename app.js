@@ -469,7 +469,7 @@ class FloatingItem {
         const scaleY = canvas.height / 1000;
 
         const drawX = Math.floor(this.virtualX * scaleX);
-        const drawY = Math.floor((this.virtualY + this.currentBob) * scaleY);
+        const drawY = Math.floor(this.virtualY * scaleY) + this.currentBob;
         const drawWidth = this.virtualWidth * scaleX;
         const drawHeight = this.virtualHeight * scaleY;
         const renderPixelScale = 6.0 * scaleX; // Proportional sprite scale
@@ -580,7 +580,7 @@ class FloatingItem {
         const scaleY = canvas.height / 1000;
 
         const drawX = this.virtualX * scaleX;
-        const drawY = (this.virtualY + this.currentBob) * scaleY;
+        const drawY = this.virtualY * scaleY + this.currentBob;
         const drawWidth = this.virtualWidth * scaleX;
         const drawHeight = this.virtualHeight * scaleY;
 
