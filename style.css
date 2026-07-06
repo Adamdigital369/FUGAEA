@@ -233,7 +233,7 @@ body {
 }
 
 .form-group label {
-    font-size: 10px;
+    font-size: 16px;
     color: var(--text-yellow);
 }
 
@@ -252,6 +252,45 @@ body {
 
 .retro-input:focus {
     border-color: var(--text-cyan);
+}
+
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-container .retro-input {
+    width: 100%;
+    padding-right: 68px; /* Leave space for the toggle button */
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 6px;
+    background-color: var(--btn-gray);
+    color: var(--text-white);
+    border: 2px solid #fff;
+    box-shadow: 2px 2px 0px #000;
+    padding: 2px 6px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle-btn:hover {
+    filter: brightness(1.2);
+}
+
+.password-toggle-btn:active {
+    box-shadow: 0px 0px 0px #000;
+    transform: translate(2px, 2px);
 }
 
 .retro-select {

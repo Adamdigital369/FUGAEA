@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=1200">
     <title>fugaea</title>
     <meta name="description" content="welcome to fugaea. login/ register to post links. see and share website links.">
 
@@ -23,7 +23,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <!-- FontAwesome for some retro-style icons if needed -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
     <!-- Cloudflare Turnstile CAPTCHA -->
     <script>
         window.onloadTurnstileCallback = function() {
@@ -189,7 +189,10 @@
                     </div>
                     <div class="form-group">
                         <label for="login-password">PASSWORD</label>
-                        <input type="password" id="login-password" required class="retro-input">
+                        <div class="password-container">
+                            <input type="password" id="login-password" required class="retro-input">
+                            <button type="button" class="password-toggle-btn" tabindex="-1">SHOW</button>
+                        </div>
                     </div>
                     <!-- Cloudflare Turnstile Widget (For Login) -->
                     <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
@@ -210,7 +213,10 @@
                     </div>
                     <div class="form-group">
                         <label for="reg-password">PASSWORD</label>
-                        <input type="password" id="reg-password" required class="retro-input">
+                        <div class="password-container">
+                            <input type="password" id="reg-password" required class="retro-input">
+                            <button type="button" class="password-toggle-btn" tabindex="-1">SHOW</button>
+                        </div>
                     </div>
                     <!-- Cloudflare Turnstile Widget (For Register) -->
                     <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
@@ -363,6 +369,6 @@
     </div>
 
     <!-- Scripts -->
-    <script type="module" src="app.js?v=32"></script>
+    <script type="module" src="app.js?v=35"></script>
 </body>
 </html>

@@ -288,12 +288,10 @@ class Wave {
         this.speedFactor = rand() * 0.4 + 0.8;
         this.virtualX = 2000 * this.phase;
 
-        // Randomly assign a gold, purple, light blue, or silver color to the ripples (approx. 15% gold, 2% purple, 4% light blue, 79% silver)
+        // Randomly assign a gold, cyan, or silver color to the ripples (approx. 15% gold, 6% cyan, 79% silver)
         const colorRand = rand();
-        if (colorRand > 0.96) {
+        if (colorRand > 0.94) {
             this.color = "rgba(0, 240, 255, 0.45)";   // Glowing retro cyan/light blue colored line
-        } else if (colorRand > 0.94) {
-            this.color = "rgba(180, 70, 255, 0.45)"; // Royal retro purple colored line
         } else if (colorRand > 0.79) {
             this.color = "rgba(255, 200, 50, 0.42)";  // Premium retro gold colored line
         } else {
@@ -510,6 +508,36 @@ class FloatingItem {
             const radius = (1 - this.splashProgress) * 40 * scaleX;
             ctx.fillRect(drawX + drawWidth/2 - radius/2, drawY + drawHeight/2 - radius/2, radius, radius);
         }
+
+        // Draw bobbing water ripples/wake at the water line (bottom of the log)
+        // Normalize the bobbing phase to a positive scale (0.3 to 1.0) for continuous movement
+        const ripplePulse = 0.65 + (this.currentBob / 6) * 0.35;
+        
+        ctx.fillStyle = "rgba(0, 240, 255, 0.75)"; // Brighter cyan water ripple
+        const rippleY = drawY + drawHeight - Math.floor(1 * scaleY);
+        const rippleHeight = Math.max(2, Math.ceil(3 * scaleY));
+        
+        // Left ripple segment
+        const leftRippleWidth = Math.floor(ripplePulse * 30 * scaleX);
+        const leftX = drawX - leftRippleWidth - Math.floor(3 * scaleX);
+        ctx.fillRect(leftX, rippleY, leftRippleWidth, rippleHeight);
+        
+        // Right ripple segment (longer wake trailing behind the log moving left)
+        const rightRippleWidth = Math.floor(ripplePulse * 45 * scaleX);
+        const rightX = drawX + drawWidth + Math.floor(3 * scaleX);
+        ctx.fillRect(rightX, rippleY, rightRippleWidth, rippleHeight);
+
+        // Fainter outer white ripples extending further out
+        ctx.fillStyle = "rgba(255, 255, 255, 0.5)"; // Semi-transparent white
+        const outerRippleHeight = Math.max(1, Math.ceil(2 * scaleY));
+        
+        const outerLeftWidth = Math.floor(ripplePulse * 15 * scaleX);
+        const outerLeftX = leftX - outerLeftWidth - Math.floor(4 * scaleX);
+        ctx.fillRect(outerLeftX, rippleY + Math.floor(1 * scaleY), outerLeftWidth, outerRippleHeight);
+
+        const outerRightWidth = Math.floor(ripplePulse * 22 * scaleX);
+        const outerRightX = rightX + rightRippleWidth + Math.floor(4 * scaleX);
+        ctx.fillRect(outerRightX, rippleY + Math.floor(1 * scaleY), outerRightWidth, outerRippleHeight);
 
         // Render the 8-bit sprite matrix
         const grid = spriteMeta.grid;
@@ -1100,7 +1128,6 @@ function showAuthModal(mode = "login") {
         if (loginEmail) {
             setTimeout(() => {
                 loginEmail.focus();
-                loginEmail.setSelectionRange(0, 0);
             }, 50); // Small timeout to ensure browser paints and layout finishes before focus
         }
     } else {
@@ -1115,7 +1142,6 @@ function showAuthModal(mode = "login") {
         if (regUsername) {
             setTimeout(() => {
                 regUsername.focus();
-                regUsername.setSelectionRange(0, 0);
             }, 50);
         }
     }
@@ -1125,6 +1151,14 @@ function closeAuthModal() {
     authModal.classList.add("hidden");
     loginForm.reset();
     registerForm.reset();
+    
+    // Reset password visibility toggles back to masked state
+    document.querySelectorAll(".password-container input").forEach(input => {
+        input.type = "password";
+    });
+    document.querySelectorAll(".password-toggle-btn").forEach(btn => {
+        btn.textContent = "SHOW";
+    });
     
     // Reset verification pending screen and restore layout
     document.querySelector(".tab-container").classList.remove("hidden");
@@ -1145,6 +1179,24 @@ function closeAuthModal() {
 // Modal tab listeners
 tabLogin.addEventListener("click", () => showAuthModal("login"));
 tabRegister.addEventListener("click", () => showAuthModal("register"));
+
+// Password show/hide toggle functionality
+document.querySelectorAll(".password-toggle-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        sound.playBleep();
+        const container = btn.closest(".password-container");
+        const input = container ? container.querySelector("input") : null;
+        if (input) {
+            if (input.type === "password") {
+                input.type = "text";
+                btn.textContent = "HIDE";
+            } else {
+                input.type = "password";
+                btn.textContent = "SHOW";
+            }
+        }
+    });
+});
 
 authTriggerBtn.addEventListener("click", async () => {
     sound.playBleep();
