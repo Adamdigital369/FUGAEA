@@ -561,7 +561,7 @@ class FloatingItem {
         ctx.textAlign = "center";
         
         // Draw black border around text for readability
-        const label = `@${this.post.username}`;
+        const label = this.post.username;
         const textX = Math.floor(drawX + drawWidth / 2);
         const textY = drawY - (this.hasBranch ? 35 : 18) * scaleY;
         
@@ -968,7 +968,7 @@ function updateAuthStateUI() {
         hudCredits.textContent = user.credits.toLocaleString();
 
         // Auto-fill username in text box
-        postText.value = `@${user.username}`;
+        postText.value = user.username;
 
         // Keep the HUD share button permanently visible for logged-in users
         if (shareXBtn) {
