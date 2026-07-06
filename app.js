@@ -288,10 +288,10 @@ class Wave {
         this.speedFactor = rand() * 0.4 + 0.8;
         this.virtualX = 2000 * this.phase;
 
-        // Randomly assign a gold, cyan, or silver color to the ripples (approx. 15% gold, 6% cyan, 79% silver)
+        // Randomly assign a gold, orange, or silver color to the ripples (approx. 15% gold, 6% orange, 79% silver)
         const colorRand = rand();
         if (colorRand > 0.94) {
-            this.color = "rgba(0, 240, 255, 0.45)";   // Glowing retro cyan/light blue colored line
+            this.color = "rgba(255, 110, 0, 0.5)";   // Glowing retro orange colored line
         } else if (colorRand > 0.79) {
             this.color = "rgba(255, 200, 50, 0.42)";  // Premium retro gold colored line
         } else {
