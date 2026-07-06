@@ -996,7 +996,7 @@ function updateAuthStateUI() {
 
     if (user) {
         if (hudUserContainer) hudUserContainer.classList.remove("hidden");
-        hudUser.textContent = user.username.toUpperCase();
+        hudUser.textContent = user.username;
         hudUser.className = "text-green";
         authTriggerBtn.innerHTML = 'LOGOUT';
         authTriggerBtn.classList.remove("hidden");
