@@ -41,6 +41,13 @@ authChannel.onmessage = (event) => {
     }
 };
 
+const postsChannel = new BroadcastChannel("posts_channel");
+postsChannel.onmessage = (event) => {
+    if (event.data.type === "SYNC_POSTS") {
+        syncDatabasePosts();
+    }
+};
+
 // --- AUTO-PILOT WEB WORKER TIMER (Bypasses background tab sleep throttling) ---
 const workerCode = `
     let timer = null;
@@ -115,6 +122,7 @@ async function triggerAutoRepost() {
         
         // Force list reload
         await syncDatabasePosts();
+        postsChannel.postMessage({ type: "SYNC_POSTS" });
         
         sound.playCoin();
         showDailyBonusToast("AUTO-PILOT: LINK REPOSTED!");
@@ -1395,6 +1403,7 @@ tossForm.addEventListener("submit", async (e) => {
 
         // Force database reload
         await syncDatabasePosts();
+        postsChannel.postMessage({ type: "SYNC_POSTS" });
 
         // If AUTO-REPOST is checked, start the Web Worker background timer
         if (autoRepostToggle && autoRepostToggle.checked) {
