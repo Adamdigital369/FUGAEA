@@ -860,6 +860,8 @@ const tabTos = document.getElementById("tab-tos");
 const tabPrivacy = document.getElementById("tab-privacy");
 const tosTextContent = document.getElementById("tos-text-content");
 const privacyTextContent = document.getElementById("privacy-text-content");
+const closeAccountContainer = document.getElementById("close-account-container");
+const deleteAccountBtn = document.getElementById("delete-account-btn");
 
 let selectedPackageAmount = 0.99;
 let selectedPackageCredits = 100;
@@ -976,6 +978,11 @@ function updateAuthStateUI() {
             shareXBtn.classList.remove("hidden");
         }
         
+        // Show close account button inside Privacy Policy
+        if (closeAccountContainer) {
+            closeAccountContainer.style.display = 'block';
+        }
+        
         // Refresh the social media buttons inside the modal (grey out claimed ones)
         updateShareModalUI();
     } else {
@@ -997,6 +1004,11 @@ function updateAuthStateUI() {
         // Keep the HUD share button visible for guests to prompt registration
         if (shareXBtn) {
             shareXBtn.classList.remove("hidden");
+        }
+
+        // Hide close account button inside Privacy Policy
+        if (closeAccountContainer) {
+            closeAccountContainer.style.display = 'none';
         }
 
         // Clean up Auto-Pilot on logout
@@ -1997,6 +2009,41 @@ if (legalClose) {
     legalClose.addEventListener("click", () => {
         sound.playBleep();
         closeLegalModal();
+    });
+}
+
+if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener("click", async () => {
+        sound.playBleep();
+        const user = auth.getCurrentUser();
+        if (!user) return;
+
+        const confirmationText = `CONFIRM ACCOUNT CLOSURE:\n\nARE YOU SURE YOU WANT TO CLOSE YOUR ACCOUNT?\n\nTHIS WILL DEACTIVATE YOUR SESSION AND PERMANENTLY QUEUE DELETION FOR:\n- USERNAME: ${user.username.toUpperCase()}\n- EMAIL: ${user.email.toUpperCase()}\n\nIF DBL-CONFIRMED, WE WILL ATTEMPT TO AUTO-DELETE YOUR DATABASE PROFILE DATA AND LOG YOU OUT IMMEDIATELY.`;
+        if (confirm(confirmationText)) {
+            try {
+                // Try to delete profile row (triggers cascade deletion of user posts in DB)
+                const { error: deleteError } = await supabase.from('profiles').delete().eq('id', user.id);
+                if (deleteError) {
+                    console.warn("Client-side direct profile deletion blocked by RLS:", deleteError);
+                    
+                    // Generate mailto link for support email fallback if RLS or Auth API blocks it
+                    const subject = encodeURIComponent(`Close Account Request - ${user.username}`);
+                    const body = encodeURIComponent(`Hello Support,\n\nPlease close my account and permanently delete all associated data for my username '${user.username}' and email '${user.email}'.\n\nThank you.`);
+                    const mailtoUrl = `mailto:support@fugaea.com?subject=${subject}&body=${body}`;
+                    
+                    alert(`NOTICE:\n\nBECAUSE OF DATABASE SECURITY POLICIES, YOUR ACCOUNT CLOSURE MUST BE CONFIRMED BY SUPPORT.\n\nAN EMAIL CLIENT WILL NOW OPEN TO SEND A DELETION REQUEST FROM '${user.email.toUpperCase()}' TO support@fugaea.com.\n\nIF NOTHING HAPPENS, PLEASE EMAIL support@fugaea.com MANUALLY WITH THE SUBJECT 'CLOSE ACCOUNT' FROM YOUR REGISTERED EMAIL ADDRESS.`);
+                    window.location.href = mailtoUrl;
+                } else {
+                    // Success!
+                    await auth.signOut();
+                    alert("SUCCESS:\n\nYOUR PROFILE DATA HAS BEEN REMOVED. LOGGING OUT...");
+                    window.location.reload();
+                }
+            } catch (err) {
+                console.error("Account deletion failed:", err);
+                alert("ERROR: COULD NOT INITIATE ACCOUNT DELETION. PLEASE TRY AGAIN OR EMAIL support@fugaea.com.");
+            }
+        }
     });
 }
 
