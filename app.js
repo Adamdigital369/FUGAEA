@@ -287,6 +287,14 @@ class Wave {
         this.length = rand() * 60 + 30;
         this.speedFactor = rand() * 0.4 + 0.8;
         this.virtualX = 2000 * this.phase;
+
+        // Randomly assign a gold or silver color to the ripples (approx. 20% gold waves)
+        const colorRand = rand();
+        if (colorRand > 0.8) {
+            this.color = "rgba(255, 200, 50, 0.42)"; // Premium retro gold colored line
+        } else {
+            this.color = "rgba(255, 255, 255, 0.28)"; // Shiny silver/white ripples
+        }
     }
 
     update(t) {
@@ -309,7 +317,7 @@ class Wave {
         const actualX = (this.virtualX / 2000) * canvas.width;
         const actualLength = (this.length / 2000) * canvas.width;
 
-        ctx.fillStyle = "rgba(255, 255, 255, 0.28)"; // Shiny silver/white ripples
+        ctx.fillStyle = this.color;
         ctx.fillRect(Math.floor(actualX), Math.floor(actualY), Math.ceil(actualLength), 4);
     }
 }
