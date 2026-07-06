@@ -938,6 +938,23 @@ async function trackPresence() {
             if (hudOnlineUsers) {
                 hudOnlineUsers.textContent = count.toLocaleString();
             }
+            
+            // System warning for high traffic (100+ concurrent viewers)
+            if (count > 100) {
+                const user = auth.getCurrentUser();
+                const isAdmin = user && (user.username.toLowerCase() === 'fugaea' || user.email.toLowerCase() === 'support@fugaea.com');
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                
+                if (isAdmin || isLocal) {
+                    if (!window.hasShownUpgradeWarning) {
+                        showDailyBonusToast("WARNING: 100+ VIEWERS ONLINE. PLEASE UPGRADE TO SUPABASE PRO TIER TO INCREASE WEBSOCKET LIMIT.");
+                        window.hasShownUpgradeWarning = true;
+                    }
+                }
+            } else {
+                // Reset flag when count drops below 100 so it can trigger again on next spike
+                window.hasShownUpgradeWarning = false;
+            }
         });
 
     presenceChannel.subscribe(async (status) => {
@@ -1702,8 +1719,8 @@ async function initApp() {
         })
         .subscribe();
 
-    // Fallback sync every 60 seconds just in case of connection fluctuations
-    setInterval(syncDatabasePosts, 60000);
+    // Fallback sync every 20 seconds just in case of connection fluctuations
+    setInterval(syncDatabasePosts, 20000);
 }
 
 // --- CHECKOUT / MICROTRANSACTION SYSTEM ---
