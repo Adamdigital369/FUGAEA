@@ -1612,7 +1612,6 @@ buyCreditsTrigger.addEventListener("click", () => {
     if (user) {
         showCheckoutModal();
     } else {
-        alert("PLEASE LOGIN OR REGISTER TO BUY CREDITS!");
         showAuthModal("login");
     }
 });
@@ -1719,7 +1718,7 @@ if (shareXBtn) {
         if (user) {
             if (shareModal) shareModal.classList.remove("hidden");
         } else {
-            showAuthModal("register");
+            showAuthModal("login");
         }
     });
 }
