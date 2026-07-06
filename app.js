@@ -288,9 +288,11 @@ class Wave {
         this.speedFactor = rand() * 0.4 + 0.8;
         this.virtualX = 2000 * this.phase;
 
-        // Randomly assign a gold or silver color to the ripples (approx. 20% gold waves)
+        // Randomly assign a gold, purple, or silver color to the ripples (approx. 20% gold, 8% purple, 72% silver)
         const colorRand = rand();
-        if (colorRand > 0.8) {
+        if (colorRand > 0.92) {
+            this.color = "rgba(180, 70, 255, 0.45)"; // Royal retro purple colored line
+        } else if (colorRand > 0.72) {
             this.color = "rgba(255, 200, 50, 0.42)"; // Premium retro gold colored line
         } else {
             this.color = "rgba(255, 255, 255, 0.28)"; // Shiny silver/white ripples
