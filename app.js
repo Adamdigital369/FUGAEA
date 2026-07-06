@@ -482,7 +482,7 @@ class FloatingItem {
             ctx.lineWidth = 3;
             
             // Expand selection boundary to cover username, branch, and log with a buffer
-            const topOffset = (this.hasBranch ? 49 : 32) * scaleY;
+            const topOffset = (this.hasBranch ? 57 : 40) * scaleY;
             const bottomOffset = 8 * scaleY;
             const sideOffset = 15 * scaleX;
             
@@ -557,13 +557,13 @@ class FloatingItem {
 
         // Draw username text tag above the item (push higher if log has branches to avoid overlap)
         ctx.fillStyle = this.isHovered ? "#ffcc00" : "#ffffff";
-        ctx.font = `${Math.max(12, Math.floor(18 * scaleX))}px VT323`;
+        ctx.font = `${Math.max(16, Math.floor(24 * scaleX))}px VT323`;
         ctx.textAlign = "center";
         
         // Draw black border around text for readability
         const label = `@${this.post.username}`;
         const textX = Math.floor(drawX + drawWidth / 2);
-        const textY = drawY - (this.hasBranch ? 25 : 8) * scaleY;
+        const textY = drawY - (this.hasBranch ? 32 : 15) * scaleY;
         
         ctx.fillStyle = "#000000";
         ctx.fillText(label, textX - 2, textY - 2);
@@ -584,7 +584,7 @@ class FloatingItem {
         const drawWidth = this.virtualWidth * scaleX;
         const drawHeight = this.virtualHeight * scaleY;
 
-        const topOffset = (this.hasBranch ? 49 : 32) * scaleY;
+        const topOffset = (this.hasBranch ? 57 : 40) * scaleY;
         const bottomOffset = 8 * scaleY;
         const sideOffset = 15 * scaleX;
         
