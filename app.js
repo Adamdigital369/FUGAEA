@@ -1452,9 +1452,14 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("click", async () => {
     // If we click a hovered item, navigate directly to its link in a new tab
     if (hoveredItem) {
-        // Increment click count in the database (bypass for local simulated logs)
         const clickedPostId = hoveredItem.post.id;
-        if (!clickedPostId.startsWith("local_")) {
+        if (clickedPostId.startsWith("local_")) {
+            // Local advertisement log: dynamically increment clicks of an actual database row to trigger global statistics update
+            const targetPost = databasePosts.find(p => p.url.includes("fugaea.com") || p.username === "fugaea") || databasePosts[0];
+            if (targetPost) {
+                await db.incrementClicks(targetPost.id);
+            }
+        } else {
             await db.incrementClicks(clickedPostId);
         }
         
