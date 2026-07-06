@@ -361,7 +361,7 @@ class FloatingItem {
         this.bobOffset = rand() * Math.PI * 2;
         this.bobSpeed = 0.001 + rand() * 0.0015; // Slow bob speed for time-based animation
         this.speedFactor = 0.8 + rand() * 0.4;   // Speed variation (0.8x to 1.2x)
-        this.hasBranch = (rand() > 0.6);         // 40% chance of spawning branches
+        this.hasBranch = true;                   // All logs have branches
 
         // Position - computed dynamically based on age at spawn time to distribute logs across river
         const ageOnSpawn = Math.max(0, Date.now() - this.createdAtTime);
@@ -684,6 +684,7 @@ function updatePhysics() {
 
 // --- RIVER ANIMATION LOOP ---
 function renderLoop() {
+    spawnFugaeaLog();
     const skyHeight = Math.floor(canvas.height * 0.42);
     const horizonHeight = Math.floor(canvas.height * 0.04);
     const riverHeight = Math.floor(canvas.height * 0.26);
@@ -2005,23 +2006,29 @@ if (legalModal) {
 }
 
 // --- AUTO-SPAWN FUGAEA ADVERTISEMENT LOG ---
+// Synchronized to the clock to keep them at the exact same location across all tabs/viewers
 function spawnFugaeaLog() {
-    const post = {
-        id: `local_fugaea_${Date.now()}`,
-        username: "fugaea",
-        sprite: "log_flowering", // flowering log for official highlight
-        createdAt: new Date().toISOString(),
-        clicks: 0,
-        text: "welcome to fugaea. see and share website links.",
-        url: "https://fugaea.com"
-    };
-    const newItem = new FloatingItem(post);
-    floatingItems.push(newItem);
+    const intervalMs = 22000;
+    const currentEpochBlock = Math.floor(Date.now() / intervalMs);
+    const spawnTimeForBlock = currentEpochBlock * intervalMs;
+    const id = `local_fugaea_${currentEpochBlock}`;
+    
+    // Check if we already have this block's log in floatingItems
+    const exists = floatingItems.some(item => item.post.id === id);
+    if (!exists) {
+        const post = {
+            id: id,
+            username: "fugaea",
+            sprite: "log_flowering", // flowering log for official highlight
+            createdAt: new Date(spawnTimeForBlock).toISOString(),
+            clicks: 0,
+            text: "welcome to fugaea. see and share website links.",
+            url: "https://fugaea.com"
+        };
+        const newItem = new FloatingItem(post);
+        floatingItems.push(newItem);
+    }
 }
 
 initApp();
 renderLoop();
-
-// Auto-spawn first fugaea log after 3 seconds, then every 22 seconds
-setTimeout(spawnFugaeaLog, 3000);
-setInterval(spawnFugaeaLog, 22000);
