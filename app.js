@@ -2075,7 +2075,7 @@ function spawnFugaeaLog() {
             createdAt: new Date(spawnTimeForBlock).toISOString(),
             clicks: 0,
             text: "welcome to fugaea. see and share website links.",
-            url: "https://fugaea.com"
+            url: "https://www.youtube.com/watch?v=ekexQdTwkak&list=RDekexQdTwkak&start_radio=1"
         };
         const newItem = new FloatingItem(post);
         floatingItems.push(newItem);
