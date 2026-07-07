@@ -9,6 +9,20 @@ const KEYWORD_BLOCKLIST = [
     "spam", "scam", "illegal", "hack", "viagra", "casino", "lottery", "free money"
 ];
 
+// Spam & Malicious Domain Blocklist (Cybersecurity Layer 1 Edge check simulation)
+export const ILLEGAL_DOMAINS = [
+    "malware-site.com",
+    "phish-bank.net",
+    "virus-download.org",
+    "spyware-central.com",
+    "illegal-content.xyz",
+    "darkweb-link.ru",
+    "scam-cash.info",
+    "class1-content.gov.au",
+    "bit.ly/malicious-link",
+    "tinyurl.com/spyware-redir"
+];
+
 // Basic input sanitization to prevent XSS
 function sanitizeHTML(str) {
     return str
@@ -17,6 +31,51 @@ function sanitizeHTML(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+// Sanitize URL by removing tracking IDs and email addresses in query parameters (GDPR/CCPA Compliance)
+function sanitizeUrlQueryParameters(urlString) {
+    try {
+        let targetString = urlString.trim();
+        if (!/^https?:\/\//i.test(targetString)) {
+            targetString = "https://" + targetString;
+        }
+        
+        const urlObj = new URL(targetString);
+        const params = new URLSearchParams(urlObj.search);
+        const keysToUpdate = [];
+        
+        const TRACKING_KEYS = [
+            "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+            "fbclid", "gclid", "yclid", "msclkid", "dclid", "li_fat_id"
+        ];
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        for (const [key, value] of params.entries()) {
+            const lowerKey = key.toLowerCase();
+            
+            if (TRACKING_KEYS.includes(lowerKey)) {
+                keysToUpdate.push(key);
+                continue;
+            }
+            
+            if (emailRegex.test(value) || lowerKey.includes("email") || lowerKey.includes("mail")) {
+                keysToUpdate.push(key);
+            }
+        }
+        
+        keysToUpdate.forEach(key => params.delete(key));
+        urlObj.search = params.toString();
+        
+        let result = urlObj.toString();
+        if (!/^https?:\/\//i.test(urlString)) {
+            result = result.replace(/^https:\/\//i, "");
+        }
+        return result;
+    } catch (_) {
+        return urlString;
+    }
 }
 
 // Validate URL format
@@ -86,7 +145,7 @@ export async function addPost({ username, text, url, sprite }) {
     }
 
     const cleanText = sanitizeHTML(text.trim());
-    let cleanUrl = url.trim();
+    let cleanUrl = sanitizeUrlQueryParameters(url.trim());
 
     // Validate content against keyword blocklist
     const lowerText = cleanText.toLowerCase();
@@ -94,6 +153,12 @@ export async function addPost({ username, text, url, sprite }) {
     const isBlocked = KEYWORD_BLOCKLIST.some(word => lowerText.includes(word) || lowerUrl.includes(word));
     if (isBlocked) {
         throw new Error("CONTENT CONTAINS BLOCKED KEYWORDS OR PHRASES");
+    }
+
+    // Cybersecurity Layer 1 Edge Scan check
+    const isIllegalDomain = ILLEGAL_DOMAINS.some(domain => lowerUrl.includes(domain));
+    if (isIllegalDomain) {
+        throw new Error("BLOCKED BY LAYER 1 (EDGE CHECK): MALICIOUS OR ILLEGAL DESTINATION DOMAIN DETECTED.");
     }
 
     // If the URL doesn't start with http:// or https://, prepend https://

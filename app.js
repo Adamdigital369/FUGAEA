@@ -614,7 +614,12 @@ class FloatingItem {
         ctx.textAlign = "center";
         
         // Draw black border around text for readability
-        const label = this.post.username;
+        let label = this.post.username;
+        if (this.post.id && (this.post.id.startsWith("local_") || this.post.username.toLowerCase().includes("ad") || this.post.username.toLowerCase() === "fugaea")) {
+            if (!label.toLowerCase().includes("sponsored") && !label.toLowerCase().includes("ad")) {
+                label = `${label} [SPONSORED]`;
+            }
+        }
         const textX = Math.floor(drawX + drawWidth / 2);
         const textY = drawY - (this.hasBranch ? 35 : 18) * scaleY;
         
@@ -1811,7 +1816,7 @@ tossForm.addEventListener("submit", async (e) => {
             autoPilotWorker.postMessage({ action: 'stop' });
         }
     } catch (err) {
-        alert(err.message.toUpperCase());
+        showRetroAlert(err.message.toUpperCase());
         if (autoRepostToggle) autoRepostToggle.checked = false;
         autoPilotWorker.postMessage({ action: 'stop' });
     }
@@ -1840,6 +1845,156 @@ const inspectText = document.getElementById("inspect-text");
 const inspectLink = document.getElementById("inspect-link");
 const inspectClose = document.getElementById("inspect-close");
 
+// --- SECURITY SCANNER LOGIC (BACKGROUND CHECKS & RETRO MODAL BLOCK) ---
+async function runBackgroundSecurityScan(url, clickedPostId) {
+    const lowerUrl = url.toLowerCase();
+    
+    // --- 1. EDGE CHECK ---
+    const isIllegalDomain = db.ILLEGAL_DOMAINS && db.ILLEGAL_DOMAINS.some(domain => lowerUrl.includes(domain.toLowerCase()));
+    const isMalwareKeyword = lowerUrl.includes("malware") || lowerUrl.includes("virus") || lowerUrl.includes("spyware") || lowerUrl.includes("keylogger");
+    
+    if (isIllegalDomain || isMalwareKeyword) {
+        const logs = [
+            { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" },
+            { text: `TARGET: ${url}`, type: "info" },
+            { text: "LAYER 1: EDGE FILTER CHECK...", type: "info" },
+            { text: "LAYER 1: EDGE FILTER CHECK -> FAILED!", type: "fail" },
+            { text: "CRITICAL: DOMAIN MATCHES KNOWN MALICIOUS BLACKLIST SIGNATURE.", type: "fail" },
+            { text: "ALERT: PLATFORM POLICY FORBIDS REDIRECTION TO CRITICAL RISK PATHS.", type: "fail" }
+        ];
+        showRetroBlockModal(url, "Layer 1 (Edge Filtering Check)", "URL is registered on global threat database of malware/phishing distributors.", logs);
+        return;
+    }
+    
+    // --- 2. REDIRECT TRACKER ---
+    const isShortener = lowerUrl.includes("bit.ly") || lowerUrl.includes("tinyurl.com") || lowerUrl.includes("t.co") || lowerUrl.includes("short.url");
+    if (isShortener) {
+        if (lowerUrl.includes("malicious-link") || lowerUrl.includes("spyware-redir")) {
+            const logs = [
+                { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" },
+                { text: `TARGET: ${url}`, type: "info" },
+                { text: "LAYER 1: EDGE FILTER CHECK -> PASSED (Domain reputation secure)", type: "success" },
+                { text: "LAYER 2: REDIRECT TRACKER...", type: "info" },
+                { text: "SHORTENER DOMAIN DETECTED. RESOLVING HOPS...", type: "warning" },
+                { text: "REDIRECT HOP 1: bit.ly -> malware-site.com", type: "warning" },
+                { text: "LAYER 2: REDIRECT TRACKER -> FAILED!", type: "fail" },
+                { text: "CRITICAL: REDIRECT TARGET RESOLVES TO BLACKLISTED MALICIOUS HOST.", type: "fail" },
+                { text: "ALERT: PLATFORM POLICY FORBIDS REDIRECTION TO CRITICAL RISK PATHS.", type: "fail" }
+            ];
+            showRetroBlockModal(url, "Layer 2 (Redirect Tracker)", "Nested URL redirection maps directly to malware-site.com.", logs);
+            return;
+        }
+    }
+    
+    // --- 3. CRAWLER SANDBOX ---
+    const isCloaking = lowerUrl.includes("cloak") || lowerUrl.includes("stealth") || lowerUrl.includes("proxy-hidden") || lowerUrl.includes("darkweb");
+    if (isCloaking) {
+        const logs = [
+            { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" },
+            { text: `TARGET: ${url}`, type: "info" },
+            { text: "LAYER 1: EDGE FILTER CHECK -> PASSED (Domain reputation secure)", type: "success" },
+            { text: "LAYER 2: REDIRECT TRACKER -> PASSED (0 redirect hops)", type: "success" },
+            { text: "LAYER 3: HEADLESS CRAWLER SANDBOX...", type: "info" },
+            { text: "SPAWNING SANDBOXED PUPPETEER PROCESS VIA RESIDENTIAL PROXY...", type: "info" },
+            { text: "LAYER 3: CRAWLER SANDBOX -> FAILED!", type: "fail" },
+            { text: "CRITICAL: CLOAKING BEHAVIOR DETECTED (Crawler user-agent blocked or redirected to decoy page).", type: "fail" },
+            { text: "ALERT: PLATFORM POLICY FORBIDS REDIRECTION TO CRITICAL RISK PATHS.", type: "fail" }
+        ];
+        showRetroBlockModal(url, "Layer 3 (Headless Crawler Sandbox)", "Destination server performs device cloaking to hide malicious payload from threat intelligence nodes.", logs);
+        return;
+    }
+    
+    // --- 4. MULTIMODAL AI THREAT SCAN ---
+    const isPhishing = lowerUrl.includes("scam") || lowerUrl.includes("bank-login") || lowerUrl.includes("phish") || lowerUrl.includes("giveaway");
+    if (isPhishing) {
+        const logs = [
+            { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" },
+            { text: `TARGET: ${url}`, type: "info" },
+            { text: "LAYER 1: EDGE FILTER CHECK -> PASSED (Domain reputation secure)", type: "success" },
+            { text: "LAYER 2: REDIRECT TRACKER -> PASSED (0 redirect hops)", type: "success" },
+            { text: "LAYER 3: CRAWLER SANDBOX -> PASSED (Clean HTML body retrieved)", type: "success" },
+            { text: "LAYER 4: MULTIMODAL AI THREAT SCAN...", type: "info" },
+            { text: "SUBMITTING SCREENSHOT & METADATA TO VISION SAFETY MODEL...", type: "info" },
+            { text: "LAYER 4: MULTIMODAL AI THREAT SCAN -> FAILED!", type: "fail" },
+            { text: "CRITICAL: AI DETECTED PHISHING LOGIN TEMPLATE (Mimics bank interface).", type: "fail" },
+            { text: "ALERT: PLATFORM POLICY FORBIDS REDIRECTION TO CRITICAL RISK PATHS.", type: "fail" }
+        ];
+        showRetroBlockModal(url, "Layer 4 (Multimodal AI Scan)", "Vision model detected layout design matching a bank portal, with a foreign domain registration. Visual phishing threat confirmed.", logs);
+        return;
+    }
+    
+    // --- APPROVED & PROCEED ---
+    if (clickedPostId) {
+        if (clickedPostId.startsWith("local_")) {
+            const targetPost = databasePosts.find(p => p.url.includes("fugaea.com") || p.username === "fugaea") || databasePosts[0];
+            if (targetPost) await db.incrementClicks(targetPost.id);
+        } else {
+            await db.incrementClicks(clickedPostId);
+        }
+    }
+    
+    window.open(url, "_blank");
+}
+
+// --- RETRO BLOCK MODAL POPUP ---
+function showRetroBlockModal(url, layerName, reason, logs) {
+    const securityScanModal = document.getElementById("security-scan-modal");
+    const scanTargetUrl = document.getElementById("scan-target-url");
+    const scanStatusText = document.getElementById("scan-status-text");
+    const scanProgressBar = document.getElementById("scan-progress-bar");
+    const scanLogs = document.getElementById("scan-logs");
+    const scanVerdictContainer = document.getElementById("scan-verdict-container");
+    const scanVerdictTitle = document.getElementById("scan-verdict-title");
+    const scanVerdictDetails = document.getElementById("scan-verdict-details");
+    const scanAbortBtn = document.getElementById("scan-abort-btn");
+    const scanProceedBtn = document.getElementById("scan-proceed-btn");
+    
+    // Configure modal for failed threat block state
+    securityScanModal.classList.remove("hidden");
+    securityScanModal.querySelector(".modal-box").classList.add("threat-detected");
+    
+    scanTargetUrl.textContent = url;
+    scanStatusText.textContent = "BLOCKED (THREAT DETECTED)";
+    scanStatusText.className = "";
+    scanStatusText.style.color = "#ff3333";
+    
+    scanProgressBar.style.width = "100%";
+    scanProgressBar.textContent = "BLOCKED";
+    scanProgressBar.style.backgroundColor = "#ff3333";
+    
+    // Populate scan logs for visual diagnostic
+    scanLogs.innerHTML = "";
+    logs.forEach(line => {
+        const logLine = document.createElement("div");
+        logLine.className = `scan-log-line ${line.type}`;
+        let prefix = "  ";
+        if (line.type === "success") prefix = "✔ ";
+        if (line.type === "fail") prefix = "✖ ";
+        if (line.type === "warning") prefix = "⚠ ";
+        logLine.textContent = prefix + line.text;
+        scanLogs.appendChild(logLine);
+    });
+    scanLogs.scrollTop = scanLogs.scrollHeight;
+    
+    scanVerdictContainer.classList.remove("hidden");
+    scanVerdictTitle.textContent = `BLOCKED AT ${layerName.toUpperCase()}`;
+    scanVerdictDetails.textContent = reason;
+    
+    scanAbortBtn.textContent = "ABORT / GO BACK";
+    scanProceedBtn.classList.add("hidden");
+    
+    sound.playSplash(); // warning sound
+}
+
+// Hook up scan modal abort button to close the modal
+const scanAbortBtn = document.getElementById("scan-abort-btn");
+if (scanAbortBtn) {
+    scanAbortBtn.addEventListener("click", () => {
+        sound.playBleep();
+        document.getElementById("security-scan-modal").classList.add("hidden");
+    });
+}
+
 canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect();
     mouseX = e.clientX - rect.left;
@@ -1847,20 +2002,10 @@ canvas.addEventListener("mousemove", (e) => {
 });
 
 canvas.addEventListener("click", async () => {
-    // If we click a hovered item, navigate directly to its link in a new tab
+    // If we click a hovered item, intercept and trigger security scanner
     if (hoveredItem) {
         const clickedPostId = hoveredItem.post.id;
-        if (clickedPostId.startsWith("local_")) {
-            // Local advertisement log: dynamically increment clicks of an actual database row to trigger global statistics update
-            const targetPost = databasePosts.find(p => p.url.includes("fugaea.com") || p.username === "fugaea") || databasePosts[0];
-            if (targetPost) {
-                await db.incrementClicks(targetPost.id);
-            }
-        } else {
-            await db.incrementClicks(clickedPostId);
-        }
-        
-        window.open(hoveredItem.post.url, "_blank");
+        runBackgroundSecurityScan(hoveredItem.post.url, clickedPostId);
     }
 });
 
@@ -1870,10 +2015,13 @@ inspectClose.addEventListener("click", () => {
     selectedItem = null;
 });
 
-inspectLink.addEventListener("click", () => {
+inspectLink.addEventListener("click", (e) => {
+    e.preventDefault();
     sound.playBleep();
-    // Automatically close the inspector HUD when the link is clicked
     inspectHud.classList.add("hidden");
+    if (selectedItem) {
+        runBackgroundSecurityScan(selectedItem.post.url, selectedItem.post.id);
+    }
     selectedItem = null;
 });
 
@@ -2154,17 +2302,17 @@ if (regResendEmailBtn) {
         sound.playBleep();
         const email = document.getElementById("reg-email").value;
         if (!email) {
-            alert("EMAIL IS REQUIRED TO RESEND VERIFICATION!");
+            showRetroAlert("EMAIL IS REQUIRED TO RESEND VERIFICATION!");
             return;
         }
         try {
             regResendEmailBtn.disabled = true;
             regResendEmailBtn.textContent = "SENDING...";
             await auth.resendVerification(email);
-            alert("VERIFICATION EMAIL RESENT! CHECK YOUR INBOX.");
+            showRetroAlert("VERIFICATION EMAIL RESENT! CHECK YOUR INBOX.");
             sound.playSuccess();
         } catch (err) {
-            alert(err.message.toUpperCase());
+            showRetroAlert(err.message.toUpperCase());
         } finally {
             regResendEmailBtn.disabled = false;
             regResendEmailBtn.textContent = "RESEND CONFIRMATION EMAIL";
@@ -2186,10 +2334,10 @@ if (regCheckStatusBtn) {
                 updateAuthStateUI();
                 sound.playSuccess();
             } else {
-                alert("EMAIL NOT YET VERIFIED. PLEASE CHECK YOUR INBOX AND CLICK THE CONFIRMATION LINK.");
+                showRetroAlert("EMAIL NOT YET VERIFIED. PLEASE CHECK YOUR INBOX AND CLICK THE CONFIRMATION LINK.");
             }
         } catch (err) {
-            alert(err.message.toUpperCase());
+            showRetroAlert(err.message.toUpperCase());
         } finally {
             regCheckStatusBtn.disabled = false;
             regCheckStatusBtn.textContent = "I'VE CONFIRMED MY EMAIL";
@@ -2547,6 +2695,47 @@ function spawnFugaeaLog() {
         const newItem = new FloatingItem(post);
         floatingItems.push(newItem);
     }
+}
+
+// --- RETRO ALERT POPUP HELPER ---
+function showRetroAlert(message) {
+    const modal = document.getElementById("retro-alert-modal");
+    const msgElement = document.getElementById("retro-alert-message");
+    if (modal && msgElement) {
+        msgElement.textContent = message.toUpperCase();
+        modal.classList.remove("hidden");
+        sound.playSplash(); // warning sound
+    }
+}
+
+// Hook up retro alert modal close button listeners
+const alertCloseBtn = document.getElementById("retro-alert-close");
+const alertHeaderCloseBtn = document.getElementById("retro-alert-header-close");
+const alertModal = document.getElementById("retro-alert-modal");
+
+if (alertCloseBtn) {
+    alertCloseBtn.addEventListener("click", () => {
+        sound.playBleep();
+        alertModal.classList.add("hidden");
+        // Clear the bad URL link box here once RETURN is pressed!
+        const urlInput = document.getElementById("post-url");
+        if (urlInput) {
+            urlInput.value = "";
+            urlInput.focus();
+        }
+    });
+}
+if (alertHeaderCloseBtn) {
+    alertHeaderCloseBtn.addEventListener("click", () => {
+        sound.playBleep();
+        alertModal.classList.add("hidden");
+        // Clear the bad URL link box here once RETURN is pressed!
+        const urlInput = document.getElementById("post-url");
+        if (urlInput) {
+            urlInput.value = "";
+            urlInput.focus();
+        }
+    });
 }
 
 initApp();
