@@ -12,6 +12,9 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // Listen to auth state changes to keep currentUser in sync in real-time
 supabase.auth.onAuthStateChange((event, session) => {
     console.log("[Auth] onAuthStateChange triggered. Event:", event, "Session:", session);
+    if (event === 'PASSWORD_RECOVERY') {
+        window.dispatchEvent(new CustomEvent('password-recovery-triggered', { detail: { session } }));
+    }
     if (session && session.user) {
         // Set temporary user metadata instantly so the UI can update immediately
         currentUser = {
@@ -323,4 +326,49 @@ export async function logShareClaim(userId, platform) {
     await refreshUserProfile();
     return true;
 }
+
+/**
+ * Request password reset email
+ * @param {string} email 
+ * @param {string} captchaToken
+ * @returns {Promise<void>}
+ */
+export async function sendPasswordResetEmail(email, captchaToken = "") {
+    if (!email) {
+        throw new Error("EMAIL IS REQUIRED");
+    }
+
+    const options = {
+        redirectTo: window.location.origin
+    };
+    if (captchaToken) {
+        options.captchaToken = captchaToken;
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), options);
+
+    if (error) {
+        throw error;
+    }
+}
+
+/**
+ * Update current user's password (e.g. during recovery)
+ * @param {string} newPassword 
+ * @returns {Promise<void>}
+ */
+export async function updatePassword(newPassword) {
+    if (!newPassword) {
+        throw new Error("NEW PASSWORD IS REQUIRED");
+    }
+
+    const { error } = await supabase.auth.updateUser({
+        password: newPassword
+    });
+
+    if (error) {
+        throw new Error(error.message.toUpperCase());
+    }
+}
+
 

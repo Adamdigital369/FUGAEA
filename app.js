@@ -866,6 +866,10 @@ const modalTitle = document.getElementById("modal-title");
 const tabLogin = document.getElementById("tab-login");
 const tabRegister = document.getElementById("tab-register");
 const loginForm = document.getElementById("login-form");
+const forgotPasswordForm = document.getElementById("forgot-password-form");
+const resetPasswordForm = document.getElementById("reset-password-form");
+const forgotPasswordBtn = document.getElementById("forgot-password-btn");
+const forgotBackBtn = document.getElementById("forgot-back-btn");
 const registerForm = document.getElementById("register-form");
 const authError = document.getElementById("auth-error");
 const authSuccess = document.getElementById("auth-success");
@@ -1081,6 +1085,7 @@ window.addEventListener('auth-state-changed', updateAuthStateUI);
 
 let loginWidgetId = null;
 let regWidgetId = null;
+let forgotWidgetId = null;
 
 function renderCaptchas() {
     if (typeof turnstile !== "undefined") {
@@ -1109,6 +1114,18 @@ function renderCaptchas() {
                 console.error("Failed to render register captcha:", err);
             }
         }
+
+        const forgotCaptchaEl = document.getElementById("forgot-captcha");
+        if (forgotCaptchaEl && forgotCaptchaEl.children.length === 0) {
+            try {
+                forgotWidgetId = turnstile.render(forgotCaptchaEl, {
+                    sitekey: siteKey,
+                    theme: "dark"
+                });
+            } catch (err) {
+                console.error("Failed to render forgot captcha:", err);
+            }
+        }
     }
 }
 
@@ -1121,12 +1138,21 @@ function showAuthModal(mode = "login") {
     authModal.classList.remove("hidden");
     authError.classList.add("hidden");
     authSuccess.classList.add("hidden");
+    
+    // Hide forgot and reset forms and restore standard layout
+    if (forgotPasswordForm) forgotPasswordForm.classList.add("hidden");
+    if (resetPasswordForm) resetPasswordForm.classList.add("hidden");
+    const tabContainer = document.querySelector(".tab-container");
+    if (tabContainer) tabContainer.classList.remove("hidden");
+
     if (typeof turnstile !== "undefined") {
         try {
             const loginCaptcha = document.getElementById("login-captcha");
             const regCaptcha = document.getElementById("register-captcha");
+            const forgotCaptcha = document.getElementById("forgot-captcha");
             if (loginCaptcha && loginCaptcha.children.length > 0) turnstile.reset(loginCaptcha);
             if (regCaptcha && regCaptcha.children.length > 0) turnstile.reset(regCaptcha);
+            if (forgotCaptcha && forgotCaptcha.children.length > 0) turnstile.reset(forgotCaptcha);
         } catch (err) {
             console.error("Failed to reset turnstile:", err);
         }
@@ -1165,8 +1191,31 @@ function showAuthModal(mode = "login") {
 
 function closeAuthModal() {
     authModal.classList.add("hidden");
+    
+    // If the user closes the modal while resetting their password (without completing it),
+    // sign them out so they return to the logged-out guest state.
+    if (resetPasswordForm && !resetPasswordForm.classList.contains("hidden")) {
+        auth.signOut().catch(err => {
+            console.error("Failed to sign out on reset cancel:", err);
+        });
+    }
+
     loginForm.reset();
     registerForm.reset();
+    if (forgotPasswordForm) {
+        forgotPasswordForm.reset();
+        forgotPasswordForm.classList.add("hidden");
+        const forgotEmailInput = document.getElementById("forgot-email");
+        if (forgotEmailInput) {
+            forgotEmailInput.disabled = false;
+            forgotEmailInput.style.opacity = "";
+            forgotEmailInput.style.cursor = "";
+        }
+    }
+    if (resetPasswordForm) {
+        resetPasswordForm.reset();
+        resetPasswordForm.classList.add("hidden");
+    }
     
     // Reset password visibility toggles back to masked state
     document.querySelectorAll(".password-container input").forEach(input => {
@@ -1187,8 +1236,10 @@ function closeAuthModal() {
     if (typeof turnstile !== "undefined") {
         const loginCaptcha = document.getElementById("login-captcha");
         const regCaptcha = document.getElementById("register-captcha");
+        const forgotCaptcha = document.getElementById("forgot-captcha");
         if (loginCaptcha) turnstile.reset(loginCaptcha);
         if (regCaptcha) turnstile.reset(regCaptcha);
+        if (forgotCaptcha) turnstile.reset(forgotCaptcha);
     }
 
     // Focus and select the link input box if the user is logged in
@@ -1257,6 +1308,249 @@ if (authModal) {
         }
     });
 }
+
+// Forgot & Reset Password Handlers
+if (forgotPasswordBtn) {
+    forgotPasswordBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        sound.playBleep();
+        
+        // Hide standard login UI
+        const tabContainer = document.querySelector(".tab-container");
+        if (tabContainer) tabContainer.classList.add("hidden");
+        loginForm.classList.add("hidden");
+        authError.classList.add("hidden");
+        authSuccess.classList.add("hidden");
+        modalTitle.textContent = "RESET PASSWORD";
+        
+        // Pre-fill email address if the user typed it in the login field
+        const loginEmailVal = document.getElementById("login-email").value;
+        const forgotEmailInput = document.getElementById("forgot-email");
+        if (forgotEmailInput) {
+            forgotEmailInput.value = loginEmailVal;
+        }
+        
+        // Show forgot password form
+        if (forgotPasswordForm) {
+            forgotPasswordForm.classList.remove("hidden");
+            const forgotEmailInput = document.getElementById("forgot-email");
+            if (forgotEmailInput) {
+                forgotEmailInput.disabled = false;
+                forgotEmailInput.style.opacity = "";
+                forgotEmailInput.style.cursor = "";
+            }
+            if (typeof turnstile !== "undefined") {
+                const forgotCaptcha = document.getElementById("forgot-captcha");
+                if (forgotCaptcha) {
+                    try {
+                        turnstile.reset(forgotCaptcha);
+                    } catch (err) {
+                        console.error("Failed to reset forgot captcha:", err);
+                    }
+                }
+            }
+            setTimeout(() => {
+                if (forgotEmailInput) forgotEmailInput.focus();
+            }, 50);
+        }
+    });
+}
+
+if (forgotBackBtn) {
+    forgotBackBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        sound.playBleep();
+        
+        authError.classList.add("hidden");
+        authSuccess.classList.add("hidden");
+        
+        // Hide forgot password form
+        if (forgotPasswordForm) {
+            forgotPasswordForm.classList.add("hidden");
+            const forgotEmailInput = document.getElementById("forgot-email");
+            if (forgotEmailInput) {
+                forgotEmailInput.disabled = false;
+                forgotEmailInput.style.opacity = "";
+                forgotEmailInput.style.cursor = "";
+            }
+        }
+        
+        // Show standard login UI
+        const tabContainer = document.querySelector(".tab-container");
+        if (tabContainer) tabContainer.classList.remove("hidden");
+        loginForm.classList.remove("hidden");
+        modalTitle.textContent = "USER";
+        
+        if (typeof turnstile !== "undefined") {
+            const loginCaptcha = document.getElementById("login-captcha");
+            if (loginCaptcha) {
+                try {
+                    turnstile.reset(loginCaptcha);
+                } catch (err) {
+                    console.error("Failed to reset login captcha:", err);
+                }
+            }
+        }
+    });
+}
+
+if (forgotPasswordForm) {
+    forgotPasswordForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        authError.classList.add("hidden");
+        authSuccess.classList.add("hidden");
+        
+        // Retrieve Cloudflare Turnstile verification token
+        const forgotFormEl = document.getElementById("forgot-password-form");
+        const captchaInput = forgotFormEl.querySelector("[name='cf-turnstile-response']");
+        const captchaResponse = captchaInput ? captchaInput.value : "";
+        if (typeof turnstile !== "undefined") {
+            if (!captchaResponse) {
+                authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE";
+                authError.classList.remove("hidden");
+                return;
+            }
+        }
+
+        const email = document.getElementById("forgot-email").value;
+        const submitBtn = forgotPasswordForm.querySelector("button[type='submit']");
+        
+        try {
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "SENDING...";
+            }
+            
+            await auth.sendPasswordResetEmail(email, captchaResponse);
+            
+            authSuccess.textContent = "RESET LINK SENT! CHECK YOUR INBOX.";
+            authSuccess.classList.remove("hidden");
+            sound.playSuccess();
+            
+            // Grey out the email input box
+            const forgotEmailInput = document.getElementById("forgot-email");
+            if (forgotEmailInput) {
+                forgotEmailInput.disabled = true;
+                forgotEmailInput.style.opacity = "0.5";
+                forgotEmailInput.style.cursor = "not-allowed";
+            }
+
+            if (typeof turnstile !== "undefined") {
+                const forgotCaptcha = document.getElementById("forgot-captcha");
+                if (forgotCaptcha) turnstile.reset(forgotCaptcha);
+            }
+        } catch (err) {
+            console.error("[Forgot Password] Request failed:", err);
+            
+            let errMsg = "RESET REQUEST FAILED";
+            if (err) {
+                if (typeof err === "string") {
+                    errMsg = err;
+                } else {
+                    const status = err.status || err.statusCode || "";
+                    const name = err.name || "";
+                    let message = err.message || "";
+                    
+                    if (message === "{}" || !message || message === "[object Object]") {
+                        if (err.error_description) {
+                            message = err.error_description;
+                        } else if (err.error) {
+                            message = typeof err.error === 'object' ? JSON.stringify(err.error) : String(err.error);
+                        } else {
+                            const str = JSON.stringify(err);
+                            message = str !== "{}" ? str : "RESET REQUEST FAILED";
+                        }
+                    }
+                    
+                    errMsg = `${name ? '[' + name + '] ' : ''}${status ? '(STATUS ' + status + ') ' : ''}${message}`;
+                }
+            }
+            
+            authError.textContent = errMsg.toUpperCase();
+            authError.classList.remove("hidden");
+            if (typeof turnstile !== "undefined") {
+                const forgotCaptcha = document.getElementById("forgot-captcha");
+                if (forgotCaptcha) turnstile.reset(forgotCaptcha);
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "SEND RESET LINK";
+            }
+        }
+    });
+}
+
+if (resetPasswordForm) {
+    resetPasswordForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        authError.classList.add("hidden");
+        authSuccess.classList.add("hidden");
+        
+        const newPassword = document.getElementById("reset-password").value;
+        const confirmPassword = document.getElementById("reset-confirm-password").value;
+        const submitBtn = resetPasswordForm.querySelector("button[type='submit']");
+        
+        if (newPassword !== confirmPassword) {
+            authError.textContent = "PASSWORDS DO NOT MATCH";
+            authError.classList.remove("hidden");
+            return;
+        }
+        
+        try {
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "UPDATING...";
+            }
+            
+            await auth.updatePassword(newPassword);
+            
+            authSuccess.textContent = "PASSWORD UPDATED! LOADING STAGE...";
+            authSuccess.classList.remove("hidden");
+            sound.playSuccess();
+            
+            setTimeout(() => {
+                closeAuthModal();
+                updateAuthStateUI();
+            }, 1500);
+        } catch (err) {
+            authError.textContent = err.message.toUpperCase();
+            authError.classList.remove("hidden");
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "UPDATE PASSWORD";
+            }
+        }
+    });
+}
+
+// Listen for password recovery trigger from auth client
+window.addEventListener('password-recovery-triggered', () => {
+    console.log("[App] Password recovery triggered!");
+    
+    // Open auth modal in Reset mode
+    authModal.classList.remove("hidden");
+    authError.classList.add("hidden");
+    authSuccess.classList.add("hidden");
+    
+    // Hide other views and tabs
+    const tabContainer = document.querySelector(".tab-container");
+    if (tabContainer) tabContainer.classList.add("hidden");
+    loginForm.classList.add("hidden");
+    registerForm.classList.add("hidden");
+    if (forgotPasswordForm) forgotPasswordForm.classList.add("hidden");
+    
+    // Show Reset Password form
+    modalTitle.textContent = "RESET PASSWORD";
+    if (resetPasswordForm) {
+        resetPasswordForm.classList.remove("hidden");
+        const resetPass = document.getElementById("reset-password");
+        if (resetPass) {
+            setTimeout(() => resetPass.focus(), 50);
+        }
+    }
+});
 
 // Submit login
 loginForm.addEventListener("submit", async (e) => {
