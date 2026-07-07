@@ -596,7 +596,7 @@ class FloatingItem {
         }
 
         // Draw username text tag above the item (push higher if log has branches to avoid overlap)
-        ctx.fillStyle = this.isHovered ? "#ffcc00" : "#ffffff";
+        ctx.fillStyle = this.isHovered ? "#00ff66" : "#ffffff";
         ctx.font = `${Math.max(18, Math.floor(27 * scaleX))}px VT323`;
         ctx.textAlign = "center";
         
@@ -611,7 +611,7 @@ class FloatingItem {
         ctx.fillText(label, textX - 2, textY + 2);
         ctx.fillText(label, textX + 2, textY + 2);
         
-        ctx.fillStyle = this.isHovered ? "#ffcc00" : "#ffffff";
+        ctx.fillStyle = this.isHovered ? "#00ff66" : "#ffffff";
         ctx.fillText(label, textX, textY);
     }
 
