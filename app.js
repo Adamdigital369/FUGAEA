@@ -609,28 +609,43 @@ class FloatingItem {
         }
 
         // Draw username text tag above the item (push higher if log has branches to avoid overlap)
-        ctx.fillStyle = this.isHovered ? "#00ff66" : "#ffffff";
+        const username = this.post.username;
+        const isSponsored = this.post.id && (this.post.id.startsWith("local_") || this.post.username.toLowerCase().includes("ad") || this.post.username.toLowerCase() === "fugaea");
+        
         ctx.font = `${Math.max(18, Math.floor(27 * scaleX))}px VT323`;
         ctx.textAlign = "center";
         
-        // Draw black border around text for readability
-        let label = this.post.username;
-        if (this.post.id && (this.post.id.startsWith("local_") || this.post.username.toLowerCase().includes("ad") || this.post.username.toLowerCase() === "fugaea")) {
-            if (!label.toLowerCase().includes("sponsored") && !label.toLowerCase().includes("ad")) {
-                label = `${label} [SPONSORED]`;
-            }
-        }
         const textX = Math.floor(drawX + drawWidth / 2);
         const textY = drawY - (this.hasBranch ? 35 : 18) * scaleY;
         
+        // Draw black border around text for readability
         ctx.fillStyle = "#000000";
-        ctx.fillText(label, textX - 2, textY - 2);
-        ctx.fillText(label, textX + 2, textY - 2);
-        ctx.fillText(label, textX - 2, textY + 2);
-        ctx.fillText(label, textX + 2, textY + 2);
+        ctx.fillText(username, textX - 2, textY - 2);
+        ctx.fillText(username, textX + 2, textY - 2);
+        ctx.fillText(username, textX - 2, textY + 2);
+        ctx.fillText(username, textX + 2, textY + 2);
         
         ctx.fillStyle = this.isHovered ? "#00ff66" : "#ffffff";
-        ctx.fillText(label, textX, textY);
+        ctx.fillText(username, textX, textY);
+        
+        // Draw separate [SPONSORED] label to the right
+        if (isSponsored) {
+            const usernameWidth = ctx.measureText(username).width;
+            const sponsoredX = textX + (usernameWidth / 2) + 8;
+            const sponsoredTag = "[SPONSORED]";
+            
+            ctx.font = `${Math.max(12, Math.floor(18 * scaleX))}px VT323`;
+            ctx.textAlign = "left";
+            
+            ctx.fillStyle = "#000000";
+            ctx.fillText(sponsoredTag, sponsoredX - 1.5, textY - 1.5);
+            ctx.fillText(sponsoredTag, sponsoredX + 1.5, textY - 1.5);
+            ctx.fillText(sponsoredTag, sponsoredX - 1.5, textY + 1.5);
+            ctx.fillText(sponsoredTag, sponsoredX + 1.5, textY + 1.5);
+            
+            ctx.fillStyle = "#ffcc00"; // Yellow sponsored tag
+            ctx.fillText(sponsoredTag, sponsoredX, textY);
+        }
     }
 
     checkCollision(mx, my) {
