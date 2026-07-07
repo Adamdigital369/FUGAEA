@@ -610,7 +610,6 @@ class FloatingItem {
 
         // Draw username text tag above the item (push higher if log has branches to avoid overlap)
         const username = this.post.username;
-        const isSponsored = this.post.id && (this.post.id.startsWith("local_") || this.post.username.toLowerCase().includes("ad") || this.post.username.toLowerCase() === "fugaea");
         
         ctx.font = `${Math.max(18, Math.floor(27 * scaleX))}px VT323`;
         ctx.textAlign = "center";
@@ -627,25 +626,6 @@ class FloatingItem {
         
         ctx.fillStyle = this.isHovered ? "#00ff66" : "#ffffff";
         ctx.fillText(username, textX, textY);
-        
-        // Draw separate [SPONSORED] label to the right
-        if (isSponsored) {
-            const usernameWidth = ctx.measureText(username).width;
-            const sponsoredX = textX + (usernameWidth / 2) + 10;
-            const sponsoredTag = "[SPONSORED]";
-            
-            ctx.font = `${Math.max(15, Math.floor(22 * scaleX))}px VT323`;
-            ctx.textAlign = "left";
-            
-            ctx.fillStyle = "#000000";
-            ctx.fillText(sponsoredTag, sponsoredX - 1.5, textY - 1.5);
-            ctx.fillText(sponsoredTag, sponsoredX + 1.5, textY - 1.5);
-            ctx.fillText(sponsoredTag, sponsoredX - 1.5, textY + 1.5);
-            ctx.fillText(sponsoredTag, sponsoredX + 1.5, textY + 1.5);
-            
-            ctx.fillStyle = "#00ff66"; // Retro green sponsored tag
-            ctx.fillText(sponsoredTag, sponsoredX, textY);
-        }
     }
 
     checkCollision(mx, my) {
