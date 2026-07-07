@@ -631,10 +631,10 @@ class FloatingItem {
         // Draw separate [SPONSORED] label to the right
         if (isSponsored) {
             const usernameWidth = ctx.measureText(username).width;
-            const sponsoredX = textX + (usernameWidth / 2) + 8;
+            const sponsoredX = textX + (usernameWidth / 2) + 10;
             const sponsoredTag = "[SPONSORED]";
             
-            ctx.font = `${Math.max(12, Math.floor(18 * scaleX))}px VT323`;
+            ctx.font = `${Math.max(15, Math.floor(22 * scaleX))}px VT323`;
             ctx.textAlign = "left";
             
             ctx.fillStyle = "#000000";
@@ -643,7 +643,7 @@ class FloatingItem {
             ctx.fillText(sponsoredTag, sponsoredX - 1.5, textY + 1.5);
             ctx.fillText(sponsoredTag, sponsoredX + 1.5, textY + 1.5);
             
-            ctx.fillStyle = "#ffcc00"; // Yellow sponsored tag
+            ctx.fillStyle = "#00ff66"; // Retro green sponsored tag
             ctx.fillText(sponsoredTag, sponsoredX, textY);
         }
     }
