@@ -26,6 +26,19 @@ let collisionParticles = [];
 let databasePosts = [];
 const expiredPostIds = new Set();
 
+// --- FALLBACK SYNC CONFIGURATION ---
+let fallbackSyncTimer = null;
+let currentSyncMs = 20000; // Default fallback is 20s
+
+function setupFallbackSync(intervalMs) {
+    if (fallbackSyncTimer) {
+        clearInterval(fallbackSyncTimer);
+    }
+    currentSyncMs = intervalMs;
+    console.log(`[Fallback Sync] Polling database every ${intervalMs / 1000} seconds.`);
+    fallbackSyncTimer = setInterval(syncDatabasePosts, intervalMs);
+}
+
 // --- FIXED TIMESTEP PHYSICS CLOCK ---
 let lastPhysicsTime = Date.now();
 let physicsAccumulator = 0;
@@ -941,10 +954,13 @@ async function trackPresence() {
         });
 
     presenceChannel.subscribe(async (status) => {
+        console.log(`[Realtime presenceChannel Status]:`, status);
         if (status === 'SUBSCRIBED') {
             await presenceChannel.track({
                 online_at: new Date().toISOString()
             });
+        } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+            setupFallbackSync(10000);
         }
     });
 }
@@ -1628,8 +1644,8 @@ async function initApp() {
     await trackPresence();
 
     // Listen for database changes in real-time to load new logs instantly (inserts, updates, etc.)
-    supabase
-        .channel('public:posts')
+    const postsChannel = supabase.channel('public:posts');
+    postsChannel
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, async (payload) => {
             console.log("[Realtime Insert] Payload:", payload);
             try {
@@ -1698,23 +1714,39 @@ async function initApp() {
                 const activeCount = floatingItems.filter(item => !item.post.id.startsWith("local_")).length;
                 hudItemCount.textContent = activeCount;
             }
-        })
-        .subscribe();
+        });
+
+    postsChannel.subscribe((status) => {
+        console.log(`[Realtime postsChannel Status]:`, status);
+        if (status === 'SUBSCRIBED') {
+            // WebSockets connected: slow polling fallback to 60s to save database usage
+            setupFallbackSync(60000);
+        } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+            // Connection failed/limit reached (e.g. 200 limit): fallback to 10s polling
+            setupFallbackSync(10000);
+        }
+    });
 
     // Listen for statistics changes (for real-time total clicks counter updates)
-    supabase
-        .channel('public:statistics')
+    const statsChannel = supabase.channel('public:statistics');
+    statsChannel
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'statistics', filter: 'key=eq.total_clicks' }, (payload) => {
             console.log("[Realtime Statistics Update] Payload:", payload);
             const val = payload.new ? Number(payload.new.value) : 0;
             if (hudTotalViews) {
                 hudTotalViews.textContent = val.toLocaleString();
             }
-        })
-        .subscribe();
+        });
 
-    // Fallback sync every 20 seconds just in case of connection fluctuations
-    setInterval(syncDatabasePosts, 20000);
+    statsChannel.subscribe((status) => {
+        console.log(`[Realtime statsChannel Status]:`, status);
+        if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+            setupFallbackSync(10000);
+        }
+    });
+
+    // Start fallback sync (will dynamically adapt when channel subscriptions complete)
+    setupFallbackSync(20000);
 }
 
 // --- CHECKOUT / MICROTRANSACTION SYSTEM ---
