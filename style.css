@@ -237,6 +237,7 @@ body {
     color: var(--text-yellow);
 }
 
+#submit-section .form-group label,
 #guest-prompt-section .form-group label {
     font-size: 10px;
 }
