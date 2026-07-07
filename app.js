@@ -488,7 +488,7 @@ class FloatingItem {
 
         // Draw selection box outline if hovered
         if (this.isHovered) {
-            ctx.strokeStyle = "rgba(0, 255, 255, 0.8)";
+            ctx.strokeStyle = "rgba(0, 255, 102, 0.8)";
             ctx.lineWidth = 3;
             
             // Expand selection boundary to cover username, branch, and log with a buffer
@@ -498,7 +498,7 @@ class FloatingItem {
             
             ctx.strokeRect(drawX - sideOffset, drawY - topOffset, drawWidth + sideOffset * 2, drawHeight + topOffset + bottomOffset);
             
-            ctx.fillStyle = "rgba(0, 255, 255, 0.1)";
+            ctx.fillStyle = "rgba(0, 255, 102, 0.1)";
             ctx.fillRect(drawX - sideOffset, drawY - topOffset, drawWidth + sideOffset * 2, drawHeight + topOffset + bottomOffset);
         }
 
