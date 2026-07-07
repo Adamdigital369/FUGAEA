@@ -1174,6 +1174,17 @@ function closeAuthModal() {
         if (loginCaptcha) turnstile.reset(loginCaptcha);
         if (regCaptcha) turnstile.reset(regCaptcha);
     }
+
+    // Focus and select the link input box if the user is logged in
+    if (auth.getCurrentUser()) {
+        const postUrl = document.getElementById("post-url");
+        if (postUrl) {
+            setTimeout(() => {
+                postUrl.focus();
+                postUrl.select();
+            }, 150);
+        }
+    }
 }
 
 // Modal tab listeners
