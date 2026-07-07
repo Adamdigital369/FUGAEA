@@ -237,6 +237,10 @@ body {
     color: var(--text-yellow);
 }
 
+#guest-prompt-section .form-group label {
+    font-size: 10px;
+}
+
 .flex-grow-2 { flex-grow: 2; }
 .flex-grow-3 { flex-grow: 3; }
 
