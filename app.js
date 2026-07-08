@@ -2290,6 +2290,14 @@ paymentForm.addEventListener("submit", async (e) => {
     }
 });
 
+// Restore payment button state when returning via browser back button (bfcache)
+window.addEventListener("pageshow", () => {
+    if (paySubmitBtn) {
+        paySubmitBtn.disabled = false;
+        paySubmitBtn.innerHTML = `<i class="fas fa-lock"></i> SECURE PAY $${selectedPackageAmount.toFixed(2)}`;
+    }
+});
+
 // --- NEW BUTTON EVENT LISTENERS ---
 
 if (regResendEmailBtn) {
