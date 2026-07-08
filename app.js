@@ -2421,7 +2421,7 @@ async function executeShare(platform, shareUrl, element, isCopyAction = false) {
 if (shareX) {
     shareX.addEventListener("click", (e) => {
         e.preventDefault();
-        const shareText = encodeURIComponent("Welcome to Fugaea. Register for 10 free links!");
+        const shareText = encodeURIComponent("Fugaea is a real-time user-generated link platform. Register today for 10 free credits to share your links!");
         const shareUrl = encodeURIComponent(window.location.origin);
         executeShare("X", `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`, shareX);
     });
@@ -2446,7 +2446,7 @@ if (shareLinkedin) {
 if (shareReddit) {
     shareReddit.addEventListener("click", (e) => {
         e.preventDefault();
-        const shareTitle = encodeURIComponent("Welcome to Fugaea. Register for 10 free links!");
+        const shareTitle = encodeURIComponent("Fugaea is a real-time user-generated link platform. Register today for 10 free credits!");
         const shareUrl = encodeURIComponent(window.location.origin);
         executeShare("Reddit", `https://www.reddit.com/submit?url=${shareUrl}&title=${shareTitle}`, shareReddit);
     });
@@ -2684,7 +2684,7 @@ function spawnFugaeaLog() {
             sprite: "log_flowering", // flowering log for official highlight
             createdAt: new Date(spawnTimeForBlock).toISOString(),
             clicks: 0,
-            text: "welcome to fugaea. see and share website links.",
+            text: "Fugaea is a real-time user-generated link platform.",
             url: "https://www.youtube.com/watch?v=4r6uKPDxIZQ&list=RD4r6uKPDxIZQ&start_radio=1"
         };
         const newItem = new FloatingItem(post);
