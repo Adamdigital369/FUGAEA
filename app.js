@@ -920,8 +920,8 @@ const privacyTextContent = document.getElementById("privacy-text-content");
 const closeAccountContainer = document.getElementById("close-account-container");
 const deleteAccountBtn = document.getElementById("delete-account-btn");
 
-let selectedPackageAmount = 0.99;
-let selectedPackageCredits = 100;
+let selectedPackageAmount = 1.99;
+let selectedPackageCredits = 300;
 
 const postText = document.getElementById("post-text");
 const tossForm = document.getElementById("toss-form");
@@ -1778,7 +1778,7 @@ tossForm.addEventListener("submit", async (e) => {
         if (!user) throw new Error("MUST BE LOGGED IN");
 
         if (user.credits < 1) {
-            throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD TO GET 100 LINKS.");
+            throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD TO GET 300 LINKS.");
         }
 
         // Deduct 1 credit (handled database-side, but keep call for API compatibility)
@@ -2193,14 +2193,14 @@ function showCheckoutModal() {
     checkoutError.classList.add("hidden");
     
     // Reset to default package on open
-    selectedPackageAmount = 0.99;
-    selectedPackageCredits = 100;
+    selectedPackageAmount = 1.99;
+    selectedPackageCredits = 300;
     
     // Update active highlight classes on load
     const packageOptions = document.querySelectorAll(".retro-package-option");
     packageOptions.forEach(opt => {
         const amount = parseFloat(opt.getAttribute("data-amount"));
-        if (amount === 0.99) {
+        if (amount === 1.99) {
             opt.classList.add("active");
             opt.style.borderColor = "var(--text-cyan)";
         } else {
@@ -2209,7 +2209,7 @@ function showCheckoutModal() {
         }
     });
     
-    paySubmitBtn.innerHTML = '<i class="fas fa-lock"></i> SECURE PAY $0.99';
+    paySubmitBtn.innerHTML = '<i class="fas fa-lock"></i> SECURE PAY $1.99';
 }
 
 function closeCheckoutModal() {
