@@ -2266,8 +2266,8 @@ paymentForm.addEventListener("submit", async (e) => {
         // Stripe Payment Links mapped by package amount
         const stripePaymentLinks = {
             "0.99": "https://buy.stripe.com/4gM3cngOvcWs2H240Ed7q00",
-            "1.98": "https://buy.stripe.com/00w9AL8hZ3lS1CYap2d7q01",
-            "9.90": "https://buy.stripe.com/8x2aEP9m39Kgbdybt6d7q02"
+            "1.99": "https://buy.stripe.com/00w9AL8hZ3lS1CYap2d7q01", // TODO: Replace with your Stripe Payment Link for $1.99
+            "4.99": "https://buy.stripe.com/8x2aEP9m39Kgbdybt6d7q02"  // TODO: Replace with your Stripe Payment Link for $4.99
         };
         
         const amountKey = selectedPackageAmount.toFixed(2);
