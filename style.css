@@ -131,10 +131,26 @@ body {
     gap: 8px;
 }
 
+.title-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
 .title-container h1 {
     font-size: 18px;
     color: var(--text-cyan);
     text-shadow: 3px 3px 0px #000;
+}
+
+.tagline {
+    font-size: 8px;
+    font-family: 'Press Start 2P', cursive;
+    color: #888888;
+    margin: 0;
+    line-height: 1.2;
+    text-transform: uppercase;
 }
 
 .stats-container {
@@ -653,9 +669,18 @@ body {
         text-align: center;
     }
 
+    .title-container {
+        align-items: center;
+    }
+
     .title-container h1 {
         font-size: 14px;
         text-align: center;
+    }
+
+    .tagline {
+        text-align: center;
+        font-size: 7px;
     }
 
     .stats-container {

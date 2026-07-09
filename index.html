@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>fugaea</title>
+    <title>fugaea - Real-time User-Generated Link Platform</title>
     <meta name="description" content="Fugaea is a real-time user-generated link platform.">
+    <link rel="canonical" href="https://www.fugaea.com/">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://fugaea.com/">
+    <meta property="og:url" content="https://www.fugaea.com/">
     <meta property="og:title" content="fugaea">
     <meta property="og:description" content="Fugaea is a real-time user-generated link platform.">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary">
-    <meta property="twitter:url" content="https://fugaea.com/">
+    <meta property="twitter:url" content="https://www.fugaea.com/">
     <meta property="twitter:title" content="fugaea">
     <meta property="twitter:description" content="Fugaea is a real-time user-generated link platform.">
     <!-- Google Fonts for 8-bit aesthetic -->
@@ -34,6 +35,16 @@
         };
     </script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" async defer></script>
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "fugaea",
+      "url": "https://www.fugaea.com/",
+      "description": "Fugaea is a real-time user-generated link platform."
+    }
+    </script>
 </head>
 <body>
     <div class="arcade-cabinet">
@@ -43,6 +54,7 @@
         <header class="retro-hud header-hud">
             <div class="hud-item title-container">
                 <h1>fugaea</h1>
+                <p class="tagline">A real-time user-generated link platform.</p>
             </div>
             <div class="hud-item stats-container">
                 <div id="hud-user-container" class="hidden">LOGGED IN: <span id="hud-user">GUEST</span></div>
