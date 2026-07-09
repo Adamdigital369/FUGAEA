@@ -153,12 +153,12 @@ rawBoatImg.onload = () => {
         }
 
         // 4. Hull Recolor (recolor white hull to black, keep dark crew members intact)
-        const isLight = (r > 115 && g > 115 && b > 115 && Math.abs(r - g) < 22 && Math.abs(g - b) < 22);
+        const isLight = (r > 80 && g > 80 && b > 80 && Math.abs(r - g) < 25 && Math.abs(g - b) < 25);
         if (isLight && yCoord >= h * 0.77) {
             const lum = r / 255.0;
-            data[i] = Math.floor(lum * 20);
-            data[i+1] = Math.floor(lum * 20);
-            data[i+2] = Math.floor(lum * 20);
+            data[i] = Math.floor(lum * 5);
+            data[i+1] = Math.floor(lum * 5);
+            data[i+2] = Math.floor(lum * 5);
         }
     }
 
