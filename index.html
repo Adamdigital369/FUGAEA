@@ -51,14 +51,21 @@
         <div class="crt-overlay"></div>
         <div class="crt-bezel-reflection"></div>
         <!-- HEADER HUD -->
-        <header class="retro-hud header-hud">
+        <header class="retro-hud header-hud is-logged-out">
             <div class="hud-item title-container">
                 <h1>fugaea</h1>
-                <p class="tagline">A real-time user-generated link platform.</p>
+                <p class="tagline">A REAL-TIME USER-GENERATED LINK PLATFORM.</p>
             </div>
             <div class="hud-item stats-container">
                 <div id="hud-user-container" class="hidden">LOGGED IN: <span id="hud-user">GUEST</span></div>
-                <div id="hud-credits-container" style="display: inline-flex; align-items: center; vertical-align: middle;">CREDITS: <span id="hud-credits" class="text-cyan" style="margin-right: 10px;">0</span> <button id="buy-credits-trigger" class="retro-btn" style="padding: 0 8px; font-size: 9px; line-height: 1; height: 21px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; background-color: #00ff66; color: #000000 !important; border-color: #ffffff;">+BUY</button> <button id="share-x-btn" class="retro-btn" style="padding: 0 8px; font-size: 9px; line-height: 1; height: 21px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; background-color: #00ff66; color: #000000 !important; border-color: #ffffff; margin-left: 8px;"><i class="fas fa-share-alt" style="margin-right: 4px;"></i>SHARE (+10)</button></div>
+                <div id="hud-credits-container" class="hud-credits-layout">
+                    <span class="credits-label">CREDITS:</span>
+                    <span id="hud-credits" class="text-cyan">0</span>
+                    <div class="credits-buttons">
+                        <button id="buy-credits-trigger" class="retro-btn">+BUY</button>
+                        <button id="share-x-btn" class="retro-btn"><i class="fas fa-share-alt" style="margin-right: 4px;"></i>SHARE (+10)</button>
+                    </div>
+                </div>
             </div>
             <div class="hud-item controls-container">
                 <button id="auth-trigger-btn" class="retro-btn hidden">
@@ -105,13 +112,12 @@
                         </div>
                         <div class="form-group flex-grow-3">
                             <label for="post-url">LINK</label>
-                            <input type="text" id="post-url" required class="retro-input">
-                        </div>
-                        <div class="form-group button-group">
-                            <label>&nbsp;</label>
-                            <button type="submit" class="retro-btn" style="background-color: #00ff66; color: #000000 !important; border-color: #ffffff;">
-                                POST LINK (1 CREDIT)
-                            </button>
+                            <div style="display: flex; gap: 8px; align-items: stretch;">
+                                <input type="text" id="post-url" required class="retro-input" style="flex-grow: 1;">
+                                <button type="submit" class="retro-btn" style="background-color: #00ff66; color: #000000 !important; border-color: #ffffff; white-space: nowrap; height: 38px;">
+                                    POST LINK (1 CREDIT)
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group auto-repost-group" style="display: flex; flex-direction: column; gap: 4px; justify-content: flex-end;">
                             <label for="auto-repost-toggle" style="font-size: 8px; color: var(--text-yellow); text-align: center; font-family: 'Press Start 2P', cursive; line-height: 1;">AUTO-REPOST</label>
@@ -138,13 +144,12 @@
                         </div>
                         <div class="form-group flex-grow-3">
                             <label>LINK</label>
-                            <input type="text" disabled class="retro-input" style="background-color: #222; color: #999; border-color: #444;">
-                        </div>
-                        <div class="form-group button-group">
-                            <label>&nbsp;</label>
-                            <button type="button" disabled class="retro-btn" style="background-color: #777; color: #bbb !important; border-color: #444;">
-                                POST LINK (1 CREDIT)
-                            </button>
+                            <div style="display: flex; gap: 8px; align-items: stretch;">
+                                <input type="text" disabled class="retro-input" style="background-color: #222; color: #999; border-color: #444; flex-grow: 1;">
+                                <button type="button" disabled class="retro-btn" style="background-color: #777; color: #bbb !important; border-color: #444; white-space: nowrap; height: 38px;">
+                                    POST LINK (1 CREDIT)
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group auto-repost-group" style="display: flex; flex-direction: column; gap: 4px; justify-content: flex-end;">
                             <label style="font-size: 8px; color: #999; text-align: center; font-family: 'Press Start 2P', cursive; line-height: 1;">AUTO-REPOST</label>

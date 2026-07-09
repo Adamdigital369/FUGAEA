@@ -1050,6 +1050,7 @@ const shareInstagram = document.getElementById("share-instagram");
 const shareTiktok = document.getElementById("share-tiktok");
 
 const authTriggerBtn = document.getElementById("auth-trigger-btn");
+const headerHud = document.querySelector(".header-hud");
 const submitSection = document.getElementById("submit-section");
 const guestPromptSection = document.getElementById("guest-prompt-section");
 
@@ -1238,6 +1239,10 @@ function updateAuthStateUI() {
         
         // Refresh the social media buttons inside the modal (grey out claimed ones)
         updateShareModalUI();
+        if (headerHud) {
+            headerHud.classList.add("is-logged-in");
+            headerHud.classList.remove("is-logged-out");
+        }
     } else {
         if (hudUserContainer) hudUserContainer.classList.add("hidden");
         hudUser.textContent = "GUEST";
@@ -1262,6 +1267,10 @@ function updateAuthStateUI() {
         // Hide close account button inside Privacy Policy
         if (closeAccountContainer) {
             closeAccountContainer.style.display = 'none';
+        }
+        if (headerHud) {
+            headerHud.classList.add("is-logged-out");
+            headerHud.classList.remove("is-logged-in");
         }
 
         // Clean up Auto-Pilot on logout
@@ -1698,7 +1707,7 @@ if (resetPasswordForm) {
             
             await auth.updatePassword(newPassword);
             
-            authSuccess.textContent = "PASSWORD UPDATED! LOADING STAGE...";
+            authSuccess.textContent = "PASSWORD UPDATED! LOADING...";
             authSuccess.classList.remove("hidden");
             sound.playSuccess();
             
@@ -1783,7 +1792,7 @@ loginForm.addEventListener("submit", async (e) => {
             diagAction.style.color = "#00ff00";
         }
         
-        authSuccess.textContent = "LOGGED IN! LOADING STAGE...";
+        authSuccess.textContent = "LOGGED IN! LOADING...";
         authSuccess.classList.remove("hidden");
         sound.playSuccess();
         setTimeout(() => {
@@ -1880,7 +1889,7 @@ registerForm.addEventListener("submit", async (e) => {
             sound.playSuccess();
             startVerificationPolling();
         } else {
-            authSuccess.textContent = "ACCOUNT CREATED! ENTERING STAGE...";
+            authSuccess.textContent = "ACCOUNT CREATED! LOADING...";
             authSuccess.classList.remove("hidden");
             sound.playSuccess();
             setTimeout(() => {
@@ -2444,6 +2453,7 @@ buyCreditsTrigger.addEventListener("click", () => {
         showAuthModal("login");
     }
 });
+// Welcome overlay listeners removed
 
 checkoutClose.addEventListener("click", () => {
     sound.playBleep();

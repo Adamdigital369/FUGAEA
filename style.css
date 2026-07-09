@@ -121,6 +121,10 @@ body {
 .header-hud {
     margin-bottom: 8px;
     border-bottom: 4px solid #fff;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .footer-hud {
@@ -147,16 +151,66 @@ body {
 .tagline {
     font-size: 10px;
     font-family: 'Press Start 2P', cursive;
-    color: #aaaaaa;
+    color: #888888;
     margin: 0;
     line-height: 1.2;
     text-transform: uppercase;
+    white-space: nowrap;
+}
+
+#hud-user-container {
+    font-size: 14px;
+    color: #ffffff;
+    text-shadow: 2px 2px 0px #000;
 }
 
 .stats-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    gap: 24px;
+    flex-direction: row;
     align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.hud-credits-layout {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.hud-credits-layout .credits-label {
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.hud-credits-layout #hud-credits {
+    font-size: 14px;
+    color: var(--text-cyan);
+}
+
+.credits-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Style the buttons inside the stats/credits containers to match original designs */
+.stats-container .retro-btn {
+    padding: 0 8px;
+    font-size: 9px;
+    line-height: 1;
+    height: 21px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    background-color: #00ff66;
+    color: #000000 !important;
+    border-color: #ffffff;
 }
 
 .controls-container {
@@ -681,9 +735,13 @@ body {
     .tagline {
         text-align: center;
         font-size: 8px;
+        max-width: none;
     }
 
+    /* Override absolute centering on mobile */
     .stats-container {
+        position: static;
+        transform: none;
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
