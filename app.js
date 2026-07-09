@@ -620,6 +620,15 @@ class FloatingItem {
         this.virtualX += this.virtualVx;
         this.virtualY += this.virtualVy;
         
+        // Gently pull the boat towards its expected horizontal position based on database age to keep tabs perfectly synced
+        const age = Math.max(0, Date.now() - this.createdAtTime);
+        const VIRTUAL_WIDTH = getVirtualWidth();
+        const travelSpan = VIRTUAL_WIDTH + 300;
+        const baseSpeed = 0.12;
+        const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
+        const expectedX = VIRTUAL_WIDTH - progress * travelSpan;
+        this.virtualX += (expectedX - this.virtualX) * 0.01;
+        
         // Slowly float back to original vertical lane and restore horizontal drift speed
         this.virtualVx += (this.virtualTargetVx - this.virtualVx) * 0.06;
         this.virtualY += (this.targetVirtualY - this.virtualY) * 0.02;
