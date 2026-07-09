@@ -1257,7 +1257,7 @@ function updateAuthStateUI() {
         submitSection.classList.add("hidden");
         if (guestPromptSection) guestPromptSection.classList.remove("hidden");
         
-        hudCredits.textContent = "0";
+        hudCredits.textContent = "10";
 
         // Keep the HUD share button visible for guests to prompt registration
         if (shareXBtn) {
