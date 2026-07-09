@@ -2,6 +2,169 @@
 import * as auth from "./auth.js";
 import * as db from "./db.js";
 import { supabase } from "./supabase-config.js";
+// --- // --- PHOTO-QUALITY SAILING BOAT ASSETS ---
+window.isBoatLoaded = false;
+window.boatImg = document.createElement('canvas');
+window.boatCanvasCache = {};
+
+// Color wheel conversion HSL -> RGB (using high saturation and medium brightness for vibrant sails)
+function getWheelRGB(index) {
+    const hue = (index * 360 / 100) % 360;
+    const h = hue;
+    const s = 0.95;
+    const l = 0.52;
+    
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    
+    if (h >= 0 && h < 60) { r = c; g = x; b = 0; }
+    else if (h >= 60 && h < 120) { r = x; g = c; b = 0; }
+    else if (h >= 120 && h < 180) { r = 0; g = c; b = x; }
+    else if (h >= 180 && h < 240) { r = 0; g = x; b = c; }
+    else if (h >= 240 && h < 300) { r = x; g = 0; b = c; }
+    else if (h >= 300 && h < 360) { r = c; g = 0; b = x; }
+    
+    return {
+        r: Math.round((r + m) * 255),
+        g: Math.round((g + m) * 255),
+        b: Math.round((b + m) * 255)
+    };
+}
+
+// Map a username deterministically to a color wheel index 0-99
+function getUsernameIndex(username) {
+    if (!username) return 0;
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash) % 100;
+}
+
+// Generate and cache a colored sail variant for a user
+window.getBoatCanvasForUser = function(username) {
+    const key = (username || '').toLowerCase().trim();
+    if (window.boatCanvasCache[key]) {
+        return window.boatCanvasCache[key];
+    }
+    
+    if (!window.boatImg || !window.isBoatLoaded) return null;
+    
+    const w = window.boatImg.width;
+    const h = window.boatImg.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(window.boatImg, 0, 0);
+    
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+    
+    const isFugaea = key === 'fugaea';
+    const colorIdx = getUsernameIndex(username);
+    const targetColor = isFugaea ? { r: 0, g: 255, b: 102 } : getWheelRGB(colorIdx);
+    
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i+1];
+        const b = data[i+2];
+        const a = data[i+3];
+        
+        // Recolor the green main sail (#00ff66)
+        if (a > 0 && r === 0 && g > 100 && b > 30 && b < 120) {
+            const lum = g / 255.0;
+            data[i] = Math.floor(lum * targetColor.r);
+            data[i+1] = Math.floor(lum * targetColor.g);
+            data[i+2] = Math.floor(lum * targetColor.b);
+        }
+    }
+    
+    ctx.putImageData(imgData, 0, 0);
+    window.boatCanvasCache[key] = canvas;
+    return canvas;
+};
+
+const rawBoatImg = new Image();
+rawBoatImg.src = 'boat_sprite.jpg?v=' + Date.now();
+rawBoatImg.onload = () => {
+    const w = rawBoatImg.width;
+    const h = rawBoatImg.height;
+
+    window.boatImg.width = w;
+    window.boatImg.height = h;
+
+    const bCtx = window.boatImg.getContext('2d');
+    bCtx.drawImage(rawBoatImg, 0, 0);
+
+    const imgData = bCtx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i+1];
+        const b = data[i+2];
+
+        const idx = i / 4;
+        const xCoord = idx % w;
+        const yCoord = Math.floor(idx / w);
+
+        // 1. Key out solid white background
+        if (r > 240 && g > 240 && b > 240) {
+            data[i+3] = 0;
+            continue;
+        }
+
+        // 2. Erase the keel, rudder, and water (UNCONDITIONALLY below the hull line Y = 88%)
+        if (yCoord >= h * 0.88) {
+            data[i+3] = 0;
+            continue;
+        }
+
+        // 3. Both Sails Recolor (Main sail green, Front sail black)
+        if (yCoord < h * 0.77) {
+            const isLeftOfMast = xCoord < w * 0.53;
+            if (isLeftOfMast) {
+                // Main Sail: Color it neon-green (#00ff66) and erase text
+                const baseR = r < 150 ? 210 : r;
+                const lum = baseR / 255.0;
+                data[i] = Math.floor(lum * 0);
+                data[i+1] = Math.floor(lum * 255);
+                data[i+2] = Math.floor(lum * 102);
+            } else {
+                // Front Sail: Recolor the outer jib black, leave inner staysail white
+                const targetX = w * 0.53 + ((yCoord - h * 0.32) / (h * 0.45)) * (w * 0.22);
+                const isStaysail = xCoord < targetX;
+                
+                if (isStaysail) {
+                    // Inner staysail: keep it white (original fabric in boat_sprite.jpg is white)
+                    // No recoloring is necessary!
+                } else {
+                    // Outer jib: make it charcoal-black
+                    const lum = r / 255.0;
+                    data[i] = Math.floor(lum * 20);
+                    data[i+1] = Math.floor(lum * 20);
+                    data[i+2] = Math.floor(lum * 20);
+                }
+            }
+            continue;
+        }
+
+        // 4. Hull Recolor (recolor white hull to black, keep dark crew members intact)
+        const isLight = (r > 115 && g > 115 && b > 115 && Math.abs(r - g) < 22 && Math.abs(g - b) < 22);
+        if (isLight && yCoord >= h * 0.77) {
+            const lum = r / 255.0;
+            data[i] = Math.floor(lum * 20);
+            data[i+1] = Math.floor(lum * 20);
+            data[i+2] = Math.floor(lum * 20);
+        }
+    }
+
+    bCtx.putImageData(imgData, 0, 0);
+    window.isBoatLoaded = true;
+};
 
 
 // --- NO-OP RETRO AUDIO ---
@@ -176,23 +339,34 @@ const SPRITE_PIXEL_SCALE = 3.5; // size of each pixel grid unit
 const SPRITES = {
     log: {
         width: 24,
-        height: 7,
+        height: 24,
         palette: {
-            1: "#6d3e1d", // Dark brown bark
-            2: "#8b5226", // Mid brown bark
-            3: "#cd9a62", // Beige inner wood rings
-            4: "#4c2810", // Deep shadow border
-            5: "#b87742", // Light highlight bark (top)
-            6: "#542e14"  // Dark shadow bark (bottom)
+            1: "#ffffff", // White sail
+            2: "#cccccc", // Grey sail shadow
+            3: "#ff3333", // Red flag
+            4: "#8b5226", // Brown hull/mast
+            5: "#4c2810", // Dark hull shadow / borders
+            6: "#ffcc00"  // Yellow flag accent
         },
         grid: [
-            [0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0],
-            [0,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,4,0],
-            [4,3,5,2,5,5,2,5,5,5,2,5,5,2,5,5,5,2,5,5,5,2,3,4],
-            [4,3,2,2,1,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,1,2,3,4],
-            [4,3,1,1,6,1,1,1,6,1,1,1,6,1,1,1,6,1,1,1,6,1,3,4],
-            [0,4,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,4,0],
-            [0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0]
+            [0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,3,6,3,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,3,3,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,5,4,5,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,5,1,4,1,5,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,5,1,1,4,1,1,5,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,5,1,1,1,4,1,1,1,5,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,5,1,1,1,1,4,2,2,2,2,5,0,0,0,0,0,0],
+            [0,0,0,0,0,0,5,1,1,1,1,1,4,2,2,2,2,2,5,0,0,0,0,0],
+            [0,0,0,0,0,5,1,1,1,1,1,1,4,2,2,2,2,2,2,5,0,0,0,0],
+            [0,0,0,0,5,1,1,1,1,1,1,1,4,2,2,2,2,2,2,2,5,0,0,0],
+            [0,0,0,5,1,1,1,1,1,1,1,1,4,2,2,2,2,2,2,2,2,5,0,0],
+            [0,0,5,5,5,5,5,5,5,5,5,5,4,5,5,5,5,5,5,5,5,5,5,0],
+            [0,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5],
+            [5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
+            [5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
+            [0,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,0],
+            [0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0]
         ]
     },
     leaf: {
@@ -290,6 +464,11 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
+// Dynamic VIRTUAL_WIDTH calculation to preserve 1200px equivalent log/wave proportions
+function getVirtualWidth() {
+    return Math.max(2000, canvas.width / 0.6);
+}
+
 // Wave Crest Particle Definition
 class Wave {
     constructor(index) {
@@ -299,7 +478,7 @@ class Wave {
         this.yPercent = rand(); // Store relative vertical position in river
         this.length = rand() * 60 + 30;
         this.speedFactor = rand() * 0.4 + 0.8;
-        this.virtualX = 2000 * this.phase;
+        this.virtualX = getVirtualWidth() * this.phase;
 
         // Randomly assign a gold, orange, or silver color to the ripples (approx. 15% gold, 6% orange, 79% silver)
         const colorRand = rand();
@@ -313,7 +492,7 @@ class Wave {
     }
 
     update(t) {
-        const VIRTUAL_WIDTH = 2000;
+        const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 100;
         const baseSpeed = 0.16875; // virtual speed units per millisecond (50% faster)
         
@@ -329,8 +508,9 @@ class Wave {
         const actualY = riverTop + this.yPercent * (riverBottom - riverTop - 4);
         
         // Map virtualX to actual x coordinate on canvas
-        const actualX = (this.virtualX / 2000) * canvas.width;
-        const actualLength = (this.length / 2000) * canvas.width;
+        const VIRTUAL_WIDTH = getVirtualWidth();
+        const actualX = (this.virtualX / VIRTUAL_WIDTH) * canvas.width;
+        const actualLength = (this.length / VIRTUAL_WIDTH) * canvas.width;
 
         ctx.fillStyle = this.color;
         ctx.fillRect(Math.floor(actualX), Math.floor(actualY), Math.ceil(actualLength), 4);
@@ -338,7 +518,7 @@ class Wave {
 }
 
 // Initial waves (increased for more active current lines)
-const waveParticles = Array.from({ length: 70 }, (_, i) => new Wave(i));
+const waveParticles = Array.from({ length: 4480 }, (_, i) => new Wave(i));
 
 // Collision Splash Particle
 class SplashParticle {
@@ -370,9 +550,11 @@ class SplashParticle {
 class FloatingItem {
     constructor(post) {
         this.post = post;
-        this.createdAtTime = new Date(post.createdAt).getTime();
+        const rawCreated = new Date(post.createdAt).getTime();
+        // If the post is brand new (created in the last 15 seconds or from the future due to clock skew),
+        // lock its spawn time to Date.now() so it starts off-screen on the right and sails in.
+        this.createdAtTime = (Math.abs(Date.now() - rawCreated) < 15000 || rawCreated > Date.now()) ? Date.now() : rawCreated;
         
-        // Virtual Size (constant in virtual coordinate space)
         const spriteMeta = SPRITES[post.sprite] || SPRITES.log;
         const VIRTUAL_PIXEL_SCALE = 6.0;
         this.virtualWidth = spriteMeta.width * VIRTUAL_PIXEL_SCALE;
@@ -384,24 +566,17 @@ class FloatingItem {
         this.bobOffset = rand() * Math.PI * 2;
         this.bobSpeed = 0.001 + rand() * 0.0015; // Slow bob speed for time-based animation
         this.speedFactor = 0.8 + rand() * 0.4;   // Speed variation (0.8x to 1.2x)
-        this.hasBranch = true;                   // All logs have branches
+        this.hasBranch = false;                   // Disable branches
+        this.currentAngle = 0;
 
-        // Position - computed dynamically based on age at spawn time to distribute logs across river
-        const ageOnSpawn = Math.max(0, Date.now() - this.createdAtTime);
-        const VIRTUAL_WIDTH = 2000;
-        const travelSpan = VIRTUAL_WIDTH + 300;
-        const baseSpeed = 0.12; // Virtual base speed units per millisecond (matches physics vx)
-        const progress = (ageOnSpawn * baseSpeed * this.speedFactor) / travelSpan;
+        // Position - always spawn from behind the right edge of the screen to prevent mid-river pop-ins
+        const VIRTUAL_WIDTH = getVirtualWidth();
+        this.virtualX = VIRTUAL_WIDTH;
         
-        if (progress >= 1.0) {
-            this.isExpired = true;
-        }
-
-        this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
-        
-        const riverTop = 460;
-        const riverBottom = 720;
-        this.virtualY = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.virtualHeight - 8);
+        const LANES = [400, 480, 560];
+        const lane = Math.floor(rand() * 3);
+        this.targetVirtualY = LANES[lane];
+        this.virtualY = this.targetVirtualY;
         
         // Physical state vectors in virtual coordinate space
         this.virtualTargetVx = -2.0 * this.speedFactor;
@@ -410,24 +585,22 @@ class FloatingItem {
         
         this.currentBob = 0;
         this.isHovered = false;
-
+ 
         // Splash effect for brand new logs dropped in
         this.splashProgress = (Date.now() - this.createdAtTime < 2500) ? 0.0 : 1.0;
         this.hasEnteredScreen = false;
     }
-
+ 
     realign() {
         const age = Math.max(0, Date.now() - this.createdAtTime);
-        const VIRTUAL_WIDTH = 2000;
+        const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 300;
         const baseSpeed = 0.12;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         
         this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
         
-        const riverTop = 460;
-        const riverBottom = 720;
-        this.virtualY = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.virtualHeight - 8);
+        this.virtualY = this.targetVirtualY;
         
         this.virtualVx = this.virtualTargetVx;
         this.virtualVy = 0;
@@ -440,24 +613,31 @@ class FloatingItem {
         this.virtualX += this.virtualVx;
         this.virtualY += this.virtualVy;
         
-        const riverTop = 460;
-        const riverBottom = 720;
-        const targetY = riverTop + 4 + this.yPercent * (riverBottom - riverTop - this.virtualHeight - 8);
-        
         // Slowly float back to original vertical lane and restore horizontal drift speed
         this.virtualVx += (this.virtualTargetVx - this.virtualVx) * 0.06;
-        this.virtualY += (targetY - this.virtualY) * 0.02;
+        this.virtualY += (this.targetVirtualY - this.virtualY) * 0.02;
         this.virtualVy += (0 - this.virtualVy) * 0.03;
 
         // Keep inside vertical river boundary (bounce off top/bottom)
-        const minVal = riverTop + 4;
-        const maxVal = riverBottom - this.virtualHeight - 8;
+        const minVal = 390;
+        const maxVal = 620;
         if (this.virtualY < minVal) {
             this.virtualY = minVal;
             this.virtualVy = Math.abs(this.virtualVy) * 0.5 + 0.25; // push down in virtual units
         } else if (this.virtualY > maxVal) {
             this.virtualY = maxVal;
             this.virtualVy = -Math.abs(this.virtualVy) * 0.5 - 0.25; // push up in virtual units
+        }
+
+        // Enforce that boats always push forward (to the left) and never stop or drift backwards
+        if (this.virtualVx > -0.6 * this.speedFactor) {
+            this.virtualVx = -0.6 * this.speedFactor;
+        }
+
+        // Clamp maximum speed to the left to prevent compounding chain collisions from launching boats off-screen too quickly
+        const maxLeftSpeed = -1.6 * this.speedFactor;
+        if (this.virtualVx < maxLeftSpeed) {
+            this.virtualVx = maxLeftSpeed;
         }
 
         // Trigger exit / expiration when off screen to the left
@@ -467,16 +647,15 @@ class FloatingItem {
     }
 
     update(t) {
-        // Bobbing animation based on absolute time
-        const currentBobPhase = this.bobOffset + (t * this.bobSpeed);
-        this.currentBob = Math.sin(currentBobPhase) * 6;
+        // Bobbing animation disabled for smooth line sailing
+        this.currentBob = 0;
         
         if (this.splashProgress < 1.0) {
             this.splashProgress += 0.04;
         }
 
         // Trigger entrance sound using scaled coordinates
-        const scaleX = canvas.width / 2000;
+        const scaleX = canvas.width / getVirtualWidth();
         const screenX = this.virtualX * scaleX;
         const screenWidth = this.virtualWidth * scaleX;
         if (!this.hasEnteredScreen && screenX <= canvas.width && screenX + screenWidth >= 0) {
@@ -488,7 +667,7 @@ class FloatingItem {
     }
 
     draw() {
-        const scaleX = canvas.width / 2000;
+        const scaleX = canvas.width / getVirtualWidth();
         const scaleY = canvas.height / 1000;
 
         const drawX = Math.floor(this.virtualX * scaleX);
@@ -522,49 +701,35 @@ class FloatingItem {
             ctx.fillRect(drawX + drawWidth/2 - radius/2, drawY + drawHeight/2 - radius/2, radius, radius);
         }
 
-        // Draw bobbing water ripples/wake at the water line (bottom of the log)
-        // Normalize the bobbing phase to a positive scale (0.3 to 1.0) for continuous movement
-        const ripplePulse = 0.65 + (this.currentBob / 6) * 0.35;
-        
-        ctx.fillStyle = "rgba(0, 240, 255, 0.75)"; // Brighter cyan water ripple
-        const rippleY = drawY + drawHeight - Math.floor(1 * scaleY);
-        const rippleHeight = Math.max(2, Math.ceil(3 * scaleY));
-        
-        // Left ripple segment
-        const leftRippleWidth = Math.floor(ripplePulse * 30 * scaleX);
-        const leftX = drawX - leftRippleWidth - Math.floor(3 * scaleX);
-        ctx.fillRect(leftX, rippleY, leftRippleWidth, rippleHeight);
-        
-        // Right ripple segment (longer wake trailing behind the log moving left)
-        const rightRippleWidth = Math.floor(ripplePulse * 45 * scaleX);
-        const rightX = drawX + drawWidth + Math.floor(3 * scaleX);
-        ctx.fillRect(rightX, rippleY, rightRippleWidth, rippleHeight);
 
-        // Fainter outer white ripples extending further out
-        ctx.fillStyle = "rgba(255, 255, 255, 0.5)"; // Semi-transparent white
-        const outerRippleHeight = Math.max(1, Math.ceil(2 * scaleY));
-        
-        const outerLeftWidth = Math.floor(ripplePulse * 15 * scaleX);
-        const outerLeftX = leftX - outerLeftWidth - Math.floor(4 * scaleX);
-        ctx.fillRect(outerLeftX, rippleY + Math.floor(1 * scaleY), outerLeftWidth, outerRippleHeight);
 
-        const outerRightWidth = Math.floor(ripplePulse * 22 * scaleX);
-        const outerRightX = rightX + rightRippleWidth + Math.floor(4 * scaleX);
-        ctx.fillRect(outerRightX, rippleY + Math.floor(1 * scaleY), outerRightWidth, outerRippleHeight);
-
-        // Render the 8-bit sprite matrix
-        const grid = spriteMeta.grid;
-        for (let r = 0; r < grid.length; r++) {
-            for (let c = 0; c < grid[r].length; c++) {
-                const colorCode = grid[r][c];
-                if (colorCode !== 0) {
-                    ctx.fillStyle = spriteMeta.palette[colorCode];
-                    ctx.fillRect(
-                        drawX + c * renderPixelScale, 
-                        drawY + r * renderPixelScale, 
-                        Math.ceil(renderPixelScale), 
-                        Math.ceil(renderPixelScale)
-                    );
+        // Render sailing boat image if loaded and this is a log variant (flipped to face the direction of travel)
+        if (this.post.sprite && this.post.sprite.startsWith('log') && window.isBoatLoaded && window.boatImg) {
+            ctx.save();
+            ctx.translate(drawX + drawWidth, drawY);
+            ctx.scale(-1, 1);
+            
+            // Get user-specific color boat canvas
+            const selectedImg = window.getBoatCanvasForUser ? window.getBoatCanvasForUser(this.post.username) : window.boatImg;
+            const drawTarget = selectedImg || window.boatImg;
+            
+            ctx.drawImage(drawTarget, 0, 0, drawWidth, drawHeight);
+            ctx.restore();
+        } else {
+            // Render the 8-bit sprite matrix
+            const grid = spriteMeta.grid;
+            for (let r = 0; r < grid.length; r++) {
+                for (let c = 0; c < grid[r].length; c++) {
+                    const colorCode = grid[r][c];
+                    if (colorCode !== 0) {
+                        ctx.fillStyle = spriteMeta.palette[colorCode];
+                        ctx.fillRect(
+                            drawX + c * renderPixelScale, 
+                            drawY + r * renderPixelScale, 
+                            Math.ceil(renderPixelScale), 
+                            Math.ceil(renderPixelScale)
+                        );
+                    }
                 }
             }
         }
@@ -629,7 +794,7 @@ class FloatingItem {
     }
 
     checkCollision(mx, my) {
-        const scaleX = canvas.width / 2000;
+        const scaleX = canvas.width / getVirtualWidth();
         const scaleY = canvas.height / 1000;
 
         const drawX = this.virtualX * scaleX;
@@ -668,7 +833,7 @@ function updatePhysics() {
             
             if (overlapX > 0 && overlapY > 0) {
                 // Spawn pixelated water splash particles at screen contact point
-                const scaleX = canvas.width / 2000;
+                const scaleX = canvas.width / getVirtualWidth();
                 const scaleY = canvas.height / 1000;
                 const contactX = ((Math.max(a.virtualX, b.virtualX) + Math.min(a.virtualX + a.virtualWidth, b.virtualX + b.virtualWidth)) / 2) * scaleX;
                 const contactY = ((Math.max(a.virtualY, b.virtualY) + Math.min(a.virtualY + a.virtualHeight, b.virtualY + b.virtualHeight)) / 2) * scaleY;
@@ -687,10 +852,10 @@ function updatePhysics() {
                         a.virtualVy += 0.3;
                         b.virtualVy -= 0.3;
                         
-                        // Bounce velocities (elastic response with mild damping to allow realistic grouping/jamming)
+                        // Bounce velocities (elastic response favoring pushing the front boat forward faster)
                         const temp = a.virtualVx;
-                        a.virtualVx = b.virtualVx * 0.8;
-                        b.virtualVx = temp * 0.8;
+                        a.virtualVx = Math.min(a.virtualVx, b.virtualVx * 1.3);
+                        b.virtualVx = temp * 0.55;
                     } else {
                         a.virtualX += push;
                         b.virtualX -= push;
@@ -698,9 +863,10 @@ function updatePhysics() {
                         a.virtualVy -= 0.3;
                         b.virtualVy += 0.3;
                         
+                        // Bounce velocities (elastic response favoring pushing the front boat forward faster)
                         const temp = a.virtualVx;
-                        a.virtualVx = b.virtualVx * 0.8;
-                        b.virtualVx = temp * 0.8;
+                        b.virtualVx = Math.min(b.virtualVx, a.virtualVx * 1.3);
+                        a.virtualVx = temp * 0.55;
                     }
                 } else {
                     const push = overlapY / 2;
@@ -724,6 +890,19 @@ function updatePhysics() {
             }
         }
     }
+
+    // Clamp Y positions of all items to stay strictly inside the river channel (prevent pushing onto land)
+    floatingItems.forEach(item => {
+        const minVal = 390;
+        const maxVal = 620;
+        if (item.virtualY < minVal) {
+            item.virtualY = minVal;
+            item.virtualVy = Math.abs(item.virtualVy) * 0.5 + 0.25;
+        } else if (item.virtualY > maxVal) {
+            item.virtualY = maxVal;
+            item.virtualVy = -Math.abs(item.virtualVy) * 0.5 - 0.25;
+        }
+    });
 
     // Filter out expired items
     floatingItems = floatingItems.filter(item => {
@@ -1743,8 +1922,14 @@ async function syncDatabasePosts() {
         const activePosts = posts.filter(post => !expiredPostIds.has(post.id));
         if (hudItemCount) hudItemCount.textContent = activePosts.length;
         
-        // Remove any floating items that are no longer present in activePosts (keep local mock logs)
-        floatingItems = floatingItems.filter(item => item.post.id.startsWith("local_") || activePosts.some(post => post.id === item.post.id));
+        // Remove any floating items that are no longer present in activePosts,
+        // but only if they have also physically sailed off screen to the left (isExpired) to prevent premature deletion during traffic jams.
+        floatingItems = floatingItems.filter(item => {
+            if (item.post.id.startsWith("local_")) return true;
+            const isPresentInActive = activePosts.some(post => post.id === item.post.id);
+            if (isPresentInActive) return true;
+            return !item.isExpired;
+        });
 
         // Re-align floatingItems array: add any logs that are present in activePosts but missing on screen
         activePosts.forEach((post) => {
@@ -2562,7 +2747,7 @@ window.simulateLogs = function(count = 20) {
         
         const newItem = new FloatingItem(mockPost);
         // Spawn them staggered across the visible screen area to trigger immediate bounces
-        newItem.virtualX = Math.random() * (2000 - 250) + 50;
+        newItem.virtualX = Math.random() * (getVirtualWidth() - 250) + 50;
         newItem.virtualVx = -2.0 * newItem.speedFactor; // start drift velocity
         
         floatingItems.push(newItem);

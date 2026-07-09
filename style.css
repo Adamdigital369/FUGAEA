@@ -78,19 +78,16 @@ body {
 
 /* Arcade Cabinet Wrapping Frame */
 .arcade-cabinet {
-    width: 95vw;
-    height: 92vh;
-    max-width: 1200px;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100%;
     background-color: var(--bezel-color);
-    border: 8px solid var(--cabinet-border);
-    box-shadow: 
-        0 0 0 8px #000,
-        0 15px 0 #000,
-        0 20px 25px rgba(0, 0, 0, 0.6);
+    border: none;
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     position: relative;
-    padding: 10px;
+    padding: 0;
     overflow: hidden;
 }
 
@@ -476,7 +473,7 @@ body {
 }
 
 .footer-disclaimer {
-    color: #ff5555;
+    color: #888;
     font-family: 'Press Start 2P', cursive;
     font-size: 10px;
 }
