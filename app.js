@@ -631,7 +631,7 @@ class FloatingItem {
 
         // Keep inside vertical river boundary (bounce off top/bottom)
         const minVal = 390;
-        const maxVal = 620;
+        const maxVal = 580;
         if (this.virtualY < minVal) {
             this.virtualY = minVal;
             this.virtualVy = Math.abs(this.virtualVy) * 0.5 + 0.25; // push down in virtual units
@@ -908,7 +908,7 @@ function updatePhysics() {
     // Clamp Y positions of all items to stay strictly inside the river channel (prevent pushing onto land)
     floatingItems.forEach(item => {
         const minVal = 390;
-        const maxVal = 620;
+        const maxVal = 580;
         if (item.virtualY < minVal) {
             item.virtualY = minVal;
             item.virtualVy = Math.abs(item.virtualVy) * 0.5 + 0.25;
