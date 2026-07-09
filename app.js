@@ -551,9 +551,7 @@ class FloatingItem {
     constructor(post) {
         this.post = post;
         const rawCreated = new Date(post.createdAt).getTime();
-        // If the post is brand new (created in the last 15 seconds or from the future due to clock skew),
-        // lock its spawn time to Date.now() so it starts off-screen on the right and sails in.
-        this.createdAtTime = (Math.abs(Date.now() - rawCreated) < 15000 || rawCreated > Date.now()) ? Date.now() : rawCreated;
+        this.createdAtTime = rawCreated;
         
         const spriteMeta = SPRITES[post.sprite] || SPRITES.log;
         const VIRTUAL_PIXEL_SCALE = 6.0;
@@ -571,7 +569,16 @@ class FloatingItem {
 
         // Position - always spawn from behind the right edge of the screen to prevent mid-river pop-ins
         const VIRTUAL_WIDTH = getVirtualWidth();
-        this.virtualX = VIRTUAL_WIDTH;
+        const age = Math.max(0, Date.now() - this.createdAtTime);
+        const travelSpan = VIRTUAL_WIDTH + 300;
+        const baseSpeed = 0.12;
+        const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
+        
+        if (age < 5000) {
+            this.virtualX = VIRTUAL_WIDTH;
+        } else {
+            this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
+        }
         
         const LANES = [400, 480, 560];
         const lane = Math.floor(rand() * 3);
