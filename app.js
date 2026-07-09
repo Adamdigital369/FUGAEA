@@ -494,7 +494,7 @@ class Wave {
     update(t) {
         const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 100;
-        const baseSpeed = 0.28; // virtual speed units per millisecond (scaled up)
+        const baseSpeed = 0.12; // virtual speed units per millisecond (slowed down waves)
         
         // Progress goes from 0 to 1
         const progress = ( (t * baseSpeed * this.speedFactor) / travelSpan + this.phase ) % 1.0;
