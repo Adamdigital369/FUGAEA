@@ -145,9 +145,9 @@ body {
 }
 
 .tagline {
-    font-size: 8px;
+    font-size: 10px;
     font-family: 'Press Start 2P', cursive;
-    color: #888888;
+    color: #aaaaaa;
     margin: 0;
     line-height: 1.2;
     text-transform: uppercase;
@@ -680,7 +680,7 @@ body {
 
     .tagline {
         text-align: center;
-        font-size: 7px;
+        font-size: 8px;
     }
 
     .stats-container {
