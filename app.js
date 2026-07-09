@@ -567,18 +567,13 @@ class FloatingItem {
         this.hasBranch = false;                   // Disable branches
         this.currentAngle = 0;
 
-        // Position - always spawn from behind the right edge of the screen to prevent mid-river pop-ins
+        // Position - calculate exact age-based horizontal position to keep all tabs 100% in sync
         const VIRTUAL_WIDTH = getVirtualWidth();
         const age = Math.max(0, Date.now() - this.createdAtTime);
         const travelSpan = VIRTUAL_WIDTH + 300;
         const baseSpeed = 0.12;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
-        
-        if (age < 5000) {
-            this.virtualX = VIRTUAL_WIDTH;
-        } else {
-            this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
-        }
+        this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
         
         const LANES = [400, 480, 560];
         const lane = Math.floor(rand() * 3);
@@ -627,7 +622,7 @@ class FloatingItem {
         const baseSpeed = 0.12;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         const expectedX = VIRTUAL_WIDTH - progress * travelSpan;
-        this.virtualX += (expectedX - this.virtualX) * 0.01;
+        this.virtualX += (expectedX - this.virtualX) * 0.1;
         
         // Slowly float back to original vertical lane and restore horizontal drift speed
         this.virtualVx += (this.virtualTargetVx - this.virtualVx) * 0.06;
@@ -683,6 +678,9 @@ class FloatingItem {
     }
 
     draw() {
+        if (this.post.sprite && this.post.sprite.startsWith('log') && !window.isBoatLoaded) {
+            return;
+        }
         const scaleX = canvas.width / getVirtualWidth();
         const scaleY = canvas.height / 1000;
 
