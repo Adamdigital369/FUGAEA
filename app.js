@@ -117,8 +117,8 @@ rawBoatImg.onload = () => {
             continue;
         }
 
-        // 2. Erase the keel, rudder, and water (UNCONDITIONALLY below the hull line Y = 88%)
-        if (yCoord >= h * 0.88) {
+        // 2. Erase the keel, rudder, and water (UNCONDITIONALLY below the hull line Y = 91%)
+        if (yCoord >= h * 0.91) {
             data[i+3] = 0;
             continue;
         }
@@ -153,12 +153,12 @@ rawBoatImg.onload = () => {
         }
 
         // 4. Hull Recolor (recolor white hull to black, keep dark crew members intact)
-        const isLight = (r > 80 && g > 80 && b > 80 && Math.abs(r - g) < 25 && Math.abs(g - b) < 25);
+        const isLight = (r > 115 && g > 115 && b > 115 && Math.abs(r - g) < 22 && Math.abs(g - b) < 22);
         if (isLight && yCoord >= h * 0.77) {
             const lum = r / 255.0;
-            data[i] = Math.floor(lum * 5);
-            data[i+1] = Math.floor(lum * 5);
-            data[i+2] = Math.floor(lum * 5);
+            data[i] = Math.floor(lum * 20);
+            data[i+1] = Math.floor(lum * 20);
+            data[i+2] = Math.floor(lum * 20);
         }
     }
 
