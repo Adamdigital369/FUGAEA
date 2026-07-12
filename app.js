@@ -585,9 +585,10 @@ class FloatingItem {
         this.virtualWidth = spriteMeta.width * VIRTUAL_PIXEL_SCALE;
         this.virtualHeight = spriteMeta.height * VIRTUAL_PIXEL_SCALE;
 
-        // Seeded random for deterministic attributes per log
+        // Seeded random for deterministic attributes per log (quantized to 5 discrete lanes)
         const rand = seededRandom(post.id);
-        this.yPercent = rand();
+        const lane = Math.floor(rand() * 5);
+        this.yPercent = lane / 4; // Spaced evenly: 0.0, 0.25, 0.5, 0.75, 1.0
         this.bobOffset = rand() * Math.PI * 2;
         this.bobSpeed = 0.001 + rand() * 0.0015; // Slow bob speed for time-based animation
         this.speedFactor = 0.8 + rand() * 0.4;   // Speed variation (0.8x to 1.2x)
@@ -651,9 +652,9 @@ class FloatingItem {
         const expectedX = VIRTUAL_WIDTH - progress * travelSpan;
         this.virtualX += (expectedX - this.virtualX) * 0.1;
         
-        // Slowly float back to original vertical lane and restore horizontal drift speed
+        // Slowly float back to original vertical lane and restore horizontal drift speed (tighter pull for straight lanes)
         this.virtualVx += (this.virtualTargetVx - this.virtualVx) * 0.06;
-        this.virtualY += (this.targetVirtualY - this.virtualY) * 0.02;
+        this.virtualY += (this.targetVirtualY - this.virtualY) * 0.08;
         this.virtualVy += (0 - this.virtualVy) * 0.03;
 
         // Keep inside vertical river boundary (bounce off top/bottom)
