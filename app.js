@@ -586,7 +586,9 @@ class FloatingItem {
         this.virtualHeight = spriteMeta.height * VIRTUAL_PIXEL_SCALE;
 
         // Seeded random for deterministic attributes per log (quantized to 5 discrete lanes)
-        const rand = seededRandom(post.id);
+        // Seed using username and text so optimistic logs and database logs calculate identical lanes, speed, and bobbing
+        const seedString = `${post.username}_${post.text}`;
+        const rand = seededRandom(seedString);
         const lane = Math.floor(rand() * 5);
         this.yPercent = lane / 4; // Spaced evenly: 0.0, 0.25, 0.5, 0.75, 1.0
         this.bobOffset = rand() * Math.PI * 2;
@@ -1963,7 +1965,9 @@ registerForm.addEventListener("submit", async (e) => {
 
 // --- POPULATE FLOATING ITEMS ---
 function isPostCompleted(post) {
-    const rand = seededRandom(post.id);
+    // Seed using username and text to match FloatingItem constructor attributes
+    const seedString = `${post.username}_${post.text}`;
+    const rand = seededRandom(seedString);
     rand(); // yPercent
     rand(); // bobOffset
     rand(); // bobSpeed
