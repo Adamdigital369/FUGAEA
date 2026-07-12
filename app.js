@@ -886,6 +886,11 @@ function updatePhysics() {
             const a = floatingItems[i];
             const b = floatingItems[j];
             
+            // Skip collision physics if either log is still off-screen to the right (has not entered play area)
+            if (a.virtualX > 2000 || b.virtualX > 2000) {
+                continue;
+            }
+            
             // Check box overlap in virtual coordinates
             const overlapX = Math.min(a.virtualX + a.virtualWidth, b.virtualX + b.virtualWidth) - Math.max(a.virtualX, b.virtualX);
             const overlapY = Math.min(a.virtualY + a.virtualHeight, b.virtualY + b.virtualHeight) - Math.max(a.virtualY, b.virtualY);
