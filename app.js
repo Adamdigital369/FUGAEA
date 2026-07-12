@@ -710,12 +710,15 @@ class FloatingItem {
     draw() {
         const scaleX = canvas.width / getVirtualWidth();
         const scaleY = canvas.height / 1000;
+        
+        // Caps the visual scale factor at 0.6 to prevent the "zoomed-in" look on large monitors
+        const zoomScale = Math.min(0.6, scaleX);
 
         const drawX = Math.floor(this.virtualX * scaleX);
         const drawY = Math.floor(this.virtualY * scaleY) + this.currentBob;
-        const drawWidth = this.virtualWidth * scaleX;
+        const drawWidth = this.virtualWidth * zoomScale;
         const drawHeight = this.virtualHeight * scaleY;
-        const renderPixelScale = 6.0 * scaleX; // Proportional sprite scale
+        const renderPixelScale = 6.0 * zoomScale; // Proportional sprite scale
 
         const spriteMeta = SPRITES[this.post.sprite] || SPRITES.log;
 
@@ -727,7 +730,7 @@ class FloatingItem {
             // Expand selection boundary to cover username, branch, and log with a buffer
             const topOffset = (this.hasBranch ? 61 : 44) * scaleY;
             const bottomOffset = 8 * scaleY;
-            const sideOffset = 15 * scaleX;
+            const sideOffset = 15 * zoomScale;
             
             ctx.strokeRect(drawX - sideOffset, drawY - topOffset, drawWidth + sideOffset * 2, drawHeight + topOffset + bottomOffset);
             
@@ -738,7 +741,7 @@ class FloatingItem {
         // Splash effect for brand new logs dropped in
         if (this.splashProgress < 1.0) {
             ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-            const radius = (1 - this.splashProgress) * 40 * scaleX;
+            const radius = (1 - this.splashProgress) * 40 * zoomScale;
             ctx.fillRect(drawX + drawWidth/2 - radius/2, drawY + drawHeight/2 - radius/2, radius, radius);
         }
 
@@ -751,25 +754,25 @@ class FloatingItem {
         const rippleHeight = Math.max(2, Math.ceil(3 * scaleY));
         
         // Left ripple segment
-        const leftRippleWidth = Math.floor(ripplePulse * 30 * scaleX);
-        const leftX = drawX - leftRippleWidth - Math.floor(3 * scaleX);
+        const leftRippleWidth = Math.floor(ripplePulse * 30 * zoomScale);
+        const leftX = drawX - leftRippleWidth - Math.floor(3 * zoomScale);
         ctx.fillRect(leftX, rippleY, leftRippleWidth, rippleHeight);
         
         // Right ripple segment (longer wake trailing behind the log moving left)
-        const rightRippleWidth = Math.floor(ripplePulse * 45 * scaleX);
-        const rightX = drawX + drawWidth + Math.floor(3 * scaleX);
+        const rightRippleWidth = Math.floor(ripplePulse * 45 * zoomScale);
+        const rightX = drawX + drawWidth + Math.floor(3 * zoomScale);
         ctx.fillRect(rightX, rippleY, rightRippleWidth, rippleHeight);
 
         // Fainter outer white ripples extending further out
         ctx.fillStyle = "rgba(255, 255, 255, 0.5)"; // Semi-transparent white
         const outerRippleHeight = Math.max(1, Math.ceil(2 * scaleY));
         
-        const outerLeftWidth = Math.floor(ripplePulse * 15 * scaleX);
-        const outerLeftX = leftX - outerLeftWidth - Math.floor(4 * scaleX);
+        const outerLeftWidth = Math.floor(ripplePulse * 15 * zoomScale);
+        const outerLeftX = leftX - outerLeftWidth - Math.floor(4 * zoomScale);
         ctx.fillRect(outerLeftX, rippleY + Math.floor(1 * scaleY), outerLeftWidth, outerRippleHeight);
 
-        const outerRightWidth = Math.floor(ripplePulse * 22 * scaleX);
-        const outerRightX = rightX + rightRippleWidth + Math.floor(4 * scaleX);
+        const outerRightWidth = Math.floor(ripplePulse * 22 * zoomScale);
+        const outerRightX = rightX + rightRippleWidth + Math.floor(4 * zoomScale);
         ctx.fillRect(outerRightX, rippleY + Math.floor(1 * scaleY), outerRightWidth, outerRippleHeight);
 
         // Render the 8-bit sprite matrix (reverted back to logs, bypassing yachts)
@@ -831,7 +834,7 @@ class FloatingItem {
         // Draw username text tag above the item (push higher if log has branches to avoid overlap)
         const username = this.post.username;
         
-        ctx.font = `${Math.max(18, Math.floor(27 * scaleX))}px VT323`;
+        ctx.font = `${Math.max(18, Math.floor(27 * zoomScale))}px VT323`;
         ctx.textAlign = "center";
         
         const textX = Math.floor(drawX + drawWidth / 2);
@@ -851,15 +854,16 @@ class FloatingItem {
     checkCollision(mx, my) {
         const scaleX = canvas.width / getVirtualWidth();
         const scaleY = canvas.height / 1000;
+        const zoomScale = Math.min(0.6, scaleX);
 
         const drawX = this.virtualX * scaleX;
         const drawY = this.virtualY * scaleY + this.currentBob;
-        const drawWidth = this.virtualWidth * scaleX;
+        const drawWidth = this.virtualWidth * zoomScale;
         const drawHeight = this.virtualHeight * scaleY;
 
         const topOffset = (this.hasBranch ? 61 : 44) * scaleY;
         const bottomOffset = 8 * scaleY;
-        const sideOffset = 15 * scaleX;
+        const sideOffset = 15 * zoomScale;
         
         return (
             mx >= drawX - sideOffset && 
