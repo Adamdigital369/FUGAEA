@@ -585,12 +585,11 @@ class FloatingItem {
         this.virtualWidth = spriteMeta.width * VIRTUAL_PIXEL_SCALE;
         this.virtualHeight = spriteMeta.height * VIRTUAL_PIXEL_SCALE;
 
-        // Seeded random for deterministic attributes per log (quantized to 5 discrete lanes)
+        // Seeded random for deterministic attributes per log (fully random vertical position)
         // Seed using username and text so optimistic logs and database logs calculate identical lanes, speed, and bobbing
         const seedString = `${post.username}_${post.text}`;
         const rand = seededRandom(seedString);
-        const lane = Math.floor(rand() * 5);
-        this.yPercent = lane / 4; // Spaced evenly: 0.0, 0.25, 0.5, 0.75, 1.0
+        this.yPercent = rand();
         this.bobOffset = rand() * Math.PI * 2;
         this.bobSpeed = 0.001 + rand() * 0.0015; // Slow bob speed for time-based animation
         this.speedFactor = 0.8 + rand() * 0.4;   // Speed variation (0.8x to 1.2x)
