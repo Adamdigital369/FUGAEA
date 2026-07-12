@@ -586,9 +586,7 @@ class FloatingItem {
         this.virtualHeight = spriteMeta.height * VIRTUAL_PIXEL_SCALE;
 
         // Seeded random for deterministic attributes per log (fully random vertical position)
-        // Seed using username and text so optimistic logs and database logs calculate identical lanes, speed, and bobbing
-        const seedString = `${post.username}_${post.text}`;
-        const rand = seededRandom(seedString);
+        const rand = seededRandom(post.id);
         this.yPercent = rand();
         this.bobOffset = rand() * Math.PI * 2;
         this.bobSpeed = 0.001 + rand() * 0.0015; // Slow bob speed for time-based animation
@@ -1964,9 +1962,7 @@ registerForm.addEventListener("submit", async (e) => {
 
 // --- POPULATE FLOATING ITEMS ---
 function isPostCompleted(post) {
-    // Seed using username and text to match FloatingItem constructor attributes
-    const seedString = `${post.username}_${post.text}`;
-    const rand = seededRandom(seedString);
+    const rand = seededRandom(post.id);
     rand(); // yPercent
     rand(); // bobOffset
     rand(); // bobSpeed
@@ -2028,6 +2024,11 @@ async function syncDatabasePosts() {
                 if (optLog) {
                     newItem.virtualX = optLog.virtualX;
                     newItem.virtualY = optLog.virtualY;
+                    newItem.targetVirtualY = optLog.targetVirtualY;
+                    newItem.yPercent = optLog.yPercent;
+                    newItem.speedFactor = optLog.speedFactor;
+                    newItem.bobOffset = optLog.bobOffset;
+                    newItem.bobSpeed = optLog.bobSpeed;
                     newItem.virtualVx = optLog.virtualVx;
                     newItem.virtualVy = optLog.virtualVy;
                     newItem.createdAtTime = optLog.createdAtTime;
@@ -2424,6 +2425,11 @@ async function initApp() {
                             if (optLog) {
                                 newItem.virtualX = optLog.virtualX;
                                 newItem.virtualY = optLog.virtualY;
+                                newItem.targetVirtualY = optLog.targetVirtualY;
+                                newItem.yPercent = optLog.yPercent;
+                                newItem.speedFactor = optLog.speedFactor;
+                                newItem.bobOffset = optLog.bobOffset;
+                                newItem.bobSpeed = optLog.bobSpeed;
                                 newItem.virtualVx = optLog.virtualVx;
                                 newItem.virtualVy = optLog.virtualVy;
                                 newItem.createdAtTime = optLog.createdAtTime;
