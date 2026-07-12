@@ -2012,7 +2012,8 @@ async function syncDatabasePosts() {
                 const optLog = floatingItems.find(item => 
                     item.post.id.startsWith("local_opt_") && 
                     item.post.username === post.username && 
-                    item.post.text === post.text
+                    (item.post.text === post.text || 
+                     item.post.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") === post.text)
                 );
                 
                 if (optLog) {
@@ -2402,6 +2403,26 @@ async function initApp() {
                         const existsOnScreen = floatingItems.some(item => item.post.id === post.id);
                         if (!existsOnScreen) {
                             const newItem = new FloatingItem(post);
+                            
+                            // If there is an optimistic log floating for this post, replace it smoothly without visual jumps
+                            const optLog = floatingItems.find(item => 
+                                item.post.id.startsWith("local_opt_") && 
+                                item.post.username === post.username && 
+                                (item.post.text === post.text || 
+                                 item.post.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") === post.text)
+                            );
+                            
+                            if (optLog) {
+                                newItem.virtualX = optLog.virtualX;
+                                newItem.virtualY = optLog.virtualY;
+                                newItem.virtualVx = optLog.virtualVx;
+                                newItem.virtualVy = optLog.virtualVy;
+                                newItem.createdAtTime = optLog.createdAtTime;
+                                
+                                // Remove optimistic log
+                                floatingItems = floatingItems.filter(item => item !== optLog);
+                            }
+                            
                             floatingItems.push(newItem);
                             
                             if (hudItemCount) {
@@ -2409,8 +2430,8 @@ async function initApp() {
                                 hudItemCount.textContent = activeCount;
                             }
                             
-                            // Play splash sound if page is loaded
-                            if (isPageLoaded) {
+                            // Play splash sound if page is loaded and it's not replacing an optimistic log
+                            if (isPageLoaded && !optLog) {
                                 sound.playSplash();
                             }
                         }
