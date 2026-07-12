@@ -33,7 +33,7 @@ supabase.auth.onAuthStateChange((event, session) => {
                 console.log("[Auth] Background fetching user profile for ID:", session.user.id);
                 const { data: profile, error } = await supabase
                     .from('profiles')
-                    .select('username, credits')
+                    .select('username, credits, status')
                     .eq('id', session.user.id)
                     .single();
 
@@ -42,6 +42,13 @@ supabase.auth.onAuthStateChange((event, session) => {
                         console.error("Error fetching user profile:", error);
                     }
                 } else if (profile) {
+                    if (profile.status === 'deleted') {
+                        console.log("[Auth] Session belongs to a deleted account. Signing out...");
+                        supabase.auth.signOut();
+                        currentUser = null;
+                        window.dispatchEvent(new CustomEvent('auth-state-changed'));
+                        return;
+                    }
                     let userCredits = profile.credits !== undefined ? profile.credits : 10;
                     
                     // Migrate users with 5 credits to 10 credits
@@ -144,6 +151,19 @@ export async function signIn(email, password, captchaToken = "") {
 
         if (error) {
             throw new Error(error.message.toUpperCase());
+        }
+
+        if (data && data.user) {
+            const { data: profile, error: profileErr } = await supabase
+                .from('profiles')
+                .select('status')
+                .eq('id', data.user.id)
+                .single();
+
+            if (profile && profile.status === 'deleted') {
+                await supabase.auth.signOut();
+                throw new Error("THIS ACCOUNT HAS BEEN DELETED.");
+            }
         }
 
         return data.session;
@@ -369,6 +389,28 @@ export async function updatePassword(newPassword) {
     if (error) {
         throw new Error(error.message.toUpperCase());
     }
+}
+
+/**
+ * Soft delete current user's profile and sign out
+ * @param {string} userId 
+ */
+export async function deleteAccount(userId) {
+    if (!userId) return;
+    
+    // Update profile status to 'deleted' in public.profiles table
+    const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ status: 'deleted' })
+        .eq('id', userId);
+        
+    if (profileError) {
+        console.error("Failed to soft-delete user profile status:", profileError);
+        throw new Error(profileError.message);
+    }
+    
+    // Sign out of Auth session
+    await signOut();
 }
 
 

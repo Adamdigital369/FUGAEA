@@ -24,7 +24,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <!-- FontAwesome for some retro-style icons if needed -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=9">
     <!-- Cloudflare Turnstile CAPTCHA -->
     <script>
         window.onloadTurnstileCallback = function() {
@@ -54,7 +54,6 @@
         <header class="retro-hud header-hud is-logged-out">
             <div class="hud-item title-container">
                 <h1>fugaea</h1>
-                <p class="tagline">A REAL-TIME USER-GENERATED LINK PLATFORM.</p>
             </div>
             <div class="hud-item stats-container">
                 <div id="hud-user-container" class="hidden">LOGGED IN: <span id="hud-user">GUEST</span></div>
@@ -401,7 +400,7 @@
                         <p style="margin-bottom: 12px;">5. USER DATA RIGHTS: YOU MAY REQUEST FULL ACCOUNT AND ASSOCIATED DATA DELETION AT ANY TIME BY REACHING OUT TO SUPPORT OR BY CLOSING YOUR ACCOUNT.</p>
                         <p style="margin-bottom: 12px; display: none;" id="close-account-container">
                             <button id="delete-account-btn" class="retro-btn" style="background-color: #ff3333; color: #ffffff !important; font-family: 'Press Start 2P', cursive; font-size: 8px; padding: 6px 12px; border: 3px solid #ffffff; box-shadow: var(--pixel-shadow); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                                <i class="fas fa-trash-alt"></i> CLOSE ACCOUNT
+                                <i class="fas fa-trash-alt"></i> DELETE ACCOUNT
                             </button>
                         </p>
                         <p style="margin-bottom: 12px;">6. THIRD-PARTY SHARING: WE DO NOT SELL, SHARE, OR DISTRIBUTE YOUR PERSONAL INFORMATION TO ANY THIRD PARTY, EXCEPT TO COMPLY WITH LEGAL OBLIGATIONS OR STRIPE AUDITS.</p>
@@ -425,6 +424,24 @@
             </div>
         </div>
     </div>
+
+    <!-- RETRO DELETE CONFIRMATION MODAL -->
+    <div id="delete-confirm-modal" class="modal-overlay hidden">
+        <div class="modal-box retro-border" style="max-width: 450px; border-color: #ff3333; background-color: #1a1c23;">
+            <div class="modal-header" style="border-bottom-color: #ff3333; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #ff3333; font-family: 'Press Start 2P', cursive; font-size: 11px;"><i class="fas fa-trash-alt" style="margin-right: 6px;"></i>DELETE ACCOUNT</h3>
+                <button id="delete-confirm-header-close" class="retro-btn close-btn" style="border-color: #ff3333; color: #ff3333 !important; background: none; font-size: 12px; padding: 4px 8px;">&times;</button>
+            </div>
+            <div class="modal-body" style="font-family: 'Press Start 2P', cursive; font-size: 9px; line-height: 1.6; text-align: center; display: flex; flex-direction: column; gap: 16px;">
+                <p style="color: #ffffff; word-break: break-word;">ARE YOU ABSOLUTELY SURE YOU WANT TO DELETE YOUR ACCOUNT? THIS CANNOT BE UNDONE.</p>
+                <div style="display: flex; gap: 12px; justify-content: center; width: 100%;">
+                    <button id="delete-confirm-yes" class="retro-btn danger-btn" style="flex: 1; border-color: #fff; background-color: #ff3333; color: #fff !important; font-family: 'Press Start 2P', cursive; font-size: 10px; padding: 10px; cursor: pointer;">YES, DELETE</button>
+                    <button id="delete-confirm-no" class="retro-btn" style="flex: 1; border-color: #fff; background-color: #555; color: #fff !important; font-family: 'Press Start 2P', cursive; font-size: 10px; padding: 10px; cursor: pointer;">NO, CANCEL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- SECURITY SCANNER MODAL -->
     <div id="security-scan-modal" class="modal-overlay hidden">
@@ -477,6 +494,6 @@
     </div>
 
     <!-- Scripts -->
-    <script type="module" src="app.js?v=229"></script>
+    <script type="module" src="app.js?v=245"></script>
 </body>
 </html>

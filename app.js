@@ -1,7 +1,42 @@
 // --- 8-BIT RETRO RIVER MAIN APPLICATION ---
 import * as auth from "./auth.js";
 import * as db from "./db.js";
-import { supabase } from "./supabase-config.js";
+import { supabase, supabaseUrl, supabaseAnonKey } from "./supabase-config.js";
+
+// --- RETRO SERVER CLOCK SYNCHRONIZER (NTP-STYLE CLOCK SKEW SYNC) ---
+window.serverTimeOffset = 0;
+
+async function syncServerTimeOffset() {
+    try {
+        const start = Date.now();
+        const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+            method: 'HEAD',
+            headers: {
+                'apikey': supabaseAnonKey
+            }
+        });
+        const end = Date.now();
+        const serverDateHeader = response.headers.get('date');
+        if (serverDateHeader) {
+            const serverTime = new Date(serverDateHeader).getTime();
+            const latency = (end - start) / 2;
+            const adjustedServerTime = serverTime + latency;
+            window.serverTimeOffset = adjustedServerTime - end;
+            console.log(`[Clock Sync] Server offset: ${window.serverTimeOffset}ms (latency: ${latency}ms)`);
+        }
+    } catch (e) {
+        console.error("Failed to sync server time offset:", e);
+    }
+}
+
+// Initial sync on load and then background update every 30 seconds
+syncServerTimeOffset();
+setInterval(syncServerTimeOffset, 30000);
+
+function getServerTime() {
+    return Date.now() + window.serverTimeOffset;
+}
+
 // --- // --- PHOTO-QUALITY SAILING BOAT ASSETS ---
 window.isBoatLoaded = false;
 window.boatImg = document.createElement('canvas');
@@ -339,34 +374,23 @@ const SPRITE_PIXEL_SCALE = 3.5; // size of each pixel grid unit
 const SPRITES = {
     log: {
         width: 24,
-        height: 24,
+        height: 7,
         palette: {
-            1: "#ffffff", // White sail
-            2: "#cccccc", // Grey sail shadow
-            3: "#ff3333", // Red flag
-            4: "#8b5226", // Brown hull/mast
-            5: "#4c2810", // Dark hull shadow / borders
-            6: "#ffcc00"  // Yellow flag accent
+            1: "#6d3e1d", // Dark brown bark
+            2: "#8b5226", // Mid brown bark
+            3: "#cd9a62", // Beige inner wood rings
+            4: "#4c2810", // Deep shadow border
+            5: "#b87742", // Light highlight bark (top)
+            6: "#542e14"  // Dark shadow bark (bottom)
         },
         grid: [
-            [0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0,0,0,3,6,3,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0,0,0,3,3,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0,0,5,4,5,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0,5,1,4,1,5,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,5,1,1,4,1,1,5,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,5,1,1,1,4,1,1,1,5,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,5,1,1,1,1,4,2,2,2,2,5,0,0,0,0,0,0],
-            [0,0,0,0,0,0,5,1,1,1,1,1,4,2,2,2,2,2,5,0,0,0,0,0],
-            [0,0,0,0,0,5,1,1,1,1,1,1,4,2,2,2,2,2,2,5,0,0,0,0],
-            [0,0,0,0,5,1,1,1,1,1,1,1,4,2,2,2,2,2,2,2,5,0,0,0],
-            [0,0,0,5,1,1,1,1,1,1,1,1,4,2,2,2,2,2,2,2,2,5,0,0],
-            [0,0,5,5,5,5,5,5,5,5,5,5,4,5,5,5,5,5,5,5,5,5,5,0],
-            [0,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5],
-            [5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
-            [5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
-            [0,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,0],
-            [0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0]
+            [0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0],
+            [0,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,4,0],
+            [4,3,5,2,5,5,2,5,5,5,2,5,5,2,5,5,5,2,5,5,5,2,3,4],
+            [4,3,2,2,1,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,1,2,3,4],
+            [4,3,1,1,6,1,1,1,6,1,1,1,6,1,1,1,6,1,1,1,6,1,3,4],
+            [0,4,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,4,0],
+            [0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0]
         ]
     },
     leaf: {
@@ -480,14 +504,16 @@ class Wave {
         this.speedFactor = rand() * 0.4 + 0.8;
         this.virtualX = getVirtualWidth() * this.phase;
 
-        // Randomly assign a gold, orange, or silver color to the ripples (approx. 15% gold, 6% orange, 79% silver)
+        // Randomly assign a gold, cyan, orange, or silver color to the ripples
         const colorRand = rand();
         if (colorRand > 0.94) {
-            this.color = "rgba(255, 110, 0, 0.5)";   // Glowing retro orange colored line
-        } else if (colorRand > 0.79) {
-            this.color = "rgba(255, 200, 50, 0.42)";  // Premium retro gold colored line
+            this.color = "rgba(0, 240, 255, 0.45)";   // Glowing retro cyan/light blue colored line (6%)
+        } else if (colorRand > 0.88) {
+            this.color = "rgba(255, 110, 0, 0.5)";    // Glowing retro orange colored line (6%)
+        } else if (colorRand > 0.73) {
+            this.color = "rgba(255, 200, 50, 0.42)";  // Premium retro gold colored line (15%)
         } else {
-            this.color = "rgba(255, 255, 255, 0.28)"; // Shiny silver/white ripples
+            this.color = "rgba(255, 255, 255, 0.28)"; // Shiny silver/white ripples (73%)
         }
     }
 
@@ -517,8 +543,8 @@ class Wave {
     }
 }
 
-// Initial waves (increased for more active current lines)
-const waveParticles = Array.from({ length: 4480 }, (_, i) => new Wave(i));
+// Initial waves (restored to 70 lines)
+const waveParticles = Array.from({ length: 70 }, (_, i) => new Wave(i));
 
 // Collision Splash Particle
 class SplashParticle {
@@ -551,7 +577,9 @@ class FloatingItem {
     constructor(post) {
         this.post = post;
         const rawCreated = new Date(post.createdAt).getTime();
-        this.createdAtTime = rawCreated;
+        // If the post is brand new (created in the last 15 seconds or from the future due to clock skew),
+        // lock its spawn time to getServerTime() so it starts exactly at the right off-screen edge and sails in.
+        this.createdAtTime = (Math.abs(getServerTime() - rawCreated) < 15000 || rawCreated > getServerTime()) ? getServerTime() : rawCreated;
         
         const spriteMeta = SPRITES[post.sprite] || SPRITES.log;
         const VIRTUAL_PIXEL_SCALE = 6.0;
@@ -564,20 +592,20 @@ class FloatingItem {
         this.bobOffset = rand() * Math.PI * 2;
         this.bobSpeed = 0.001 + rand() * 0.0015; // Slow bob speed for time-based animation
         this.speedFactor = 0.8 + rand() * 0.4;   // Speed variation (0.8x to 1.2x)
-        this.hasBranch = false;                   // Disable branches
+        this.hasBranch = true;                    // Enable branches
         this.currentAngle = 0;
 
         // Position - calculate exact age-based horizontal position to keep all tabs 100% in sync
         const VIRTUAL_WIDTH = getVirtualWidth();
-        const age = Math.max(0, Date.now() - this.createdAtTime);
+        const age = Math.max(0, getServerTime() - this.createdAtTime);
         const travelSpan = VIRTUAL_WIDTH + 300;
         const baseSpeed = 0.20;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
         
-        const LANES = [400, 480, 560];
-        const lane = Math.floor(rand() * 3);
-        this.targetVirtualY = LANES[lane];
+        const riverTop = 460;
+        const riverBottom = 720;
+        this.targetVirtualY = (riverTop + 12) + this.yPercent * (riverBottom - riverTop - this.virtualHeight - 24);
         this.virtualY = this.targetVirtualY;
         
         // Physical state vectors in virtual coordinate space
@@ -589,12 +617,12 @@ class FloatingItem {
         this.isHovered = false;
  
         // Splash effect for brand new logs dropped in
-        this.splashProgress = (Date.now() - this.createdAtTime < 2500) ? 0.0 : 1.0;
+        this.splashProgress = (getServerTime() - this.createdAtTime < 2500) ? 0.0 : 1.0;
         this.hasEnteredScreen = false;
     }
  
     realign() {
-        const age = Math.max(0, Date.now() - this.createdAtTime);
+        const age = Math.max(0, getServerTime() - this.createdAtTime);
         const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 300;
         const baseSpeed = 0.20;
@@ -607,7 +635,7 @@ class FloatingItem {
         this.virtualVx = this.virtualTargetVx;
         this.virtualVy = 0;
         this.isHovered = false;
-        this.splashProgress = (Date.now() - this.createdAtTime < 2500) ? 0.0 : 1.0;
+        this.splashProgress = (getServerTime() - this.createdAtTime < 2500) ? 0.0 : 1.0;
     }
 
     updatePhysics() {
@@ -616,7 +644,7 @@ class FloatingItem {
         this.virtualY += this.virtualVy;
         
         // Gently pull the boat towards its expected horizontal position based on database age to keep tabs perfectly synced
-        const age = Math.max(0, Date.now() - this.createdAtTime);
+        const age = Math.max(0, getServerTime() - this.createdAtTime);
         const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 300;
         const baseSpeed = 0.20;
@@ -630,8 +658,10 @@ class FloatingItem {
         this.virtualVy += (0 - this.virtualVy) * 0.03;
 
         // Keep inside vertical river boundary (bounce off top/bottom)
-        const minVal = 390;
-        const maxVal = 580;
+        const riverTop = 460;
+        const riverBottom = 720;
+        const minVal = riverTop + 12;
+        const maxVal = riverBottom - this.virtualHeight - 12;
         if (this.virtualY < minVal) {
             this.virtualY = minVal;
             this.virtualVy = Math.abs(this.virtualVy) * 0.5 + 0.25; // push down in virtual units
@@ -658,8 +688,9 @@ class FloatingItem {
     }
 
     update(t) {
-        // Bobbing animation disabled for smooth line sailing
-        this.currentBob = 0;
+        // Bobbing animation based on absolute time
+        const currentBobPhase = this.bobOffset + (t * this.bobSpeed);
+        this.currentBob = Math.sin(currentBobPhase) * 6;
         
         if (this.splashProgress < 1.0) {
             this.splashProgress += 0.04;
@@ -678,9 +709,6 @@ class FloatingItem {
     }
 
     draw() {
-        if (this.post.sprite && this.post.sprite.startsWith('log') && !window.isBoatLoaded) {
-            return;
-        }
         const scaleX = canvas.width / getVirtualWidth();
         const scaleY = canvas.height / 1000;
 
@@ -715,35 +743,49 @@ class FloatingItem {
             ctx.fillRect(drawX + drawWidth/2 - radius/2, drawY + drawHeight/2 - radius/2, radius, radius);
         }
 
+        // Draw bobbing water ripples/wake at the water line (bottom of the log)
+        // Normalize the bobbing phase to a positive scale (0.3 to 1.0) for continuous movement
+        const ripplePulse = 0.65 + (this.currentBob / 6) * 0.35;
+        
+        ctx.fillStyle = "rgba(0, 240, 255, 0.75)"; // Brighter cyan water ripple
+        const rippleY = drawY + drawHeight - Math.floor(1 * scaleY);
+        const rippleHeight = Math.max(2, Math.ceil(3 * scaleY));
+        
+        // Left ripple segment
+        const leftRippleWidth = Math.floor(ripplePulse * 30 * scaleX);
+        const leftX = drawX - leftRippleWidth - Math.floor(3 * scaleX);
+        ctx.fillRect(leftX, rippleY, leftRippleWidth, rippleHeight);
+        
+        // Right ripple segment (longer wake trailing behind the log moving left)
+        const rightRippleWidth = Math.floor(ripplePulse * 45 * scaleX);
+        const rightX = drawX + drawWidth + Math.floor(3 * scaleX);
+        ctx.fillRect(rightX, rippleY, rightRippleWidth, rippleHeight);
 
+        // Fainter outer white ripples extending further out
+        ctx.fillStyle = "rgba(255, 255, 255, 0.5)"; // Semi-transparent white
+        const outerRippleHeight = Math.max(1, Math.ceil(2 * scaleY));
+        
+        const outerLeftWidth = Math.floor(ripplePulse * 15 * scaleX);
+        const outerLeftX = leftX - outerLeftWidth - Math.floor(4 * scaleX);
+        ctx.fillRect(outerLeftX, rippleY + Math.floor(1 * scaleY), outerLeftWidth, outerRippleHeight);
 
-        // Render sailing boat image if loaded and this is a log variant (flipped to face the direction of travel)
-        if (this.post.sprite && this.post.sprite.startsWith('log') && window.isBoatLoaded && window.boatImg) {
-            ctx.save();
-            ctx.translate(drawX + drawWidth, drawY);
-            ctx.scale(-1, 1);
-            
-            // Get user-specific color boat canvas
-            const selectedImg = window.getBoatCanvasForUser ? window.getBoatCanvasForUser(this.post.username) : window.boatImg;
-            const drawTarget = selectedImg || window.boatImg;
-            
-            ctx.drawImage(drawTarget, 0, 0, drawWidth, drawHeight);
-            ctx.restore();
-        } else {
-            // Render the 8-bit sprite matrix
-            const grid = spriteMeta.grid;
-            for (let r = 0; r < grid.length; r++) {
-                for (let c = 0; c < grid[r].length; c++) {
-                    const colorCode = grid[r][c];
-                    if (colorCode !== 0) {
-                        ctx.fillStyle = spriteMeta.palette[colorCode];
-                        ctx.fillRect(
-                            drawX + c * renderPixelScale, 
-                            drawY + r * renderPixelScale, 
-                            Math.ceil(renderPixelScale), 
-                            Math.ceil(renderPixelScale)
-                        );
-                    }
+        const outerRightWidth = Math.floor(ripplePulse * 22 * scaleX);
+        const outerRightX = rightX + rightRippleWidth + Math.floor(4 * scaleX);
+        ctx.fillRect(outerRightX, rippleY + Math.floor(1 * scaleY), outerRightWidth, outerRippleHeight);
+
+        // Render the 8-bit sprite matrix (reverted back to logs, bypassing yachts)
+        const grid = spriteMeta.grid;
+        for (let r = 0; r < grid.length; r++) {
+            for (let c = 0; c < grid[r].length; c++) {
+                const colorCode = grid[r][c];
+                if (colorCode !== 0) {
+                    ctx.fillStyle = spriteMeta.palette[colorCode];
+                    ctx.fillRect(
+                        drawX + c * renderPixelScale, 
+                        drawY + r * renderPixelScale, 
+                        Math.ceil(renderPixelScale), 
+                        Math.ceil(renderPixelScale)
+                    );
                 }
             }
         }
@@ -907,8 +949,10 @@ function updatePhysics() {
 
     // Clamp Y positions of all items to stay strictly inside the river channel (prevent pushing onto land)
     floatingItems.forEach(item => {
-        const minVal = 390;
-        const maxVal = 580;
+        const riverTop = 460;
+        const riverBottom = 720;
+        const minVal = riverTop + 12;
+        const maxVal = riverBottom - item.virtualHeight - 12;
         if (item.virtualY < minVal) {
             item.virtualY = minVal;
             item.virtualVy = Math.abs(item.virtualVy) * 0.5 + 0.25;
@@ -970,11 +1014,12 @@ function renderLoop() {
     ctx.fillStyle = "#3c583a";
     ctx.fillRect(0, riverBottom, canvas.width, canvas.height - riverBottom);
 
-    const now = Date.now();
+    const localNow = Date.now();
+    const serverNow = getServerTime();
 
     // Run fixed timestep physics catch up
-    let elapsed = now - lastPhysicsTime;
-    lastPhysicsTime = now;
+    let elapsed = localNow - lastPhysicsTime;
+    lastPhysicsTime = localNow;
     if (elapsed > 1000) {
         elapsed = 1000;
     }
@@ -984,9 +1029,9 @@ function renderLoop() {
         physicsAccumulator -= PHYSICS_TIMESTEP;
     }
 
-    // Update & draw waves
+    // Update & draw waves using synchronized server time
     waveParticles.forEach(w => {
-        w.update(now);
+        w.update(serverNow);
         w.draw();
     });
 
@@ -997,9 +1042,9 @@ function renderLoop() {
     });
     collisionParticles = collisionParticles.filter(p => p.life > 0);
 
-    // Update rendering state of floating items
+    // Update rendering state of floating items using synchronized server time
     floatingItems.forEach(item => {
-        item.update(now);
+        item.update(serverNow);
     });
 
     let currentHover = null;
@@ -1917,7 +1962,7 @@ function isPostCompleted(post) {
     const travelSpan = 2300;
     const baseSpeed = 0.15;
     const travelTime = travelSpan / (baseSpeed * speedFactor);
-    const age = Date.now() - new Date(post.createdAt).getTime();
+    const age = getServerTime() - new Date(post.createdAt).getTime();
     const completed = age >= travelTime;
     console.log(`[isPostCompleted] ID: ${post.id.slice(0,8)}, age: ${Math.round(age)}, travelTime: ${Math.round(travelTime)}, completed: ${completed}`);
     return completed;
@@ -1959,10 +2004,29 @@ async function syncDatabasePosts() {
             const exists = floatingItems.some(item => item.post.id === post.id);
             if (!exists) {
                 const newItem = new FloatingItem(post);
+                
+                // If there is an optimistic log floating for this post, replace it smoothly without visual jumps
+                const optLog = floatingItems.find(item => 
+                    item.post.id.startsWith("local_opt_") && 
+                    item.post.username === post.username && 
+                    item.post.text === post.text
+                );
+                
+                if (optLog) {
+                    newItem.virtualX = optLog.virtualX;
+                    newItem.virtualY = optLog.virtualY;
+                    newItem.virtualVx = optLog.virtualVx;
+                    newItem.virtualVy = optLog.virtualVy;
+                    newItem.createdAtTime = optLog.createdAtTime;
+                    
+                    // Remove optimistic log
+                    floatingItems = floatingItems.filter(item => item !== optLog);
+                }
+                
                 floatingItems.push(newItem);
                 
-                // Play splash sound if page is loaded and it's not a historical post
-                if (isPageLoaded && Date.now() - new Date(post.createdAt).getTime() < 5000) {
+                // Play splash sound if page is loaded and it's not a historical post (and not replacing an optimistic log)
+                if (!optLog && isPageLoaded && getServerTime() - new Date(post.createdAt).getTime() < 5000) {
                     sound.playSplash();
                 }
             }
@@ -1988,6 +2052,19 @@ tossForm.addEventListener("submit", async (e) => {
         if (user.credits < 1) {
             throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD TO GET 100 LINKS.");
         }
+
+        // Spawn the log optimistically immediately to provide instant visual feedback!
+        const optimisticPost = {
+            id: "local_opt_" + Date.now(),
+            username: user.username,
+            text: textVal,
+            url: urlVal,
+            sprite: spriteVal,
+            createdAt: new Date().toISOString()
+        };
+        const optimisticLog = new FloatingItem(optimisticPost);
+        floatingItems.push(optimisticLog);
+        sound.playSplash(); // Play splash instantly!
 
         // Deduct 1 credit (handled database-side, but keep call for API compatibility)
         await auth.deductCredit(user.id);
@@ -2839,40 +2916,7 @@ if (legalClose) {
     });
 }
 
-if (deleteAccountBtn) {
-    deleteAccountBtn.addEventListener("click", async () => {
-        sound.playBleep();
-        const user = auth.getCurrentUser();
-        if (!user) return;
 
-        const confirmationText = `CONFIRM ACCOUNT CLOSURE:\n\nARE YOU SURE YOU WANT TO CLOSE YOUR ACCOUNT?\n\nTHIS WILL DEACTIVATE YOUR SESSION AND PERMANENTLY QUEUE DELETION FOR:\n- USERNAME: ${user.username.toUpperCase()}\n- EMAIL: ${user.email.toUpperCase()}\n\nIF DBL-CONFIRMED, WE WILL ATTEMPT TO AUTO-DELETE YOUR DATABASE PROFILE DATA AND LOG YOU OUT IMMEDIATELY.`;
-        if (confirm(confirmationText)) {
-            try {
-                // Try to delete profile row (triggers cascade deletion of user posts in DB)
-                const { error: deleteError } = await supabase.from('profiles').delete().eq('id', user.id);
-                if (deleteError) {
-                    console.warn("Client-side direct profile deletion blocked by RLS:", deleteError);
-                    
-                    // Generate mailto link for support email fallback if RLS or Auth API blocks it
-                    const subject = encodeURIComponent(`Close Account Request - ${user.username}`);
-                    const body = encodeURIComponent(`Hello Support,\n\nPlease close my account and permanently delete all associated data for my username '${user.username}' and email '${user.email}'.\n\nThank you.`);
-                    const mailtoUrl = `mailto:support@fugaea.com?subject=${subject}&body=${body}`;
-                    
-                    alert(`NOTICE:\n\nBECAUSE OF DATABASE SECURITY POLICIES, YOUR ACCOUNT CLOSURE MUST BE CONFIRMED BY SUPPORT.\n\nAN EMAIL CLIENT WILL NOW OPEN TO SEND A DELETION REQUEST FROM '${user.email.toUpperCase()}' TO support@fugaea.com.\n\nIF NOTHING HAPPENS, PLEASE EMAIL support@fugaea.com MANUALLY WITH THE SUBJECT 'CLOSE ACCOUNT' FROM YOUR REGISTERED EMAIL ADDRESS.`);
-                    window.location.href = mailtoUrl;
-                } else {
-                    // Success!
-                    await auth.signOut();
-                    alert("SUCCESS:\n\nYOUR PROFILE DATA HAS BEEN REMOVED. LOGGING OUT...");
-                    window.location.reload();
-                }
-            } catch (err) {
-                console.error("Account deletion failed:", err);
-                alert("ERROR: COULD NOT INITIATE ACCOUNT DELETION. PLEASE TRY AGAIN OR EMAIL support@fugaea.com.");
-            }
-        }
-    });
-}
 
 // Close legal modal if clicking outside the modal box
 if (legalModal) {
@@ -2888,7 +2932,7 @@ if (legalModal) {
 // Synchronized to the clock to keep them at the exact same location across all tabs/viewers
 function spawnFugaeaLog() {
     const intervalMs = 22000;
-    const currentEpochBlock = Math.floor(Date.now() / intervalMs);
+    const currentEpochBlock = Math.floor(getServerTime() / intervalMs);
     const spawnTimeForBlock = currentEpochBlock * intervalMs;
     const id = `local_fugaea_${currentEpochBlock}`;
     
@@ -2902,7 +2946,7 @@ function spawnFugaeaLog() {
             createdAt: new Date(spawnTimeForBlock).toISOString(),
             clicks: 0,
             text: "Fugaea is a real-time user-generated link platform.",
-            url: "https://www.youtube.com/watch?v=4r6uKPDxIZQ&list=RD4r6uKPDxIZQ&start_radio=1"
+            url: "https://www.youtube.com/watch?v=ekexQdTwkak&list=RDekexQdTwkak&start_radio=1"
         };
         const newItem = new FloatingItem(post);
         floatingItems.push(newItem);
@@ -2946,6 +2990,55 @@ if (alertHeaderCloseBtn) {
         if (urlInput) {
             urlInput.value = "";
             urlInput.focus();
+        }
+    });
+}
+
+// --- RETRO ACCOUNT DELETION HANDLERS ---
+const deleteConfirmModal = document.getElementById("delete-confirm-modal");
+const deleteConfirmHeaderClose = document.getElementById("delete-confirm-header-close");
+const deleteConfirmYes = document.getElementById("delete-confirm-yes");
+const deleteConfirmNo = document.getElementById("delete-confirm-no");
+const deleteSuccessModal = document.getElementById("delete-success-modal");
+const deleteSuccessClose = document.getElementById("delete-success-close");
+
+if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener("click", () => {
+        // Hide the legal modal first so they can see the confirmation popup clearly!
+        const legalModal = document.getElementById("legal-modal");
+        if (legalModal) legalModal.classList.add("hidden");
+        
+        if (deleteConfirmModal) deleteConfirmModal.classList.remove("hidden");
+    });
+}
+
+const closeConfirm = () => {
+    if (deleteConfirmModal) deleteConfirmModal.classList.add("hidden");
+    // Open legal-modal back up
+    const legalModal = document.getElementById("legal-modal");
+    if (legalModal) legalModal.classList.remove("hidden");
+};
+if (deleteConfirmNo) deleteConfirmNo.addEventListener("click", closeConfirm);
+if (deleteConfirmHeaderClose) deleteConfirmHeaderClose.addEventListener("click", closeConfirm);
+
+if (deleteConfirmYes) {
+    deleteConfirmYes.addEventListener("click", async () => {
+        try {
+            const user = auth.getCurrentUser();
+            if (user) {
+                deleteConfirmYes.disabled = true;
+                deleteConfirmYes.textContent = "DELETING...";
+                
+                await auth.deleteAccount(user.id);
+                
+                // Reload the window instantly to reset state and log out
+                window.location.reload();
+            }
+        } catch (err) {
+            console.error("Account deletion error:", err);
+            showRetroAlert("DELETION FAILED: " + err.message.toUpperCase());
+            deleteConfirmYes.disabled = false;
+            deleteConfirmYes.textContent = "YES, DELETE";
         }
     });
 }
