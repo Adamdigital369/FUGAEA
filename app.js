@@ -887,8 +887,8 @@ function updatePhysics() {
             const a = floatingItems[i];
             const b = floatingItems[j];
             
-            // Skip collision physics if either log is still off-screen to the right (has not entered play area)
-            if (a.virtualX > 2000 || b.virtualX > 2000) {
+            // Skip collision physics if either log has not fully entered the visible play area (off-screen to the right)
+            if (a.virtualX + a.virtualWidth > 2000 || b.virtualX + b.virtualWidth > 2000) {
                 continue;
             }
             
@@ -2070,7 +2070,7 @@ tossForm.addEventListener("submit", async (e) => {
             text: textVal,
             url: urlVal,
             sprite: spriteVal,
-            createdAt: new Date().toISOString()
+            createdAt: new Date(getServerTime()).toISOString()
         };
         const optimisticLog = new FloatingItem(optimisticPost);
         floatingItems.push(optimisticLog);
