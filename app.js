@@ -357,13 +357,23 @@ setTimeout(() => {
 
 // Deterministic seeded random number generator
 function seededRandom(seedStr) {
-    let hash = 0;
+    // Generate a 32-bit hash value from the seedStr (DJB2)
+    let hash = 5381;
     for (let i = 0; i < seedStr.length; i++) {
-        hash = seedStr.charCodeAt(i) + ((hash << 5) - hash);
+        hash = ((hash << 5) + hash) + seedStr.charCodeAt(i);
     }
+    
+    // Mulberry32 generator state
+    let state = hash >>> 0;
     return function() {
-        const x = Math.sin(hash++) * 10000;
-        return x - Math.floor(x);
+        state = (state + 0x9e3779b9) | 0;
+        let z = state;
+        z ^= z >>> 16;
+        z = Math.imul(z, 0x21f0aa7f);
+        z ^= z >>> 15;
+        z = Math.imul(z, 0x735a2d97);
+        z ^= z >>> 15;
+        return (z >>> 0) / 4294967296;
     };
 }
 
@@ -2069,7 +2079,7 @@ tossForm.addEventListener("submit", async (e) => {
 
         // Spawn the log optimistically immediately to provide instant visual feedback!
         const optimisticPost = {
-            id: "local_opt_" + Date.now(),
+            id: `local_opt_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
             username: user.username,
             text: textVal,
             url: urlVal,
