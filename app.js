@@ -520,7 +520,7 @@ class Wave {
     update(t) {
         const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 100;
-        const baseSpeed = 0.15; // virtual speed units per millisecond (midpoint wave speed)
+        const baseSpeed = 0.16875; // virtual speed units per millisecond (50% faster)
         
         // Progress goes from 0 to 1
         const progress = ( (t * baseSpeed * this.speedFactor) / travelSpan + this.phase ) % 1.0;
@@ -598,7 +598,7 @@ class FloatingItem {
         const VIRTUAL_WIDTH = getVirtualWidth();
         const age = Math.max(0, getServerTime() - this.createdAtTime);
         const travelSpan = VIRTUAL_WIDTH + 300;
-        const baseSpeed = 0.15;
+        const baseSpeed = 0.12;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
         
@@ -624,7 +624,7 @@ class FloatingItem {
         const age = Math.max(0, getServerTime() - this.createdAtTime);
         const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 300;
-        const baseSpeed = 0.15;
+        const baseSpeed = 0.12;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         
         this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
@@ -646,7 +646,7 @@ class FloatingItem {
         const age = Math.max(0, getServerTime() - this.createdAtTime);
         const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 300;
-        const baseSpeed = 0.15;
+        const baseSpeed = 0.12;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         const expectedX = VIRTUAL_WIDTH - progress * travelSpan;
         this.virtualX += (expectedX - this.virtualX) * 0.1;
@@ -1963,7 +1963,7 @@ function isPostCompleted(post) {
     rand(); // bobSpeed
     const speedFactor = 0.8 + rand() * 0.4;
     const travelSpan = 2300;
-    const baseSpeed = 0.15;
+    const baseSpeed = 0.09;
     const travelTime = travelSpan / (baseSpeed * speedFactor);
     const age = getServerTime() - new Date(post.createdAt).getTime();
     const completed = age >= travelTime;
