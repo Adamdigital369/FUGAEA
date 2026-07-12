@@ -520,7 +520,7 @@ class Wave {
     update(t) {
         const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 100;
-        const baseSpeed = 0.20; // virtual speed units per millisecond (midpoint wave speed)
+        const baseSpeed = 0.15; // virtual speed units per millisecond (midpoint wave speed)
         
         // Progress goes from 0 to 1
         const progress = ( (t * baseSpeed * this.speedFactor) / travelSpan + this.phase ) % 1.0;
@@ -598,7 +598,7 @@ class FloatingItem {
         const VIRTUAL_WIDTH = getVirtualWidth();
         const age = Math.max(0, getServerTime() - this.createdAtTime);
         const travelSpan = VIRTUAL_WIDTH + 300;
-        const baseSpeed = 0.20;
+        const baseSpeed = 0.15;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
         
@@ -608,7 +608,7 @@ class FloatingItem {
         this.virtualY = this.targetVirtualY;
         
         // Physical state vectors in virtual coordinate space
-        this.virtualTargetVx = -3.3 * this.speedFactor;
+        this.virtualTargetVx = -2.0 * this.speedFactor;
         this.virtualVx = this.virtualTargetVx;
         this.virtualVy = 0;
         
@@ -624,7 +624,7 @@ class FloatingItem {
         const age = Math.max(0, getServerTime() - this.createdAtTime);
         const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 300;
-        const baseSpeed = 0.20;
+        const baseSpeed = 0.15;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         
         this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
@@ -646,7 +646,7 @@ class FloatingItem {
         const age = Math.max(0, getServerTime() - this.createdAtTime);
         const VIRTUAL_WIDTH = getVirtualWidth();
         const travelSpan = VIRTUAL_WIDTH + 300;
-        const baseSpeed = 0.20;
+        const baseSpeed = 0.15;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         const expectedX = VIRTUAL_WIDTH - progress * travelSpan;
         this.virtualX += (expectedX - this.virtualX) * 0.1;
@@ -670,12 +670,12 @@ class FloatingItem {
         }
 
         // Enforce that boats always push forward (to the left) and never stop or drift backwards
-        if (this.virtualVx > -1.0 * this.speedFactor) {
-            this.virtualVx = -1.0 * this.speedFactor;
+        if (this.virtualVx > -0.6 * this.speedFactor) {
+            this.virtualVx = -0.6 * this.speedFactor;
         }
 
         // Clamp maximum speed to the left to prevent compounding chain collisions from launching boats off-screen too quickly
-        const maxLeftSpeed = -2.7 * this.speedFactor;
+        const maxLeftSpeed = -1.8 * this.speedFactor;
         if (this.virtualVx < maxLeftSpeed) {
             this.virtualVx = maxLeftSpeed;
         }
