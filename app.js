@@ -488,9 +488,9 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
-// Dynamic VIRTUAL_WIDTH calculation to preserve 1200px equivalent log/wave proportions
+// Fixed VIRTUAL_WIDTH calculation to keep log/wave coordinates 100% synchronized across all screen sizes
 function getVirtualWidth() {
-    return Math.max(2000, canvas.width / 0.6);
+    return 2000;
 }
 
 // Wave Crest Particle Definition
@@ -577,9 +577,8 @@ class FloatingItem {
     constructor(post) {
         this.post = post;
         const rawCreated = new Date(post.createdAt).getTime();
-        // If the post is brand new (created in the last 15 seconds or from the future due to clock skew),
-        // lock its spawn time to getServerTime() so it starts exactly at the right off-screen edge and sails in.
-        this.createdAtTime = (Math.abs(getServerTime() - rawCreated) < 15000 || rawCreated > getServerTime()) ? getServerTime() : rawCreated;
+        // If the post is from the future due to clock skew, clamp it to getServerTime() to prevent negative age.
+        this.createdAtTime = (rawCreated > getServerTime()) ? getServerTime() : rawCreated;
         
         const spriteMeta = SPRITES[post.sprite] || SPRITES.log;
         const VIRTUAL_PIXEL_SCALE = 6.0;
