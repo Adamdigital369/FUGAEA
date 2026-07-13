@@ -6,7 +6,8 @@ import { supabase } from './supabase-config.js';
 
 // Spam Prevention Keyword Blocklist
 const KEYWORD_BLOCKLIST = [
-    "spam", "scam", "illegal", "hack", "viagra", "casino", "lottery", "free money"
+    "spam", "scam", "illegal", "hack", "viagra", "casino", "lottery", "free money",
+    "porn", "pornhub", "xvideos", "nsfw", "adult content", "xxx"
 ];
 
 // Spam & Malicious Domain Blocklist (Cybersecurity Layer 1 Edge check simulation)
@@ -20,7 +21,13 @@ export const ILLEGAL_DOMAINS = [
     "scam-cash.info",
     "class1-content.gov.au",
     "bit.ly/malicious-link",
-    "tinyurl.com/spyware-redir"
+    "tinyurl.com/spyware-redir",
+    "pornhub.com",
+    "xvideos.com",
+    "xnxx.com",
+    "redtube.com",
+    "youporn.com",
+    "onlyfans.com"
 ];
 
 // Basic input sanitization to prevent XSS
