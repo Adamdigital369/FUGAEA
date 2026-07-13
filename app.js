@@ -2251,16 +2251,13 @@ async function scanIncomingLink(url) {
 }
 
 // Toss Form Submit
-tossForm.addEventListener("submit", async (e) => {
+tossForm.addEventListener("submit", (e) => {
     e.preventDefault();
     
     const textVal = postText.value;
     const urlVal = document.getElementById("post-url").value;
     const spriteVal = "log"; // Only logs allowed for link posts
     const autoRepostToggle = document.getElementById("auto-repost-toggle");
-    
-    const submitBtn = tossForm.querySelector("button[type='submit']");
-    const originalText = submitBtn ? submitBtn.innerHTML : "POST LINK (1 CREDIT)";
     
     try {
         const user = auth.getCurrentUser();
@@ -2270,23 +2267,14 @@ tossForm.addEventListener("submit", async (e) => {
             throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD TO GET 100 LINKS.");
         }
 
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI SCANNING...';
-        }
+        // Deduct credit locally and optimistically
+        user.credits -= 1;
+        updateAuthStateUI();
 
-        const scanResult = await scanIncomingLink(urlVal);
-        if (!scanResult.passed) {
-            throw new Error("SUBMISSION BLOCKED: SAFETY POLICY VIOLATION");
-        }
-
-        if (submitBtn) {
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> POSTING...';
-        }
-
-        // Spawn the log optimistically immediately to provide instant visual feedback!
+        // Spawn optimistic log
+        const optimisticId = `local_opt_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
         const optimisticPost = {
-            id: `local_opt_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+            id: optimisticId,
             username: user.username,
             text: textVal,
             url: urlVal,
@@ -2297,27 +2285,49 @@ tossForm.addEventListener("submit", async (e) => {
         floatingItems.push(optimisticLog);
         sound.playSplash(); // Play splash instantly!
 
-        // Deduct 1 credit (handled database-side, but keep call for API compatibility)
-        await auth.deductCredit(user.id);
-
-        await db.addPost({
-            username: user.username,
-            text: textVal,
-            url: urlVal,
-            sprite: spriteVal
-        });
-
         // Keep the URL filled and highlight it so they can easily re-submit or type over it
         const urlInput = document.getElementById("post-url");
-        urlInput.select();
-        urlInput.focus();
-        
-        // Fetch updated credit statistics from database
-        await auth.refreshUserProfile();
+        if (urlInput) {
+            urlInput.select();
+            urlInput.focus();
+        }
 
-        // Force database reload
-        await syncDatabasePosts();
-        postsChannel.postMessage({ type: "SYNC_POSTS" });
+        // Run security scan and DB insert in background
+        (async () => {
+            try {
+                const scanResult = await scanIncomingLink(urlVal);
+                if (!scanResult.passed) {
+                    throw new Error("SUBMISSION BLOCKED: SAFETY POLICY VIOLATION");
+                }
+
+                // Deduct 1 credit database-side
+                await auth.deductCredit(user.id);
+
+                await db.addPost({
+                    username: user.username,
+                    text: textVal,
+                    url: urlVal,
+                    sprite: spriteVal
+                });
+
+                // Fetch updated credit statistics from database
+                await auth.refreshUserProfile();
+                updateAuthStateUI();
+
+                // Force database reload
+                await syncDatabasePosts();
+                postsChannel.postMessage({ type: "SYNC_POSTS" });
+            } catch (err) {
+                // Restore credit locally on failure
+                user.credits += 1;
+                updateAuthStateUI();
+
+                // Remove optimistic log
+                floatingItems = floatingItems.filter(item => item.post.id !== optimisticId);
+
+                showRetroAlert(err.message.toUpperCase());
+            }
+        })();
 
         // If AUTO-REPOST is checked, start the Web Worker background timer
         if (autoRepostToggle && autoRepostToggle.checked) {
@@ -2330,11 +2340,6 @@ tossForm.addEventListener("submit", async (e) => {
         showRetroAlert(err.message.toUpperCase());
         if (autoRepostToggle) autoRepostToggle.checked = false;
         autoPilotWorker.postMessage({ action: 'stop' });
-    } finally {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        }
     }
 });
 
