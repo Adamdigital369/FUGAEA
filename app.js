@@ -2883,7 +2883,7 @@ async function executeShare(platform, shareUrl, element, isCopyAction = false) {
     try {
         const claimed = await auth.checkShareClaimed(user.id, platform);
         if (claimed) {
-            alert("REWARD ALREADY CLAIMED FOR THIS PLATFORM!");
+            showRetroAlert("REWARD ALREADY CLAIMED FOR THIS PLATFORM!");
             return;
         }
     } catch (err) {
@@ -2927,7 +2927,7 @@ async function executeShare(platform, shareUrl, element, isCopyAction = false) {
             const msg = isCopyAction ? `LINK COPIED! OPENING ${platform.toUpperCase()}! +10 CREDITS!` : `SHARED ON ${platform.toUpperCase()}! +10 CREDITS!`;
             showDailyBonusToast(msg);
         } catch (err) {
-            alert("COULD NOT ADD SHARE CREDITS: " + err.message.toUpperCase());
+            showRetroAlert("COULD NOT ADD SHARE CREDITS: " + err.message.toUpperCase());
             // Re-enable/restore buttons if error occurs
             await updateShareModalUI();
         }
