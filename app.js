@@ -624,6 +624,7 @@ class FloatingItem {
         
         this.currentBob = 0;
         this.isHovered = false;
+        this.virtualXOffset = 0;
  
         // Splash effect for brand new logs dropped in
         this.splashProgress = (getServerTime() - this.createdAtTime < 2500) ? 0.0 : 1.0;
@@ -638,6 +639,7 @@ class FloatingItem {
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
         
         this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
+        this.virtualXOffset = 0;
         
         this.virtualY = this.targetVirtualY;
         
@@ -658,7 +660,7 @@ class FloatingItem {
         const travelSpan = VIRTUAL_WIDTH + 300;
         const baseSpeed = 0.12;
         const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
-        const expectedX = VIRTUAL_WIDTH - progress * travelSpan;
+        const expectedX = VIRTUAL_WIDTH - progress * travelSpan + this.virtualXOffset;
         this.virtualX += (expectedX - this.virtualX) * 0.1;
         
         // Slowly float back to original vertical lane and restore horizontal drift speed (tighter pull for straight lanes)
@@ -896,8 +898,13 @@ function updatePhysics() {
             const a = floatingItems[i];
             const b = floatingItems[j];
             
-            // Skip collision physics if either log has not fully entered the visible play area (off-screen to the right)
-            if (a.virtualX + a.virtualWidth > 2000 || b.virtualX + b.virtualWidth > 2000) {
+            // Skip collision if either is expired
+            if (a.isExpired || b.isExpired) {
+                continue;
+            }
+            
+            // Skip collision physics only if both logs are completely off-screen to the right (virtualX >= 2000)
+            if (a.virtualX >= 2000 && b.virtualX >= 2000) {
                 continue;
             }
             
@@ -921,6 +928,8 @@ function updatePhysics() {
                     if (a.virtualX < b.virtualX) {
                         a.virtualX -= push;
                         b.virtualX += push;
+                        a.virtualXOffset -= push;
+                        b.virtualXOffset += push;
                         
                         // Mild vertical lane slide nudge to help them eventually clear each other
                         a.virtualVy += 0.3;
@@ -933,6 +942,8 @@ function updatePhysics() {
                     } else {
                         a.virtualX += push;
                         b.virtualX -= push;
+                        a.virtualXOffset += push;
+                        b.virtualXOffset -= push;
                         
                         a.virtualVy -= 0.3;
                         b.virtualVy += 0.3;
@@ -944,9 +955,32 @@ function updatePhysics() {
                     }
                 } else {
                     const push = overlapY / 2;
+                    const riverTop = 460;
+                    const riverBottom = 720;
                     if (a.virtualY < b.virtualY) {
                         a.virtualY -= push;
                         b.virtualY += push;
+
+                        let targetA = a.targetVirtualY - push;
+                        let targetB = b.targetVirtualY + push;
+                        const minValA = riverTop + 12;
+                        const maxValA = riverBottom - a.virtualHeight - 12;
+                        const minValB = riverTop + 12;
+                        const maxValB = riverBottom - b.virtualHeight - 12;
+
+                        if (targetA < minValA) {
+                            const excess = minValA - targetA;
+                            targetA = minValA;
+                            targetB += excess;
+                        }
+                        if (targetB > maxValB) {
+                            const excess = targetB - maxValB;
+                            targetB = maxValB;
+                            targetA -= excess;
+                        }
+
+                        a.targetVirtualY = Math.max(minValA, Math.min(maxValA, targetA));
+                        b.targetVirtualY = Math.max(minValB, Math.min(maxValB, targetB));
                         
                         // Bounce vertical velocities and add slight nudge to separate
                         const temp = a.virtualVy;
@@ -955,6 +989,27 @@ function updatePhysics() {
                     } else {
                         a.virtualY += push;
                         b.virtualY -= push;
+
+                        let targetA = a.targetVirtualY + push;
+                        let targetB = b.targetVirtualY - push;
+                        const minValA = riverTop + 12;
+                        const maxValA = riverBottom - a.virtualHeight - 12;
+                        const minValB = riverTop + 12;
+                        const maxValB = riverBottom - b.virtualHeight - 12;
+
+                        if (targetA > maxValA) {
+                            const excess = targetA - maxValA;
+                            targetA = maxValA;
+                            targetB -= excess;
+                        }
+                        if (targetB < minValB) {
+                            const excess = minValB - targetB;
+                            targetB = minValB;
+                            targetA += excess;
+                        }
+
+                        a.targetVirtualY = Math.max(minValA, Math.min(maxValA, targetA));
+                        b.targetVirtualY = Math.max(minValB, Math.min(maxValB, targetB));
                         
                         const temp = a.virtualVy;
                         a.virtualVy = b.virtualVy * -0.4 - 0.25;
@@ -2035,6 +2090,7 @@ async function syncDatabasePosts() {
                     newItem.virtualX = optLog.virtualX;
                     newItem.virtualY = optLog.virtualY;
                     newItem.targetVirtualY = optLog.targetVirtualY;
+                    newItem.virtualXOffset = optLog.virtualXOffset || 0;
                     newItem.yPercent = optLog.yPercent;
                     newItem.speedFactor = optLog.speedFactor;
                     newItem.bobOffset = optLog.bobOffset;
@@ -2436,6 +2492,7 @@ async function initApp() {
                                 newItem.virtualX = optLog.virtualX;
                                 newItem.virtualY = optLog.virtualY;
                                 newItem.targetVirtualY = optLog.targetVirtualY;
+                                newItem.virtualXOffset = optLog.virtualXOffset || 0;
                                 newItem.yPercent = optLog.yPercent;
                                 newItem.speedFactor = optLog.speedFactor;
                                 newItem.bobOffset = optLog.bobOffset;
