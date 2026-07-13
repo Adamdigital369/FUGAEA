@@ -2101,8 +2101,9 @@ async function syncDatabasePosts() {
         // but only if they have also physically sailed off screen to the left (isExpired) to prevent premature deletion during traffic jams.
         floatingItems = floatingItems.filter(item => {
             if (item.post.id.startsWith("local_")) return true;
-            const isPresentInActive = activePosts.some(post => post.id === item.post.id);
-            return isPresentInActive;
+            const isPresentInDB = databasePosts.some(post => post.id === item.post.id);
+            if (!isPresentInDB) return false; // Deleted from DB -> delete from screen immediately
+            return !item.isExpired; // Keep it on screen until it physically sails off
         });
 
         // Re-align floatingItems array: add any logs that are present in activePosts but missing on screen
