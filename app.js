@@ -2116,6 +2116,48 @@ async function syncDatabasePosts() {
     }
 }
 
+// AI Multimodal Content Safety Scanner (CORS Proxy & Heuristics)
+async function scanDestinationContent(url) {
+    const lowerUrl = url.toLowerCase();
+    const adultKeywords = ["porn", "sex", "xxx", "xvideos", "pornhub", "xnxx", "redtube", "youporn", "onlyfans", "hentai", "erotic", "adult", "nude", "naked"];
+    if (adultKeywords.some(keyword => lowerUrl.includes(keyword))) {
+        return { isPorn: true, reason: "Adult domain or URL pattern matches safety filters." };
+    }
+
+    try {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+            return { isPorn: false }; // fallback to pass if proxy fails
+        }
+        const html = await response.text();
+        const lowerHtml = html.toLowerCase();
+
+        let matchCount = 0;
+        const scanTerms = [
+            "porn", "pornhub", "xvideos", "xnxx", "redtube", "youporn", "onlyfans", 
+            "hentai", "erotic", "xxx", "sex video", "adult video", "adult webcam",
+            "tube8", "spankbang", "eporner", "chaturbate", "bongacams"
+        ];
+        
+        for (const term of scanTerms) {
+            const regex = new RegExp(term, "g");
+            const matches = lowerHtml.match(regex);
+            if (matches) {
+                matchCount += matches.length;
+            }
+        }
+
+        if (matchCount >= 3) {
+            return { isPorn: true, reason: `AI Content safety scan detected high density of adult content markers (${matchCount} matches).` };
+        }
+    } catch (err) {
+        console.warn("AI safety scan fetch failed:", err);
+    }
+    
+    return { isPorn: false };
+}
+
 // Toss Form Submit
 tossForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -2125,12 +2167,30 @@ tossForm.addEventListener("submit", async (e) => {
     const spriteVal = "log"; // Only logs allowed for link posts
     const autoRepostToggle = document.getElementById("auto-repost-toggle");
     
+    const submitBtn = tossForm.querySelector("button[type='submit']");
+    const originalText = submitBtn ? submitBtn.innerHTML : "POST LINK (1 CREDIT)";
+    
     try {
         const user = auth.getCurrentUser();
         if (!user) throw new Error("MUST BE LOGGED IN");
 
         if (user.credits < 1) {
             throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD TO GET 100 LINKS.");
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI SCANNING...';
+        }
+
+        // Run the AI Content Scan
+        const scanResult = await scanDestinationContent(urlVal);
+        if (scanResult.isPorn) {
+            throw new Error(scanResult.reason.toUpperCase());
+        }
+
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> POSTING...';
         }
 
         // Spawn the log optimistically immediately to provide instant visual feedback!
@@ -2179,6 +2239,11 @@ tossForm.addEventListener("submit", async (e) => {
         showRetroAlert(err.message.toUpperCase());
         if (autoRepostToggle) autoRepostToggle.checked = false;
         autoPilotWorker.postMessage({ action: 'stop' });
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
     }
 });
 
