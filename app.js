@@ -1051,6 +1051,7 @@ function updatePhysics() {
 
 // --- RIVER ANIMATION LOOP ---
 function renderLoop() {
+    spawnFugaeaLog();
     const skyHeight = Math.floor(canvas.height * 0.42);
     const horizonHeight = Math.floor(canvas.height * 0.04);
     const riverHeight = Math.floor(canvas.height * 0.26);
@@ -2077,6 +2078,8 @@ async function syncDatabasePosts() {
 
         // Re-align floatingItems array: add any logs that are present in activePosts but missing on screen
         activePosts.forEach((post) => {
+            if (expiredPostIds.has(post.id)) return; // Do not re-spawn expired posts!
+            
             const exists = floatingItems.some(item => item.post.id === post.id);
             if (!exists) {
                 const newItem = new FloatingItem(post);
