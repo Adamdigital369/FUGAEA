@@ -139,7 +139,7 @@ export async function getPosts() {
  * @param {string} postDetails.sprite
  * @returns {Promise<object>} The newly created post
  */
-export async function addPost({ username, text, url, sprite }) {
+export async function addPost({ id, username, text, url, sprite }) {
     // 1. Get the current active user session to confirm login status and ID
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session || !session.user) {
@@ -182,6 +182,7 @@ export async function addPost({ username, text, url, sprite }) {
     }
 
     const chosenSprite = sprite || "log";
+    const finalId = id || crypto.randomUUID();
 
     // Insert the new post into the Supabase database
     // The database level BEFORE INSERT trigger 'on_post_created' handles 
@@ -190,6 +191,7 @@ export async function addPost({ username, text, url, sprite }) {
         .from('posts')
         .insert([
             {
+                id: finalId,
                 user_id: userId,
                 text: cleanText,
                 url: cleanUrl,

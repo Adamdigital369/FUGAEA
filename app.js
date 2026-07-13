@@ -329,8 +329,10 @@ async function triggerAutoRepost() {
         // Deduct 1 credit database-side
         await auth.deductCredit(user.id);
 
-        // Submit post programmatically
+        // Submit post programmatically with client-generated UUID
+        const postId = crypto.randomUUID();
         await db.addPost({
+            id: postId,
             username: user.username,
             text: textVal,
             url: urlVal,
@@ -2330,10 +2332,10 @@ tossForm.addEventListener("submit", (e) => {
         user.credits -= 1;
         updateAuthStateUI();
 
-        // Spawn optimistic log
-        const optimisticId = `local_opt_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        // Spawn optimistic log with client-generated UUID
+        const postId = crypto.randomUUID();
         const optimisticPost = {
-            id: optimisticId,
+            id: postId,
             username: user.username,
             text: textVal,
             url: urlVal,
@@ -2363,6 +2365,7 @@ tossForm.addEventListener("submit", (e) => {
                 await auth.deductCredit(user.id);
 
                 await db.addPost({
+                    id: postId,
                     username: user.username,
                     text: textVal,
                     url: urlVal,
@@ -2382,7 +2385,7 @@ tossForm.addEventListener("submit", (e) => {
                 updateAuthStateUI();
 
                 // Remove optimistic log
-                floatingItems = floatingItems.filter(item => item.post.id !== optimisticId);
+                floatingItems = floatingItems.filter(item => item.post.id !== postId);
 
                 showRetroAlert(err.message.toUpperCase());
             }
