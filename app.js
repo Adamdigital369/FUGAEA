@@ -2048,7 +2048,34 @@ function isPostCompleted(post) {
     return completed;
 }
 
+let isSyncing = false;
+let syncNeedsRetry = false;
+
+function cleanUrlForComparison(url) {
+    if (!url) return "";
+    try {
+        let u = url.trim();
+        if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+        const urlObj = new URL(u);
+        const TRACKING_KEYS = [
+            "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+            "fbclid", "gclid", "yclid", "msclkid", "dclid", "li_fat_id"
+        ];
+        for (const key of TRACKING_KEYS) {
+            urlObj.searchParams.delete(key);
+        }
+        return urlObj.toString().replace(/\/$/, "");
+    } catch (e) {
+        return url.toLowerCase().trim().replace(/\/$/, "");
+    }
+}
+
 async function syncDatabasePosts() {
+    if (isSyncing) {
+        syncNeedsRetry = true;
+        return;
+    }
+    isSyncing = true;
     try {
         const posts = await db.getPosts();
         databasePosts = posts;
@@ -2075,8 +2102,7 @@ async function syncDatabasePosts() {
         floatingItems = floatingItems.filter(item => {
             if (item.post.id.startsWith("local_")) return true;
             const isPresentInActive = activePosts.some(post => post.id === item.post.id);
-            if (isPresentInActive) return true;
-            return !item.isExpired;
+            return isPresentInActive;
         });
 
         // Re-align floatingItems array: add any logs that are present in activePosts but missing on screen
@@ -2090,9 +2116,12 @@ async function syncDatabasePosts() {
                 // If there is an optimistic log floating for this post, replace it smoothly without visual jumps
                 const optLog = floatingItems.find(item => 
                     item.post.id.startsWith("local_opt_") && 
-                    item.post.username === post.username && 
-                    (item.post.text === post.text || 
-                     item.post.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") === post.text)
+                    (
+                        (cleanUrlForComparison(item.post.url) === cleanUrlForComparison(post.url)) ||
+                        (item.post.username.toLowerCase() === post.username.toLowerCase() && 
+                         (item.post.text === post.text || 
+                          item.post.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") === post.text))
+                    )
                 );
                 
                 if (optLog) {
@@ -2123,6 +2152,12 @@ async function syncDatabasePosts() {
         });
     } catch (e) {
         console.error("Failed to sync posts:", e);
+    } finally {
+        isSyncing = false;
+        if (syncNeedsRetry) {
+            syncNeedsRetry = false;
+            await syncDatabasePosts();
+        }
     }
 }
 
@@ -2613,12 +2648,15 @@ async function initApp() {
                             const newItem = new FloatingItem(post);
                             
                             // If there is an optimistic log floating for this post, replace it smoothly without visual jumps
-                            const optLog = floatingItems.find(item => 
-                                item.post.id.startsWith("local_opt_") && 
-                                item.post.username === post.username && 
-                                (item.post.text === post.text || 
-                                 item.post.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") === post.text)
-                            );
+                             const optLog = floatingItems.find(item => 
+                                 item.post.id.startsWith("local_opt_") && 
+                                 (
+                                     (cleanUrlForComparison(item.post.url) === cleanUrlForComparison(post.url)) ||
+                                     (item.post.username.toLowerCase() === post.username.toLowerCase() && 
+                                      (item.post.text === post.text || 
+                                       item.post.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") === post.text))
+                                 )
+                             );
                             
                             if (optLog) {
                                 newItem.virtualX = optLog.virtualX;
