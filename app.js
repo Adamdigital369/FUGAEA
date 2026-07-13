@@ -223,6 +223,7 @@ let floatingItems = [];
 let collisionParticles = [];
 let databasePosts = [];
 const expiredPostIds = new Set();
+let isInitialSync = true;
 
 // --- FALLBACK SYNC CONFIGURATION ---
 let fallbackSyncTimer = null;
@@ -2087,11 +2088,18 @@ async function syncDatabasePosts() {
         }
 
         // Add completed posts to expiredPostIds
-        posts.forEach(post => {
-            if (isPostCompleted(post)) {
+        if (isInitialSync) {
+            posts.forEach(post => {
                 expiredPostIds.add(post.id);
-            }
-        });
+            });
+            isInitialSync = false;
+        } else {
+            posts.forEach(post => {
+                if (isPostCompleted(post)) {
+                    expiredPostIds.add(post.id);
+                }
+            });
+        }
         
         // Filter active posts (that are not yet completed/expired)
         const activePosts = posts.filter(post => !expiredPostIds.has(post.id));
