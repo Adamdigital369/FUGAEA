@@ -280,7 +280,9 @@ const autoPilotWorker = new Worker(URL.createObjectURL(blob));
 
 autoPilotWorker.onmessage = (e) => {
     if (e.data === 'tick') {
-        triggerAutoRepost();
+        if (document.visibilityState === 'visible') {
+            triggerAutoRepost();
+        }
     }
 };
 
@@ -2304,12 +2306,9 @@ async function scanIncomingLink(url) {
     return { passed: true };
 }
 
-let isSubmitting = false;
-
 // Toss Form Submit
-tossForm.addEventListener("submit", async (e) => {
+tossForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
     
     const textVal = postText.value;
     let urlVal = document.getElementById("post-url").value.trim();
@@ -2318,14 +2317,6 @@ tossForm.addEventListener("submit", async (e) => {
     }
     const spriteVal = "log"; // Only logs allowed for link posts
     const autoRepostToggle = document.getElementById("auto-repost-toggle");
-    
-    const submitBtn = tossForm.querySelector('button[type="submit"]');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.style.opacity = "0.5";
-    }
-    
-    isSubmitting = true;
     
     try {
         const user = auth.getCurrentUser();
@@ -2360,40 +2351,42 @@ tossForm.addEventListener("submit", async (e) => {
             urlInput.focus();
         }
 
-        // Wait for safety scan and DB insert
-        try {
-            const scanResult = await scanIncomingLink(urlVal);
-            if (!scanResult.passed) {
-                throw new Error("SUBMISSION BLOCKED: SAFETY POLICY VIOLATION");
+        // Run security scan and DB insert in background
+        (async () => {
+            try {
+                const scanResult = await scanIncomingLink(urlVal);
+                if (!scanResult.passed) {
+                    throw new Error("SUBMISSION BLOCKED: SAFETY POLICY VIOLATION");
+                }
+
+                // Deduct 1 credit database-side
+                await auth.deductCredit(user.id);
+
+                await db.addPost({
+                    username: user.username,
+                    text: textVal,
+                    url: urlVal,
+                    sprite: spriteVal
+                });
+
+                // Fetch updated credit statistics from database
+                await auth.refreshUserProfile();
+                updateAuthStateUI();
+
+                // Force database reload
+                await syncDatabasePosts();
+                postsChannel.postMessage({ type: "SYNC_POSTS" });
+            } catch (err) {
+                // Restore credit locally on failure
+                user.credits += 1;
+                updateAuthStateUI();
+
+                // Remove optimistic log
+                floatingItems = floatingItems.filter(item => item.post.id !== optimisticId);
+
+                showRetroAlert(err.message.toUpperCase());
             }
-
-            // Deduct 1 credit database-side
-            await auth.deductCredit(user.id);
-
-            await db.addPost({
-                username: user.username,
-                text: textVal,
-                url: urlVal,
-                sprite: spriteVal
-            });
-
-            // Fetch updated credit statistics from database
-            await auth.refreshUserProfile();
-            updateAuthStateUI();
-
-            // Force database reload
-            await syncDatabasePosts();
-            postsChannel.postMessage({ type: "SYNC_POSTS" });
-        } catch (err) {
-            // Restore credit locally on failure
-            user.credits += 1;
-            updateAuthStateUI();
-
-            // Remove optimistic log
-            floatingItems = floatingItems.filter(item => item.post.id !== optimisticId);
-
-            showRetroAlert(err.message.toUpperCase());
-        }
+        })();
 
         // If AUTO-REPOST is checked, start the Web Worker background timer
         if (autoRepostToggle && autoRepostToggle.checked) {
@@ -2406,12 +2399,6 @@ tossForm.addEventListener("submit", async (e) => {
         showRetroAlert(err.message.toUpperCase());
         if (autoRepostToggle) autoRepostToggle.checked = false;
         autoPilotWorker.postMessage({ action: 'stop' });
-    } finally {
-        isSubmitting = false;
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.style.opacity = "1";
-        }
     }
 });
 
