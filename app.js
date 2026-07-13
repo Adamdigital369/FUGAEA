@@ -2201,7 +2201,7 @@ async function scanIncomingLink(url) {
     }
 
     // --- 5. ADULT CONTENT SCAN (Our new AI scraper scan) ---
-    const adultKeywords = ["porn", "sex", "xxx", "xvideos", "pornhub", "xnxx", "redtube", "youporn", "onlyfans", "hentai", "erotic", "adult", "nude", "naked"];
+    const adultKeywords = ["porn", "sex", "xxx", "xvideos", "pornhub", "xnxx", "redtube", "youporn", "onlyfans", "hentai", "erotic", "adult", "nude", "naked", "xhamster", "chaturbate", "bongacams", "stripchat", "spankbang"];
     if (adultKeywords.some(keyword => lowerUrl.includes(keyword))) {
         const logs = [
             { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" },

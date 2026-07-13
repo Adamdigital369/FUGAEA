@@ -27,7 +27,12 @@ export const ILLEGAL_DOMAINS = [
     "xnxx.com",
     "redtube.com",
     "youporn.com",
-    "onlyfans.com"
+    "onlyfans.com",
+    "xhamster.com",
+    "chaturbate.com",
+    "bongacams.com",
+    "stripchat.com",
+    "spankbang.com"
 ];
 
 // Basic input sanitization to prevent XSS
