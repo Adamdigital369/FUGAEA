@@ -2036,12 +2036,12 @@ function isPostCompleted(post) {
     rand(); // bobOffset
     rand(); // bobSpeed
     const speedFactor = 0.8 + rand() * 0.4;
-    const travelSpan = 2300;
-    const baseSpeed = 0.09;
+    const VIRTUAL_WIDTH = getVirtualWidth();
+    const travelSpan = VIRTUAL_WIDTH + 350;
+    const baseSpeed = 0.12; // Matches physics engine baseSpeed
     const travelTime = travelSpan / (baseSpeed * speedFactor);
     const age = getServerTime() - new Date(post.createdAt).getTime();
     const completed = age >= travelTime;
-    console.log(`[isPostCompleted] ID: ${post.id.slice(0,8)}, age: ${Math.round(age)}, travelTime: ${Math.round(travelTime)}, completed: ${completed}`);
     return completed;
 }
 
@@ -2110,6 +2110,7 @@ async function syncDatabasePosts() {
                 }
                 
                 floatingItems.push(newItem);
+                expiredPostIds.add(post.id); // Mark as expired/spawned immediately so it only runs down the river once!
                 
                 // Play splash sound if page is loaded and it's not a historical post (and not replacing an optimistic log)
                 if (!optLog && isPageLoaded && getServerTime() - new Date(post.createdAt).getTime() < 5000) {
@@ -2628,6 +2629,7 @@ async function initApp() {
                             }
                             
                             floatingItems.push(newItem);
+                            expiredPostIds.add(post.id); // Mark as expired/spawned immediately so it only runs down the river once!
                             
                             if (hudItemCount) {
                                 const activeCount = floatingItems.filter(item => !item.post.id.startsWith("local_")).length;
