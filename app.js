@@ -320,6 +320,9 @@ async function triggerAutoRepost() {
     }
     
     try {
+        // Deduct 1 credit database-side
+        await auth.deductCredit(user.id);
+
         // Submit post programmatically
         await db.addPost({
             username: user.username,
@@ -330,6 +333,7 @@ async function triggerAutoRepost() {
         
         // Refresh credit stats from DB
         await auth.refreshUserProfile();
+        updateAuthStateUI();
         
         // Force list reload
         await syncDatabasePosts();
@@ -1047,7 +1051,6 @@ function updatePhysics() {
 
 // --- RIVER ANIMATION LOOP ---
 function renderLoop() {
-    spawnFugaeaLog();
     const skyHeight = Math.floor(canvas.height * 0.42);
     const horizonHeight = Math.floor(canvas.height * 0.04);
     const riverHeight = Math.floor(canvas.height * 0.26);
