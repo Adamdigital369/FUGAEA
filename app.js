@@ -2275,10 +2275,8 @@ tossForm.addEventListener("submit", async (e) => {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI SCANNING...';
         }
 
-        // Run the full AI/Malware Safety scan on submission!
         const scanResult = await scanIncomingLink(urlVal);
         if (!scanResult.passed) {
-            showRetroBlockModal(urlVal, scanResult.layer, scanResult.reason, scanResult.logs);
             throw new Error("SUBMISSION BLOCKED: SAFETY POLICY VIOLATION");
         }
 
@@ -2456,52 +2454,7 @@ async function runBackgroundSecurityScan(url, clickedPostId) {
 
 // --- RETRO BLOCK MODAL POPUP ---
 function showRetroBlockModal(url, layerName, reason, logs) {
-    const securityScanModal = document.getElementById("security-scan-modal");
-    const scanTargetUrl = document.getElementById("scan-target-url");
-    const scanStatusText = document.getElementById("scan-status-text");
-    const scanProgressBar = document.getElementById("scan-progress-bar");
-    const scanLogs = document.getElementById("scan-logs");
-    const scanVerdictContainer = document.getElementById("scan-verdict-container");
-    const scanVerdictTitle = document.getElementById("scan-verdict-title");
-    const scanVerdictDetails = document.getElementById("scan-verdict-details");
-    const scanAbortBtn = document.getElementById("scan-abort-btn");
-    const scanProceedBtn = document.getElementById("scan-proceed-btn");
-    
-    // Configure modal for failed threat block state
-    securityScanModal.classList.remove("hidden");
-    securityScanModal.querySelector(".modal-box").classList.add("threat-detected");
-    
-    scanTargetUrl.textContent = url;
-    scanStatusText.textContent = "BLOCKED (THREAT DETECTED)";
-    scanStatusText.className = "";
-    scanStatusText.style.color = "#ff3333";
-    
-    scanProgressBar.style.width = "100%";
-    scanProgressBar.textContent = "BLOCKED";
-    scanProgressBar.style.backgroundColor = "#ff3333";
-    
-    // Populate scan logs for visual diagnostic
-    scanLogs.innerHTML = "";
-    logs.forEach(line => {
-        const logLine = document.createElement("div");
-        logLine.className = `scan-log-line ${line.type}`;
-        let prefix = "  ";
-        if (line.type === "success") prefix = "✔ ";
-        if (line.type === "fail") prefix = "✖ ";
-        if (line.type === "warning") prefix = "⚠ ";
-        logLine.textContent = prefix + line.text;
-        scanLogs.appendChild(logLine);
-    });
-    scanLogs.scrollTop = scanLogs.scrollHeight;
-    
-    scanVerdictContainer.classList.remove("hidden");
-    scanVerdictTitle.textContent = `BLOCKED AT ${layerName.toUpperCase()}`;
-    scanVerdictDetails.textContent = reason;
-    
-    scanAbortBtn.textContent = "ABORT / GO BACK";
-    scanProceedBtn.classList.add("hidden");
-    
-    sound.playSplash(); // warning sound
+    showRetroAlert(`BLOCKED: ${reason}`);
 }
 
 // Hook up scan modal abort button to close the modal
