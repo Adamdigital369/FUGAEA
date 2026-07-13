@@ -310,7 +310,10 @@ async function triggerAutoRepost() {
     }
     
     const textVal = postText.value;
-    const urlVal = document.getElementById("post-url").value;
+    let urlVal = document.getElementById("post-url").value.trim();
+    if (urlVal && !/^https?:\/\//i.test(urlVal)) {
+        urlVal = "https://" + urlVal;
+    }
     
     if (!textVal || !urlVal) {
         autoRepostToggle.checked = false;
@@ -2262,7 +2265,10 @@ tossForm.addEventListener("submit", (e) => {
     e.preventDefault();
     
     const textVal = postText.value;
-    const urlVal = document.getElementById("post-url").value;
+    let urlVal = document.getElementById("post-url").value.trim();
+    if (urlVal && !/^https?:\/\//i.test(urlVal)) {
+        urlVal = "https://" + urlVal;
+    }
     const spriteVal = "log"; // Only logs allowed for link posts
     const autoRepostToggle = document.getElementById("auto-repost-toggle");
     
@@ -2460,8 +2466,11 @@ async function runBackgroundSecurityScan(url, clickedPostId) {
             await db.incrementClicks(clickedPostId);
         }
     }
-    
-    window.open(url, "_blank");
+    let targetUrl = url.trim();
+    if (!/^https?:\/\//i.test(targetUrl)) {
+        targetUrl = "https://" + targetUrl;
+    }
+    window.open(targetUrl, "_blank");
 }
 
 // --- RETRO BLOCK MODAL POPUP ---
