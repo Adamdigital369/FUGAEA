@@ -3237,7 +3237,7 @@ function spawnFugaeaLog() {
             createdAt: new Date(spawnTimeForBlock).toISOString(),
             clicks: 0,
             text: "Fugaea is a real-time user-generated link platform.",
-            url: "https://www.youtube.com/watch?v=ekexQdTwkak&list=RDekexQdTwkak&start_radio=1"
+            url: "https://www.youtube.com/watch?v=N_GfH09iP9c&list=RDN_GfH09iP9c&start_radio=1"
         };
         const newItem = new FloatingItem(post);
         floatingItems.push(newItem);
