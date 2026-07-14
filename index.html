@@ -51,7 +51,7 @@
         <div class="crt-overlay"></div>
         <div class="crt-bezel-reflection"></div>
         <!-- HEADER HUD -->
-        <header class="retro-hud header-hud is-logged-out">
+        <header class="retro-hud header-hud is-logged-out" data-nosnippet>
             <div class="hud-item title-container">
                 <h1>fugaea</h1>
             </div>
@@ -81,7 +81,7 @@
             <canvas id="river-canvas"></canvas>
             
             <!-- Context HUD for clicking items -->
-            <div id="item-inspect-hud" class="inspect-hud hidden">
+            <div id="item-inspect-hud" class="inspect-hud hidden" data-nosnippet>
                 <div class="inspect-content">
                     <div class="inspect-label">INSPECTING POST...</div>
                     <div class="inspect-details">
@@ -101,7 +101,7 @@
         </main>
 
         <!-- FOOTER / SUBMISSION CONTROLS -->
-        <footer class="retro-hud footer-hud">
+        <footer class="retro-hud footer-hud" data-nosnippet>
             <div id="submit-section" class="submit-wrapper hidden">
                 <form id="toss-form" class="retro-form">
                     <div class="form-row">
@@ -180,7 +180,7 @@
     </div>
 
     <!-- AUTH MODAL -->
-    <div id="auth-modal" class="modal-overlay hidden">
+    <div id="auth-modal" class="modal-overlay hidden" data-nosnippet>
         <div class="modal-box retro-border">
             <div class="modal-header">
                 <h3 id="modal-title">USER</h3>
@@ -289,7 +289,7 @@
     </div>
 
     <!-- STRIPE CHECKOUT MODAL (MICROTRANSACTIONS) -->
-    <div id="checkout-modal" class="modal-overlay hidden">
+    <div id="checkout-modal" class="modal-overlay hidden" data-nosnippet>
         <div class="modal-box retro-border">
             <div class="modal-header">
                 <h3 style="font-size: 11px;">STRIPE CHECKOUT</h3>
@@ -329,7 +329,7 @@
     </div>
 
     <!-- SOCIAL SHARE MODAL -->
-    <div id="share-modal" class="modal-overlay hidden">
+    <div id="share-modal" class="modal-overlay hidden" data-nosnippet>
         <div class="modal-box retro-border">
             <div class="modal-header">
                 <h3 style="font-size: 11px;">SHARE & GET UP TO +60 CREDITS</h3>
@@ -363,7 +363,7 @@
     </div>
 
     <!-- LEGAL MODAL (TOS & PRIVACY) -->
-    <div id="legal-modal" class="modal-overlay hidden">
+    <div id="legal-modal" class="modal-overlay hidden" data-nosnippet>
         <div class="modal-box retro-border" style="max-width: 550px;">
             <div class="modal-header">
                 <h3 id="legal-modal-title">LEGAL POLICY</h3>
@@ -412,7 +412,7 @@
     </div>
 
     <!-- RETRO ALERT MODAL -->
-    <div id="retro-alert-modal" class="modal-overlay hidden">
+    <div id="retro-alert-modal" class="modal-overlay hidden" data-nosnippet>
         <div class="modal-box retro-border" style="max-width: 450px; border-color: #ff3333; background-color: #1a1c23;">
             <div class="modal-header" style="border-bottom-color: #ff3333; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="color: #ff3333; font-family: 'Press Start 2P', cursive; font-size: 11px;"><i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>SYSTEM ERROR</h3>
@@ -426,7 +426,7 @@
     </div>
 
     <!-- RETRO DELETE CONFIRMATION MODAL -->
-    <div id="delete-confirm-modal" class="modal-overlay hidden">
+    <div id="delete-confirm-modal" class="modal-overlay hidden" data-nosnippet>
         <div class="modal-box retro-border" style="max-width: 450px; border-color: #ff3333; background-color: #1a1c23;">
             <div class="modal-header" style="border-bottom-color: #ff3333; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="color: #ff3333; font-family: 'Press Start 2P', cursive; font-size: 11px;"><i class="fas fa-trash-alt" style="margin-right: 6px;"></i>DELETE ACCOUNT</h3>
@@ -444,7 +444,7 @@
 
 
     <!-- SECURITY SCANNER MODAL -->
-    <div id="security-scan-modal" class="modal-overlay hidden">
+    <div id="security-scan-modal" class="modal-overlay hidden" data-nosnippet>
         <div class="modal-box retro-border" style="max-width: 550px; border-color: var(--text-cyan);">
             <div class="modal-header" style="border-bottom-color: var(--text-cyan);">
                 <h3 style="color: var(--text-cyan); font-size: 11px;"><i class="fas fa-shield-halved" style="margin-right: 6px;"></i>CYBERSECURITY GATE v1.0</h3>
@@ -486,7 +486,7 @@
     </div>
 
     <!-- DIAGNOSTICS OVERLAY PANEL -->
-    <div id="diagnostics-panel" style="display: none; position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); color: #00ff00; padding: 12px; font-family: 'VT323', monospace; font-size: 16px; z-index: 10000; border: 3px solid #00ff00; box-shadow: 4px 4px 0px #000; pointer-events: none;">
+    <div id="diagnostics-panel" style="display: none; position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); color: #00ff00; padding: 12px; font-family: 'VT323', monospace; font-size: 16px; z-index: 10000; border: 3px solid #00ff00; box-shadow: 4px 4px 0px #000; pointer-events: none;" data-nosnippet>
         <div style="font-weight: bold; text-decoration: underline; margin-bottom: 6px;">SYSTEM DIAGNOSTICS:</div>
         - DB CONNECTION: <span id="diag-connected" style="color: #ffff00;">CHECKING...</span><br>
         - SESSION STATUS: <span id="diag-session" style="color: #ffff00;">CHECKING...</span><br>
