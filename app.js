@@ -2274,7 +2274,7 @@ async function scanIncomingLink(url) {
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 450); // 450ms safety check timeout!
+        const timeoutId = setTimeout(() => controller.abort(), 1000); // 1000ms safety check timeout!
 
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
         const response = await fetch(proxyUrl, { signal: controller.signal });
