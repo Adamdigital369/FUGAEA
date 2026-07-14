@@ -37,6 +37,16 @@ function getServerTime() {
     return Date.now() + window.serverTimeOffset;
 }
 
+function generateUUID() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 // --- // --- PHOTO-QUALITY SAILING BOAT ASSETS ---
 window.isBoatLoaded = false;
 window.boatImg = document.createElement('canvas');
@@ -330,7 +340,7 @@ async function triggerAutoRepost() {
         await auth.deductCredit(user.id);
 
         // Submit post programmatically with client-generated UUID
-        const postId = crypto.randomUUID();
+        const postId = generateUUID();
         await db.addPost({
             id: postId,
             username: user.username,
@@ -2363,6 +2373,7 @@ tossForm.addEventListener("submit", (e) => {
         // Run security scan and DB insert in background (non-blocking for UI)
         (async () => {
             try {
+                showDailyBonusToast("AI CRAWLER: SCANNING LINK...");
                 const scanResult = await scanIncomingLink(urlVal);
                 if (!scanResult.passed) {
                     throw new Error(`BLOCKED AT ${scanResult.layer.toUpperCase()}: ${scanResult.reason}`);
@@ -2373,7 +2384,7 @@ tossForm.addEventListener("submit", (e) => {
 
                 // Generate a local optimistic post ID that starts with "local_opt_"
                 // so that syncDatabasePosts can realign it seamlessly when database write completes
-                const optPostId = "local_opt_" + crypto.randomUUID();
+                const optPostId = "local_opt_" + generateUUID();
 
                 // Spawn optimistic log with client-generated ID instantly once safety check passes
                 // This ensures it spawns at age 0, meaning it slides in from the right off-screen!
