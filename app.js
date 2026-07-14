@@ -2373,7 +2373,6 @@ tossForm.addEventListener("submit", (e) => {
         // Run security scan and DB insert in background (non-blocking for UI)
         (async () => {
             try {
-                showDailyBonusToast("AI CRAWLER: SCANNING LINK...");
                 const scanResult = await scanIncomingLink(urlVal);
                 if (!scanResult.passed) {
                     throw new Error(`BLOCKED AT ${scanResult.layer.toUpperCase()}: ${scanResult.reason}`);
