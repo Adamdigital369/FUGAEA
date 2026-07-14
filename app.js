@@ -2273,8 +2273,13 @@ async function scanIncomingLink(url) {
     }
 
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 450); // 450ms safety check timeout!
+
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
+        const response = await fetch(proxyUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (response.ok) {
             const html = await response.text();
             const lowerHtml = html.toLowerCase();
@@ -2363,24 +2368,6 @@ tossForm.addEventListener("submit", (e) => {
             throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD TO GET 100 LINKS.");
         }
 
-        // Deduct credit locally and optimistically
-        user.credits -= 1;
-        updateAuthStateUI();
-
-        // Spawn optimistic log with client-generated UUID instantly for snappy UI feedback
-        const postId = generateUUID();
-        const optimisticPost = {
-            id: postId,
-            username: user.username,
-            text: textVal,
-            url: urlVal,
-            sprite: spriteVal,
-            createdAt: new Date(getServerTime()).toISOString()
-        };
-        const optimisticLog = new FloatingItem(optimisticPost);
-        floatingItems.push(optimisticLog);
-        sound.playSplash(); // Play splash instantly!
-
         // Keep the URL filled and highlight it so they can easily re-submit or type over it
         const urlInput = document.getElementById("post-url");
         if (urlInput) {
@@ -2396,12 +2383,34 @@ tossForm.addEventListener("submit", (e) => {
                     throw new Error(`BLOCKED AT ${scanResult.layer.toUpperCase()}: ${scanResult.reason}`);
                 }
 
-                // Deduct 1 credit database-side
+                // Deduct 1 credit locally and database-side
+                user.credits -= 1;
+                updateAuthStateUI();
                 await auth.deductCredit(user.id);
+
+                // Generate a local optimistic post ID that starts with "local_opt_"
+                // so that syncDatabasePosts can realign it seamlessly when database write completes
+                const optPostId = "local_opt_" + generateUUID();
+
+                // Spawn optimistic log with client-generated ID instantly once safety check passes
+                // This ensures it spawns at age 0, meaning it slides in from the right off-screen!
+                const optimisticPost = {
+                    id: optPostId,
+                    username: user.username,
+                    text: textVal,
+                    url: urlVal,
+                    sprite: spriteVal,
+                    createdAt: new Date(getServerTime()).toISOString()
+                };
+                const optimisticLog = new FloatingItem(optimisticPost);
+                floatingItems.push(optimisticLog);
+                sound.playSplash(); // Play splash instantly!
+
+                const dbPostId = optPostId.replace("local_opt_", "");
 
                 // Insert the post to Supabase database
                 await db.addPost({
-                    id: postId,
+                    id: dbPostId,
                     username: user.username,
                     text: textVal,
                     url: urlVal,
@@ -2416,14 +2425,7 @@ tossForm.addEventListener("submit", (e) => {
                 await syncDatabasePosts();
                 postsChannel.postMessage({ type: "SYNC_POSTS" });
             } catch (err) {
-                // Restore credit locally on failure
-                user.credits += 1;
-                updateAuthStateUI();
-
-                // Remove optimistic log
-                floatingItems = floatingItems.filter(item => item.post.id !== postId);
-
-                // Show the blocked pop-up window
+                // Show the blocked pop-up window if an issue is detected
                 showRetroAlert(err.message.toUpperCase());
             }
         })();
