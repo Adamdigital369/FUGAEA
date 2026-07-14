@@ -2269,22 +2269,40 @@ async function scanIncomingLink(url) {
             const html = await response.text();
             const lowerHtml = html.toLowerCase();
 
-            let matchCount = 0;
-            const scanTerms = [
+            let adultMatchCount = 0;
+            let malwareMatchCount = 0;
+
+            const adultTerms = [
                 "porn", "pornhub", "xvideos", "xnxx", "redtube", "youporn", "onlyfans", 
                 "hentai", "erotic", "xxx", "sex video", "adult video", "adult webcam",
                 "tube8", "spankbang", "eporner", "chaturbate", "bongacams"
             ];
+
+            const malwareTerms = [
+                "malware", "virus", "spyware", "keylogger", "trojan", "ransomware", "backdoor",
+                "exploit kit", "credential stealer", "phishing login", "phish-bank", "darkweb-link",
+                "hack database", "stolen card"
+            ];
             
-            for (const term of scanTerms) {
+            for (const term of adultTerms) {
                 const regex = new RegExp(term, "g");
                 const matches = lowerHtml.match(regex);
                 if (matches) {
-                    matchCount += matches.length;
+                    adultMatchCount += matches.length;
                 }
             }
 
-            if (matchCount >= 3) {
+            for (const term of malwareTerms) {
+                const regex = new RegExp(term, "g");
+                const matches = lowerHtml.match(regex);
+                if (matches) {
+                    malwareMatchCount += matches.length;
+                }
+            }
+
+            const totalMatches = adultMatchCount + malwareMatchCount;
+            if (totalMatches >= 3) {
+                const isMalwareThreat = malwareMatchCount > adultMatchCount;
                 const logs = [
                     { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" },
                     { text: `TARGET: ${url}`, type: "info" },
@@ -2293,12 +2311,19 @@ async function scanIncomingLink(url) {
                     { text: "LAYER 3: CRAWLER SANDBOX -> PASSED (HTML body retrieved)", type: "success" },
                     { text: "LAYER 4: MULTIMODAL AI CONTENT SCAN...", type: "info" },
                     { text: "SUBMITTING TEXT CONTENT TO SAFETY CLASSIFIER MODEL...", type: "info" },
-                    { text: `NSFW MARKER COUNT: ${matchCount}`, type: "warning" },
+                    { text: isMalwareThreat ? `MALWARE/PHISHING MARKER COUNT: ${malwareMatchCount}` : `NSFW MARKER COUNT: ${adultMatchCount}`, type: "warning" },
                     { text: "LAYER 4: MULTIMODAL AI CONTENT SCAN -> FAILED!", type: "fail" },
-                    { text: "CRITICAL: ADULT/PORNOGRAPHIC CONTENT DETECTED ON DESTINATION PAGE.", type: "fail" },
-                    { text: "ALERT: PLATFORM POLICY STRICTLY PROHIBITS ADULT/PORNOGRAPHIC CONTENT.", type: "fail" }
+                    { text: isMalwareThreat ? "CRITICAL: HARMFUL OR MALICIOUS SOFTWARE SIGNATURES DETECTED ON DESTINATION PAGE." : "CRITICAL: ADULT/PORNOGRAPHIC CONTENT DETECTED ON DESTINATION PAGE.", type: "fail" },
+                    { text: "ALERT: PLATFORM POLICY STRICTLY PROHIBITS HARMFUL/NSFW CONTENT.", type: "fail" }
                 ];
-                return { passed: false, layer: "Layer 4 (Multimodal AI Content Scan)", reason: `Adult content detected: target site contains explicit content patterns (${matchCount} adult matches).`, logs };
+                return { 
+                    passed: false, 
+                    layer: "Layer 4 (Multimodal AI Content Scan)", 
+                    reason: isMalwareThreat 
+                        ? `Harmful content detected: target site contains malicious software or phishing patterns (${malwareMatchCount} threat matches).`
+                        : `Adult content detected: target site contains explicit content patterns (${adultMatchCount} adult matches).`, 
+                    logs 
+                };
             }
         }
     } catch (err) {
@@ -2328,24 +2353,6 @@ tossForm.addEventListener("submit", (e) => {
             throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD TO GET 100 LINKS.");
         }
 
-        // Deduct credit locally and optimistically
-        user.credits -= 1;
-        updateAuthStateUI();
-
-        // Spawn optimistic log with client-generated UUID
-        const postId = crypto.randomUUID();
-        const optimisticPost = {
-            id: postId,
-            username: user.username,
-            text: textVal,
-            url: urlVal,
-            sprite: spriteVal,
-            createdAt: new Date(getServerTime()).toISOString()
-        };
-        const optimisticLog = new FloatingItem(optimisticPost);
-        floatingItems.push(optimisticLog);
-        sound.playSplash(); // Play splash instantly!
-
         // Keep the URL filled and highlight it so they can easily re-submit or type over it
         const urlInput = document.getElementById("post-url");
         if (urlInput) {
@@ -2353,40 +2360,55 @@ tossForm.addEventListener("submit", (e) => {
             urlInput.focus();
         }
 
-        // Run security scan and DB insert in background
+        // Run security scan and DB insert in background (non-blocking for UI)
         (async () => {
             try {
                 const scanResult = await scanIncomingLink(urlVal);
                 if (!scanResult.passed) {
-                    throw new Error("SUBMISSION BLOCKED: SAFETY POLICY VIOLATION");
+                    throw new Error(`BLOCKED AT ${scanResult.layer.toUpperCase()}: ${scanResult.reason}`);
                 }
 
                 // Deduct 1 credit database-side
                 await auth.deductCredit(user.id);
 
+                // Generate a local optimistic post ID that starts with "local_opt_"
+                // so that syncDatabasePosts can realign it seamlessly when database write completes
+                const optPostId = "local_opt_" + crypto.randomUUID();
+
+                // Spawn optimistic log with client-generated ID instantly once safety check passes
+                // This ensures it spawns at age 0, meaning it slides in from the right off-screen!
+                const optimisticPost = {
+                    id: optPostId,
+                    username: user.username,
+                    text: textVal,
+                    url: urlVal,
+                    sprite: spriteVal,
+                    createdAt: new Date(getServerTime()).toISOString()
+                };
+                const optimisticLog = new FloatingItem(optimisticPost);
+                floatingItems.push(optimisticLog);
+                sound.playSplash(); // Play splash instantly!
+
+                const dbPostId = optPostId.replace("local_opt_", "");
+
+                // Insert the post to Supabase database
                 await db.addPost({
-                    id: postId,
+                    id: dbPostId,
                     username: user.username,
                     text: textVal,
                     url: urlVal,
                     sprite: spriteVal
                 });
 
-                // Fetch updated credit statistics from database
+                // Fetch updated credit statistics from database (syncs HUD)
                 await auth.refreshUserProfile();
                 updateAuthStateUI();
 
-                // Force database reload
+                // Force database reload to pull the new post and spawn it on the river
                 await syncDatabasePosts();
                 postsChannel.postMessage({ type: "SYNC_POSTS" });
             } catch (err) {
-                // Restore credit locally on failure
-                user.credits += 1;
-                updateAuthStateUI();
-
-                // Remove optimistic log
-                floatingItems = floatingItems.filter(item => item.post.id !== postId);
-
+                // Show the blocked pop-up window if an issue is detected
                 showRetroAlert(err.message.toUpperCase());
             }
         })();
@@ -2507,19 +2529,37 @@ async function runBackgroundSecurityScan(url, clickedPostId) {
     }
     
     // --- APPROVED & PROCEED ---
-    if (clickedPostId) {
-        if (clickedPostId.startsWith("local_")) {
-            const targetPost = databasePosts.find(p => p.url.includes("fugaea.com") || p.username === "fugaea") || databasePosts[0];
-            if (targetPost) await db.incrementClicks(targetPost.id);
-        } else {
-            await db.incrementClicks(clickedPostId);
-        }
-    }
     let targetUrl = url.trim();
     if (!/^https?:\/\//i.test(targetUrl)) {
         targetUrl = "https://" + targetUrl;
     }
+    
+    // Open in a new tab instantly to avoid popup blockers and eliminate delay
     window.open(targetUrl, "_blank");
+
+    if (clickedPostId) {
+        if (clickedPostId.startsWith("local_")) {
+            const targetPost = databasePosts.find(p => p.url.includes("fugaea.com") || p.username === "fugaea") || databasePosts[0];
+            if (targetPost) {
+                db.incrementClicks(targetPost.id).catch(err => console.error("Increment clicks failed:", err));
+            }
+        } else {
+            db.incrementClicks(clickedPostId).catch(err => console.error("Increment clicks failed:", err));
+        }
+    }
+}
+
+// Helper to append log lines to the scanner modal
+function appendScanLog(logsContainer, text, type) {
+    const logLine = document.createElement("div");
+    logLine.className = `scan-log-line ${type}`;
+    let prefix = "  ";
+    if (type === "success") prefix = "✔ ";
+    if (type === "fail") prefix = "✖ ";
+    if (type === "warning") prefix = "⚠ ";
+    logLine.textContent = prefix + text;
+    logsContainer.appendChild(logLine);
+    logsContainer.scrollTop = logsContainer.scrollHeight;
 }
 
 // --- RETRO BLOCK MODAL POPUP ---
