@@ -2363,6 +2363,24 @@ tossForm.addEventListener("submit", (e) => {
             throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD TO GET 100 LINKS.");
         }
 
+        // Deduct credit locally and optimistically
+        user.credits -= 1;
+        updateAuthStateUI();
+
+        // Spawn optimistic log with client-generated UUID instantly for snappy UI feedback
+        const postId = generateUUID();
+        const optimisticPost = {
+            id: postId,
+            username: user.username,
+            text: textVal,
+            url: urlVal,
+            sprite: spriteVal,
+            createdAt: new Date(getServerTime()).toISOString()
+        };
+        const optimisticLog = new FloatingItem(optimisticPost);
+        floatingItems.push(optimisticLog);
+        sound.playSplash(); // Play splash instantly!
+
         // Keep the URL filled and highlight it so they can easily re-submit or type over it
         const urlInput = document.getElementById("post-url");
         if (urlInput) {
@@ -2381,29 +2399,9 @@ tossForm.addEventListener("submit", (e) => {
                 // Deduct 1 credit database-side
                 await auth.deductCredit(user.id);
 
-                // Generate a local optimistic post ID that starts with "local_opt_"
-                // so that syncDatabasePosts can realign it seamlessly when database write completes
-                const optPostId = "local_opt_" + generateUUID();
-
-                // Spawn optimistic log with client-generated ID instantly once safety check passes
-                // This ensures it spawns at age 0, meaning it slides in from the right off-screen!
-                const optimisticPost = {
-                    id: optPostId,
-                    username: user.username,
-                    text: textVal,
-                    url: urlVal,
-                    sprite: spriteVal,
-                    createdAt: new Date(getServerTime()).toISOString()
-                };
-                const optimisticLog = new FloatingItem(optimisticPost);
-                floatingItems.push(optimisticLog);
-                sound.playSplash(); // Play splash instantly!
-
-                const dbPostId = optPostId.replace("local_opt_", "");
-
                 // Insert the post to Supabase database
                 await db.addPost({
-                    id: dbPostId,
+                    id: postId,
                     username: user.username,
                     text: textVal,
                     url: urlVal,
@@ -2418,7 +2416,14 @@ tossForm.addEventListener("submit", (e) => {
                 await syncDatabasePosts();
                 postsChannel.postMessage({ type: "SYNC_POSTS" });
             } catch (err) {
-                // Show the blocked pop-up window if an issue is detected
+                // Restore credit locally on failure
+                user.credits += 1;
+                updateAuthStateUI();
+
+                // Remove optimistic log
+                floatingItems = floatingItems.filter(item => item.post.id !== postId);
+
+                // Show the blocked pop-up window
                 showRetroAlert(err.message.toUpperCase());
             }
         })();
