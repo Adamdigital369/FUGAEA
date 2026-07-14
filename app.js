@@ -2274,7 +2274,7 @@ async function scanIncomingLink(url) {
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1000); // 1000ms safety check timeout!
+        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2000ms safety check timeout!
 
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
         const response = await fetch(proxyUrl, { signal: controller.signal });
@@ -2340,9 +2340,19 @@ async function scanIncomingLink(url) {
                     logs 
                 };
             }
+        } else {
+            throw new Error("HTTP response error");
         }
     } catch (err) {
         console.warn("AI safety scan fetch failed:", err);
+        const isTimeout = err.name === "AbortError";
+        return {
+            passed: false,
+            layer: "Layer 3 (Crawler Sandbox)",
+            reason: isTimeout 
+                ? "Destination server was unresponsive (Safety scan timed out)."
+                : "Destination server blocked the safety scanner or is unreachable."
+        };
     }
     
     return { passed: true };
