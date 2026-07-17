@@ -24,8 +24,8 @@ export default async function handler(req, res) {
 
     console.log(`[AI Scan] Initiating visual screenshot safety scan for: ${url}`);
 
-    // 1. Fetch screenshot of target URL using Microlink API
-    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true`;
+    // 1. Fetch screenshot of target URL using Microlink API (disabling script execution for speed)
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&scripts=false`;
     const microRes = await fetch(microlinkUrl);
     
     if (!microRes.ok) {
