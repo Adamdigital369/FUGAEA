@@ -2234,6 +2234,7 @@ async function scanIncomingLink(url) {
                 };
             }
             console.log(`[AI Scan] Secure Gemini Vision scan passed for: ${url}`);
+            return { passed: true };
         }
     } catch (err) {
         console.warn("[AI Scan] Secure scan failed or bypassed, falling back to heuristics:", err);
