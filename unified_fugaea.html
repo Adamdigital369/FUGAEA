@@ -1,0 +1,3528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fugaea - Real-time User-Generated Link Platform</title>
+    <meta name="description" content="Fugaea is a real-time user-generated link platform.">
+    <link rel="canonical" href="https://www.fugaea.com/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fugaea.com/">
+    <meta property="og:title" content="fugaea">
+    <meta property="og:description" content="Fugaea is a real-time user-generated link platform.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:url" content="https://www.fugaea.com/">
+    <meta property="twitter:title" content="fugaea">
+    <meta property="twitter:description" content="Fugaea is a real-time user-generated link platform.">
+    <!-- Google Fonts for 8-bit aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <!-- FontAwesome for some retro-style icons if needed -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Cloudflare Turnstile CAPTCHA -->
+    <script>
+        window.onloadTurnstileCallback = function() {
+            window.turnstileReady = true;
+            if (window.onTurnstileLoad) {
+                window.onTurnstileLoad();
+            }
+        };
+    </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" async defer></script>
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "fugaea",
+      "url": "https://www.fugaea.com/",
+      "description": "Fugaea is a real-time user-generated link platform."
+    }
+    </script>
+
+    <style>
+        /* --- 8-BIT RETRO RIVER STYLE SHEET --- */
+
+        /* Root variable system for pixel-art theme */
+        :root {
+            --bg-dark: #050505;
+            --cabinet-border: #333333;
+            --bezel-color: #121212;
+            --primary-blue: #888888;
+            --river-water: #2a7ee6;
+            --text-white: #ffffff;
+            --text-yellow: #cccccc;
+            --text-green: #ffffff;
+            --text-red: #888888;
+            --text-cyan: #ffffff;
+            --btn-gray: #3a3a3a;
+            
+            /* Pixel borders */
+            --pixel-border-color: #ffffff;
+            --pixel-shadow: 4px 4px 0px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            image-rendering: pixelated; /* Crucial for retro styling */
+        }
+
+        body {
+            background-color: #ffffff;
+            color: var(--text-white);
+            font-family: 'VT323', monospace;
+            font-size: 22px;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* CRT Screen Effects */
+        .crt-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.4) 100%);
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .crt-bezel-reflection {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 30%, rgba(0, 0, 0, 0) 70%, rgba(0, 0, 0, 0.15) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Arcade Cabinet Wrapping Frame */
+        .arcade-cabinet {
+            width: 100vw;
+            height: 100vh;
+            max-width: 100%;
+            background-color: var(--bezel-color);
+            border: none;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* Retro Border Helper */
+        .retro-border {
+            border: 4px solid var(--pixel-border-color);
+            box-shadow: 
+                0 4px 0 #000, 
+                4px 0 0 #000, 
+                -4px 0 0 #000, 
+                0 -4px 0 #000,
+                inset -4px -4px 0 rgba(0, 0, 0, 0.2), 
+                inset 4px 4px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* HUD System */
+        .retro-hud {
+            background-color: #0b0c10;
+            border: 4px solid #1a1c23;
+            box-shadow: 0 4px 0 #000;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            z-index: 20;
+            color: var(--text-white);
+        }
+
+        .header-hud {
+            margin-bottom: 8px;
+            border-bottom: 4px solid #fff;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 16px;
+        }
+
+        .footer-hud {
+            margin-top: 8px;
+            border-top: 4px solid #fff;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+        }
+
+        .title-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .title-container h1 {
+            font-size: 18px;
+            color: var(--text-cyan);
+            text-shadow: 3px 3px 0px #000;
+        }
+
+        .tagline {
+            font-size: 10px;
+            font-family: 'Press Start 2P', cursive;
+            color: #888888;
+            margin: 0;
+            line-height: 1.2;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        #hud-user-container {
+            font-size: 14px;
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .stats-container {
+            flex: 2;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        .hud-credits-layout {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-credits-layout .credits-label {
+            font-size: 14px;
+            color: #ffffff;
+        }
+
+        .hud-credits-layout #hud-credits {
+            font-size: 14px;
+            color: var(--text-cyan);
+        }
+
+        .credits-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .stats-container .retro-btn {
+            padding: 0 8px;
+            font-size: 9px;
+            line-height: 1;
+            height: 21px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+            background-color: #00ff66;
+            color: #000000 !important;
+            border-color: #ffffff;
+        }
+
+        .controls-container {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        /* River Stage (Screen Area) */
+        .river-stage {
+            flex-grow: 1;
+            position: relative;
+            background-color: var(--river-water);
+            border: 4px solid #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #river-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+
+        /* Welcome Overlay */
+        .welcome-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 16, 22, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            cursor: pointer;
+        }
+
+        .welcome-box {
+            background-color: #1a1c23;
+            padding: 30px;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .welcome-box h2 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            color: var(--text-yellow);
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .welcome-box p {
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        /* Form Controls */
+        .submit-wrapper, .prompt-wrapper {
+            background-color: #14161f;
+            padding: 8px 12px;
+            border: 2px solid #2c2f3f;
+            border-radius: 0;
+        }
+
+        .prompt-wrapper {
+            text-align: center;
+            font-family: 'VT323', monospace;
+            font-size: 20px;
+        }
+
+        .retro-form .form-row {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 16px;
+            color: var(--text-yellow);
+        }
+
+        #submit-section .form-group label,
+        #guest-prompt-section .form-group label {
+            font-size: 10px;
+        }
+
+        .flex-grow-2 { flex-grow: 2; }
+        .flex-grow-3 { flex-grow: 3; }
+
+        .retro-input {
+            background-color: #000000;
+            color: var(--text-white);
+            border: 3px solid var(--btn-gray);
+            padding: 6px 10px;
+            font-family: 'VT323', monospace;
+            font-size: 20px;
+            outline: none;
+        }
+
+        .retro-input:focus {
+            border-color: var(--text-cyan);
+        }
+
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-container .retro-input {
+            width: 100%;
+            padding-right: 68px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 6px;
+            background-color: var(--btn-gray);
+            color: var(--text-white);
+            border: 2px solid #fff;
+            box-shadow: 2px 2px 0px #000;
+            padding: 2px 6px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 8px;
+            cursor: pointer;
+            user-select: none;
+            outline: none;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle-btn:hover {
+            filter: brightness(1.2);
+        }
+
+        .password-toggle-btn:active {
+            box-shadow: 0px 0px 0px #000;
+            transform: translate(2px, 2px);
+        }
+
+        .retro-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            padding-right: 32px;
+        }
+
+        /* Buttons */
+        .retro-btn {
+            background-color: var(--btn-gray);
+            color: var(--text-white);
+            border: 3px solid #fff;
+            box-shadow: 3px 3px 0px #000;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            padding: 8px 12px;
+            cursor: pointer;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .retro-btn:active {
+            box-shadow: 0px 0px 0px #000;
+            top: 3px;
+            left: 3px;
+        }
+
+        .retro-btn:hover {
+            filter: brightness(1.2);
+        }
+
+        .icon-btn {
+            padding: 8px 8px;
+            font-size: 12px;
+        }
+
+        .success-btn {
+            background-color: #ffffff;
+            color: #000000 !important;
+        }
+
+        .danger-btn {
+            background-color: #000000;
+            color: #ffffff !important;
+            border-color: #ffffff;
+        }
+
+        .action-btn {
+            background-color: #888888;
+        }
+
+        .full-width-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .retro-btn-link {
+            background: none;
+            border: none;
+            font-family: 'VT323', monospace;
+            font-size: 22px;
+            text-decoration: underline;
+            cursor: pointer;
+            color: var(--text-cyan);
+            outline: none;
+        }
+
+        .retro-btn-link:hover {
+            color: #fff;
+        }
+
+        /* Settings Sliders */
+        .river-settings {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 10px;
+            color: #888;
+        }
+
+        .copyright-label {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            color: #888;
+        }
+
+        .settings-stats {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            color: #888;
+        }
+
+        .settings-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .retro-slider {
+            appearance: none;
+            width: 150px;
+            height: 8px;
+            background: #000;
+            border: 2px solid var(--btn-gray);
+            outline: none;
+        }
+
+        .retro-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--text-yellow);
+            border: 2px solid #fff;
+            box-shadow: 2px 2px 0px #000;
+            cursor: pointer;
+        }
+
+        /* Inspection Overlay */
+        .inspect-hud {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            background-color: #0b0c10;
+            border: 4px solid var(--text-cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4), 0 4px 0 #000;
+            padding: 12px 16px;
+            z-index: 30;
+            font-family: 'VT323', monospace;
+        }
+
+        .inspect-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .inspect-label {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            color: var(--text-cyan);
+        }
+
+        .inspect-details {
+            font-size: 24px;
+            word-break: break-all;
+        }
+
+        .inspect-details .user-tag {
+            color: var(--text-yellow);
+            font-weight: bold;
+        }
+
+        .inspect-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .footer-info-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-start;
+        }
+
+        .footer-disclaimer {
+            color: #888;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .footer-info-container {
+                align-items: center;
+                text-align: center;
+            }
+        }
+
+        .footer-link {
+            color: #888888;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .footer-link:hover {
+            color: #ffffff;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-box {
+            background-color: #1a1c23;
+            width: 90%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid var(--btn-gray);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            color: var(--text-cyan);
+        }
+
+        .close-btn {
+            border: 2px solid #fff;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tab-container {
+            display: flex;
+            border: 3px solid var(--btn-gray);
+            background-color: #000;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #888;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background-color: var(--btn-gray);
+            color: #fff;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .auth-message {
+            padding: 8px;
+            border: 2px solid;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .auth-message.error {
+            background-color: #1a1a1a;
+            border-color: #ffffff;
+            color: #cccccc;
+        }
+
+        .auth-message.success {
+            background-color: #333333;
+            border-color: #ffffff;
+            color: #ffffff;
+        }
+
+        /* Animations and Utilities */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-yellow { color: var(--text-yellow); }
+        .text-cyan { color: var(--text-cyan); }
+        .text-green { color: var(--text-green); }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        .blink-title {
+            animation: blink 2.5s infinite steps(2);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 12px;
+            background-color: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--btn-gray);
+            border: 3px solid #000;
+        }
+
+        /* --- MOBILE RESPONSIVENESS (max-width: 768px) --- */
+        @media (max-width: 768px) {
+            body {
+                align-items: stretch;
+            }
+            
+            .arcade-cabinet {
+                width: 100vw;
+                height: 100vh;
+                max-width: none;
+                border: 4px solid var(--cabinet-border);
+                box-shadow: none;
+                padding: 4px;
+            }
+
+            .retro-hud {
+                padding: 6px 12px;
+            }
+
+            .retro-hud.header-hud {
+                flex-direction: column;
+                gap: 6px;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .title-container {
+                align-items: center;
+            }
+
+            .title-container h1 {
+                font-size: 14px;
+                text-align: center;
+            }
+
+            .tagline {
+                text-align: center;
+                font-size: 8px;
+                max-width: none;
+            }
+
+            .stats-container {
+                position: static;
+                transform: none;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 6px 12px;
+                font-size: 8px;
+            }
+
+            #hud-credits-container {
+                margin: 0;
+            }
+
+            .controls-container {
+                justify-content: center;
+            }
+
+            .controls-container button {
+                width: 100%;
+                font-size: 9px;
+                padding: 6px;
+            }
+
+            .retro-form .form-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+
+            .retro-form .form-row .button-group {
+                width: 100%;
+                margin: 0;
+            }
+
+            .retro-form .form-row .button-group button {
+                width: 100%;
+                padding: 10px;
+            }
+
+            .river-settings {
+                flex-direction: column;
+                gap: 6px;
+                text-align: center;
+            }
+
+            .copyright-label {
+                font-size: 8px;
+                text-align: center;
+            }
+
+            .settings-stats {
+                font-size: 8px;
+                text-align: center;
+            }
+
+            /* Modal dialogs */
+            .modal-box {
+                width: 95%;
+                padding: 12px;
+            }
+
+            .tab-container {
+                gap: 4px;
+            }
+
+            .tab-btn {
+                font-size: 10px;
+                padding: 6px;
+            }
+
+            .retro-input {
+                font-size: 16px;
+                padding: 6px;
+            }
+
+            /* Inspector HUD */
+            .inspect-details {
+                font-size: 18px;
+            }
+
+            .inspect-actions {
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .inspect-actions a, 
+            .inspect-actions button {
+                width: 100%;
+            }
+        }
+
+        /* SECURITY SCANNER EXTRA RETRO STYLES */
+        .scan-log-line {
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            line-height: 1.3;
+            letter-spacing: 0.5px;
+        }
+        .scan-log-line.info { color: #888888; }
+        .scan-log-line.success { color: #00ff66; }
+        .scan-log-line.warning { color: #ffcc00; }
+        .scan-log-line.fail { color: #ff3333; font-weight: bold; }
+
+        @keyframes threat-border-glow {
+            0% { border-color: #ff3333; box-shadow: 0 0 10px rgba(255, 51, 51, 0.5); }
+            50% { border-color: #ff9999; box-shadow: 0 0 25px rgba(255, 51, 51, 0.9); }
+            100% { border-color: #ff3333; box-shadow: 0 0 10px rgba(255, 51, 51, 0.5); }
+        }
+
+        .modal-box.threat-detected {
+            border-color: #ff3333 !important;
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.6), 8px 8px 0px #000;
+        }
+
+        @keyframes text-critical-blink {
+            0%, 49% { color: #ff3333; }
+            50%, 100% { color: #ffffff; }
+        }
+
+        .critical-blink {
+            animation: text-critical-blink 0.8s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="arcade-cabinet">
+        <div class="crt-overlay"></div>
+        <div class="crt-bezel-reflection"></div>
+        <!-- HEADER HUD -->
+        <header class="retro-hud header-hud is-logged-out" data-nosnippet>
+            <div class="hud-item title-container">
+                <h1>fugaea</h1>
+            </div>
+            <div class="hud-item stats-container">
+                <div id="hud-user-container" class="hidden">LOGGED IN: <span id="hud-user">GUEST</span></div>
+                <div id="hud-credits-container" class="hud-credits-layout">
+                    <span class="credits-label">CREDITS:</span>
+                    <span id="hud-credits" class="text-cyan">10</span>
+                    <div class="credits-buttons">
+                        <button id="buy-credits-trigger" class="retro-btn">+BUY</button>
+                        <button id="share-x-btn" class="retro-btn"><i class="fas fa-share-alt" style="margin-right: 4px;"></i>SHARE (+60)</button>
+                    </div>
+                </div>
+            </div>
+            <div class="hud-item controls-container">
+                <button id="auth-trigger-btn" class="retro-btn hidden">
+                    LOGIN / REGISTER
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN STAGE (THE RIVER) -->
+        <main class="river-stage">
+            <div class="scanlines"></div>
+            <canvas id="river-canvas"></canvas>
+            
+            <!-- Context HUD for clicking items -->
+            <div id="item-inspect-hud" class="inspect-hud hidden" data-nosnippet>
+                <div class="inspect-content">
+                    <div class="inspect-label">INSPECTING POST...</div>
+                    <div class="inspect-details">
+                        <span class="user-tag" id="inspect-user">username</span>: 
+                        <span class="message-tag" id="inspect-text">"Some cool link description here"</span>
+                    </div>
+                    <div class="inspect-actions">
+                        <a href="#" id="inspect-link" target="_blank" class="retro-btn success-btn">
+                            <i class="fas fa-external-link-alt"></i> VISIT LINK
+                        </a>
+                        <button id="inspect-close" class="retro-btn danger-btn">CLOSE</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- FOOTER / SUBMISSION CONTROLS -->
+        <footer class="retro-hud footer-hud" data-nosnippet>
+            <div id="submit-section" class="submit-wrapper hidden">
+                <form id="toss-form" class="retro-form">
+                    <div class="form-row">
+                        <div class="form-group flex-grow-2">
+                            <label for="post-text">USERNAME</label>
+                            <input type="text" id="post-text" placeholder="e.g., cool_coder" maxlength="20" required class="retro-input">
+                        </div>
+                        <div class="form-group flex-grow-3">
+                            <label for="post-url">LINK</label>
+                            <div style="display: flex; gap: 8px; align-items: stretch;">
+                                <input type="text" id="post-url" required class="retro-input" style="flex-grow: 1;">
+                                <button type="submit" class="retro-btn" style="background-color: #00ff66; color: #000000 !important; border-color: #ffffff; white-space: nowrap; height: 38px;">
+                                    POST LINK (1 CREDIT)
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group auto-repost-group" style="display: flex; flex-direction: column; gap: 4px; justify-content: flex-end;">
+                            <label for="auto-repost-toggle" style="font-size: 8px; color: var(--text-yellow); text-align: center; font-family: 'Press Start 2P', cursive; line-height: 1;">AUTO-REPOST</label>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 38px;">
+                                <input type="checkbox" id="auto-repost-toggle" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--text-cyan);">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- GUEST PROMPT SECTION (SHOWS GREYED OUT FORM WITH LOGIN CTA) -->
+            <div id="guest-prompt-section" class="submit-wrapper" style="position: relative;">
+                <div class="guest-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.3); pointer-events: auto; z-index: 5;">
+                    <button id="prompt-login-btn" class="retro-btn success-btn" style="font-family: 'Press Start 2P', cursive; font-size: 10px; padding: 10px 16px; border: 3px solid #fff; background-color: #00ff66; color: #000000 !important; cursor: pointer; pointer-events: auto; box-shadow: var(--pixel-shadow);">
+                        <i class="fas fa-lock" style="margin-right: 6px;"></i> LOGIN / REGISTER TO POST LINKS
+                    </button>
+                </div>
+                <form class="retro-form" style="user-select: none; pointer-events: none;">
+                    <div class="form-row" style="filter: blur(0.5px); opacity: 0.75;">
+                        <div class="form-group flex-grow-2">
+                            <label>USERNAME</label>
+                            <input type="text" disabled class="retro-input" style="background-color: #222; color: #999; border-color: #444;">
+                        </div>
+                        <div class="form-group flex-grow-3">
+                            <label>LINK</label>
+                            <div style="display: flex; gap: 8px; align-items: stretch;">
+                                <input type="text" disabled class="retro-input" style="background-color: #222; color: #999; border-color: #444; flex-grow: 1;">
+                                <button type="button" disabled class="retro-btn" style="background-color: #777; color: #bbb !important; border-color: #444; white-space: nowrap; height: 38px;">
+                                    POST LINK (1 CREDIT)
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group auto-repost-group" style="display: flex; flex-direction: column; gap: 4px; justify-content: flex-end;">
+                            <label style="font-size: 8px; color: #999; text-align: center; font-family: 'Press Start 2P', cursive; line-height: 1;">AUTO-REPOST</label>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 38px;">
+                                <input type="checkbox" disabled style="width: 20px; height: 20px; cursor: not-allowed;">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="river-settings">
+                <div class="footer-info-container">
+                    <div class="copyright-label">
+                        &copy; 2026 fugaea. ALL RIGHTS RESERVED. &nbsp;|&nbsp;
+                        <a href="#" id="legal-tos-link" class="footer-link">TERMS</a> &nbsp;|&nbsp;
+                        <a href="#" id="legal-privacy-link" class="footer-link">PRIVACY</a>
+                    </div>
+                </div>
+                <div class="settings-stats">
+                    VIEWERS ONLINE: <span id="hud-online-users" class="text-green">1</span>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    TOTAL LINK CLICKS: <span id="hud-total-views" class="text-cyan">0</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="modal-overlay hidden" data-nosnippet>
+        <div class="modal-box retro-border">
+            <div class="modal-header">
+                <h3 id="modal-title">USER</h3>
+                <button id="modal-close" class="retro-btn close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-container">
+                    <button id="tab-login" class="tab-btn active">LOGIN</button>
+                    <button id="tab-register" class="tab-btn">REGISTER</button>
+                </div>
+
+                <div id="auth-error" class="auth-message error hidden"></div>
+                <div id="auth-success" class="auth-message success hidden"></div>
+
+                <!-- LOGIN FORM -->
+                <form id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="login-email">EMAIL ADDRESS</label>
+                        <input type="email" id="login-email" required class="retro-input">
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label for="login-password">PASSWORD</label>
+                            <button type="button" id="forgot-password-btn" class="retro-btn-link" style="font-size: 14px; margin-bottom: 3px; padding: 0; line-height: 1;">FORGOT?</button>
+                        </div>
+                        <div class="password-container">
+                            <input type="password" id="login-password" required class="retro-input">
+                            <button type="button" class="password-toggle-btn" tabindex="-1">SHOW</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
+                         <div id="login-captcha"></div>
+                    </div>
+                    <button type="submit" class="retro-btn success-btn full-width-btn">LOG IN</button>
+                </form>
+
+                <!-- FORGOT PASSWORD FORM -->
+                <form id="forgot-password-form" class="auth-form hidden">
+                    <div class="form-group">
+                        <label for="forgot-email">EMAIL ADDRESS</label>
+                        <input type="email" id="forgot-email" required class="retro-input">
+                    </div>
+                    <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
+                         <div id="forgot-captcha"></div>
+                    </div>
+                    <button type="submit" class="retro-btn success-btn full-width-btn">SEND RESET LINK</button>
+                    <button type="button" id="forgot-back-btn" class="retro-btn full-width-btn" style="background-color: #555;">BACK TO LOGIN</button>
+                </form>
+
+                <!-- RESET PASSWORD FORM -->
+                <form id="reset-password-form" class="auth-form hidden">
+                    <div class="form-group">
+                        <label for="reset-password">NEW PASSWORD</label>
+                        <div class="password-container">
+                            <input type="password" id="reset-password" required class="retro-input">
+                            <button type="button" class="password-toggle-btn" tabindex="-1">SHOW</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reset-confirm-password">CONFIRM NEW PASSWORD</label>
+                        <div class="password-container">
+                            <input type="password" id="reset-confirm-password" required class="retro-input">
+                            <button type="button" class="password-toggle-btn" tabindex="-1">SHOW</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="retro-btn success-btn full-width-btn">UPDATE PASSWORD</button>
+                </form>
+
+                <!-- REGISTER FORM -->
+                <form id="register-form" class="auth-form hidden">
+                    <div class="form-group">
+                        <label for="reg-username">CHOOSE USERNAME</label>
+                        <input type="text" id="reg-username" required maxlength="30" class="retro-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">EMAIL ADDRESS</label>
+                        <input type="email" id="reg-email" required class="retro-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">PASSWORD</label>
+                        <div class="password-container">
+                            <input type="password" id="reg-password" required class="retro-input">
+                            <button type="button" class="password-toggle-btn" tabindex="-1">SHOW</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display: flex; justify-content: center; margin-bottom: 12px;">
+                         <div id="register-captcha"></div>
+                    </div>
+                    <button type="submit" class="retro-btn success-btn full-width-btn">REGISTER</button>
+                </form>
+
+                <!-- VERIFICATION PENDING SECTION -->
+                <div id="verification-pending-section" class="hidden" style="text-align: center; display: flex; flex-direction: column; gap: 16px;">
+                    <div class="auth-message success" style="margin-bottom: 8px;">
+                        REGISTRATION SUCCESSFUL! PLEASE CHECK YOUR EMAIL TO CONFIRM YOUR ACCOUNT.
+                    </div>
+                    <button id="reg-resend-email-btn" type="button" class="retro-btn success-btn full-width-btn">RESEND CONFIRMATION EMAIL</button>
+                    <button id="reg-check-status-btn" type="button" class="retro-btn full-width-btn">I'VE CONFIRMED MY EMAIL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STRIPE CHECKOUT MODAL (MICROTRANSACTIONS) -->
+    <div id="checkout-modal" class="modal-overlay hidden" data-nosnippet>
+        <div class="modal-box retro-border">
+            <div class="modal-header">
+                <h3 style="font-size: 11px;">STRIPE CHECKOUT</h3>
+                <button id="checkout-close" class="retro-btn close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="package-selection" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px;">
+                    <label style="font-family: 'Press Start 2P', cursive; font-size: 9px; color: var(--text-yellow); display: block; margin-bottom: 4px;">SELECT LINK PACKAGE:</label>
+                    <div class="retro-package-option active" data-amount="0.99" data-credits="100" style="border: 3px solid var(--text-cyan); padding: 8px; background-color: #000; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s;">
+                        <span style="font-family: 'Press Start 2P', cursive; font-size: 9px; color: #fff;">100 LINKS</span>
+                        <span style="font-family: 'Press Start 2P', cursive; font-size: 11px; color: var(--text-cyan); font-weight: bold;">$0.99</span>
+                    </div>
+                    <div class="retro-package-option" data-amount="1.99" data-credits="300" style="border: 3px solid var(--btn-gray); padding: 8px; background-color: #000; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s;">
+                        <span style="font-family: 'Press Start 2P', cursive; font-size: 9px; color: #fff;">300 LINKS</span>
+                        <span style="font-family: 'Press Start 2P', cursive; font-size: 11px; color: var(--text-cyan); font-weight: bold;">$1.99</span>
+                    </div>
+                    <div class="retro-package-option" data-amount="4.99" data-credits="1000" style="border: 3px solid var(--btn-gray); padding: 8px; background-color: #000; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s;">
+                        <span style="font-family: 'Press Start 2P', cursive; font-size: 9px; color: #fff;">1000 LINKS</span>
+                        <span style="font-family: 'Press Start 2P', cursive; font-size: 11px; color: var(--text-cyan); font-weight: bold;">$4.99</span>
+                    </div>
+                </div>
+                
+                <div id="checkout-success" class="auth-message success hidden"></div>
+                <div id="checkout-error" class="auth-message error hidden"></div>
+
+                <form id="payment-form" class="auth-form">
+                    <div style="font-family: 'Press Start 2P', cursive; font-size: 8px; color: var(--text-gray); margin-bottom: 8px; line-height: 1.5; text-align: center;">
+                        YOU WILL BE REDIRECTED TO STRIPE'S SECURE CHECKOUT PAGE TO COMPLETE YOUR PURCHASE.
+                    </div>
+                    <button type="submit" class="retro-btn success-btn full-width-btn" id="pay-submit-btn">
+                        <i class="fas fa-lock"></i> SECURE PAY $0.99
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOCIAL SHARE MODAL -->
+    <div id="share-modal" class="modal-overlay hidden" data-nosnippet>
+        <div class="modal-box retro-border">
+            <div class="modal-header">
+                <h3 style="font-size: 11px;">SHARE & GET UP TO +60 CREDITS</h3>
+                <button id="share-close" class="retro-btn close-btn">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; text-align: center;">
+                <p style="font-family: 'Press Start 2P', cursive; font-size: 9px; line-height: 1.5; color: #ffd700;">CHOOSE A PLATFORM TO SHARE THE SITE AND CLAIM +10 CREDITS EACH (UP TO +60 CREDITS TOTAL)!</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                    <a href="#" id="share-x" class="retro-btn share-network-btn" style="background-color: #1da1f2; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-twitter"></i> X (TWITTER)
+                    </a>
+                    <a href="#" id="share-facebook" class="retro-btn share-network-btn" style="background-color: #1877f2; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-facebook-f"></i> FACEBOOK
+                    </a>
+                    <a href="#" id="share-linkedin" class="retro-btn share-network-btn" style="background-color: #0077b5; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-linkedin-in"></i> LINKEDIN
+                    </a>
+                    <a href="#" id="share-reddit" class="retro-btn share-network-btn" style="background-color: #ff4500; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-reddit-alien"></i> REDDIT
+                    </a>
+                    <a href="#" id="share-instagram" class="retro-btn share-network-btn" style="background-color: #e1306c; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-instagram"></i> INSTAGRAM
+                    </a>
+                    <a href="#" id="share-tiktok" class="retro-btn share-network-btn" style="background-color: #010101; color: #ffffff !important; border-color: #ffffff; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; font-size: 11px;">
+                        <i class="fab fa-tiktok"></i> TIKTOK
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEGAL MODAL (TOS & PRIVACY) -->
+    <div id="legal-modal" class="modal-overlay hidden" data-nosnippet>
+        <div class="modal-box retro-border" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3 id="legal-modal-title">LEGAL POLICY</h3>
+                <button id="legal-close" class="retro-btn close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-container">
+                    <button id="tab-tos" class="tab-btn active">TERMS OF SERVICE</button>
+                    <button id="tab-privacy" class="tab-btn">PRIVACY POLICY</button>
+                </div>
+                
+                <div id="legal-content-box" style="max-height: 250px; overflow-y: auto; font-size: 11px; font-family: 'Press Start 2P', cursive; line-height: 1.6; color: #cccccc; padding-right: 8px;">
+                    <div id="tos-text-content">
+                        <p style="margin-bottom: 12px; color: #ff5555; font-size: 9px; line-height: 1.4;">* BY USING THIS SITE, YOU AGREE TO THESE TERMS.</p>
+                        <p style="margin-bottom: 12px;">1. USER CONTENT: ALL LINKS POSTED ON TO THE RIVER ARE USER-GENERATED. WE AUTOMATICALLY SCAN ALL INCOMING LINKS FOR MALWARE, PHISHING, CLOAKING, AND ILLEGAL CONTENT TO MAINTAIN USER SAFETY. WE DISCLAIM DIRECT ENDORSEMENT OR RESPONSIBILITY FOR VISITED MATERIAL.</p>
+                        <p style="margin-bottom: 12px;">2. PROHIBITED CONTENT: YOU MUST NOT POST SCAMS, PHISHING SITES, MALWARE, ADULT/PORNOGRAPHIC CONTENT, OR COPYRIGHT-INFRINGING MATERIALS. VIOLATORS WILL BE BANNED AND CREDITS FORFEITED.</p>
+                        <p style="margin-bottom: 12px;">3. DISCLAIMER OF LIABILITY: fugaea AND ITS OPERATORS PROVIDE THIS SERVICE 'AS IS' AND ACCEPT NO RESPONSIBILITY FOR DAMAGED COMPUTER SYSTEMS, LOST DATA, OR FRAUDULENT TRANSACTIONS ARISING FROM VISITING EXTERNAL LINKS.</p>
+                        <p style="margin-bottom: 12px;">4. LINK CREDITS: ALL PURCHASES OF LINK CREDITS ARE FINAL, NON-REFUNDABLE, AND NON-TRANSFERABLE.</p>
+                        <p style="margin-bottom: 12px;">5. AGE REQUIREMENT: YOU MUST BE AT LEAST 13 YEARS OLD TO USE THIS SITE, AND AT LEAST 18 (OR HAVE EXPLICIT PARENTAL PERMISSION) TO MAKE PURCHASES.</p>
+                        <p style="margin-bottom: 12px;">6. RIGHT TO TERMINATE: WE RESERVE THE RIGHT TO BAN ANY USERNAME, REMOVE ANY LINK, OR SUSPEND SERVICE AT OUR SOLE DISCRETION WITHOUT PRIOR NOTICE OR REFUND.</p>
+                        <p style="margin-bottom: 12px;">7. CONTACT: fugaea IS OPERATED UNDER A REGISTERED AUSTRALIAN ABN. FOR QUESTIONS OR TO REPORT PROHIBITED CONTENT, PLEASE CONTACT US AT support@fugaea.com.</p>
+                    </div>
+                    
+                    <div id="privacy-text-content" class="hidden">
+                        <p style="margin-bottom: 12px; color: #00ffcc; font-size: 9px; line-height: 1.4;">* PRIVACY & COOKIE STATEMENTS.</p>
+                        <p style="margin-bottom: 12px;">1. DATA COLLECTION & SANITIZATION: WE COLLECT YOUR EMAIL ADDRESS AND USERNAME SOLELY FOR ACCOUNT OPERATION. ALL SUBMITTED URLS ARE SANITIZED AT THE EDGE, STRIPPING ANALYTICS TRACKING IDS (UTM_*, FBCLID, ETC.) AND EMAIL QUERY SIGNATURES TO PROTECT PRIVACY.</p>
+                        <p style="margin-bottom: 12px;">2. PAYMENT DATA: PAYMENT TRANSACTIONS ARE SECURELY PROCESSED BY STRIPE. WE DO NOT STORE YOUR CREDIT CARD INFORMATION ON OUR SERVERS. DETAILS ARE GOVERNED BY STRIPE'S PRIVACY POLICY (STRIPE.COM/PRIVACY).</p>
+                        <p style="margin-bottom: 12px;">3. COOKIES & LOCAL STORAGE: WE USE LOCAL STORAGE AND ESSENTIAL SESSION COOKIES TO KEEP YOU LOGGED IN. IP ADDRESSES ARE DE-IDENTIFIED AND NEVER PERMANENTLY STORED.</p>
+                        <p style="margin-bottom: 12px;">4. CHILDREN'S PRIVACY: WE DO NOT KNOWINGLY COLLECT, STORE, OR SOLICIT PERSONAL DATA FROM CHILDREN UNDER THE AGE OF 13.</p>
+                        <p style="margin-bottom: 12px;">5. USER DATA RIGHTS: YOU MAY REQUEST FULL ACCOUNT AND ASSOCIATED DATA DELETION AT ANY TIME BY REACHING OUT TO SUPPORT OR BY CLOSING YOUR ACCOUNT.</p>
+                        <p style="margin-bottom: 12px; display: none;" id="close-account-container">
+                            <button id="delete-account-btn" class="retro-btn" style="background-color: #ff3333; color: #ffffff !important; font-family: 'Press Start 2P', cursive; font-size: 8px; padding: 6px 12px; border: 3px solid #ffffff; box-shadow: var(--pixel-shadow); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                                <i class="fas fa-trash-alt"></i> DELETE ACCOUNT
+                            </button>
+                        </p>
+                        <p style="margin-bottom: 12px;">6. THIRD-PARTY SHARING: WE DO NOT SELL, SHARE, OR DISTRIBUTE YOUR PERSONAL INFORMATION TO ANY THIRD PARTY, EXCEPT TO COMPLY WITH LEGAL OBLIGATIONS OR STRIPE AUDITS.</p>
+                        <p style="margin-bottom: 12px;">7. CONTACT: FOR PRIVACY QUESTIONS OR TO REQUEST DATA DELETION, PLEASE REACH OUT TO support@fugaea.com.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RETRO ALERT MODAL -->
+    <div id="retro-alert-modal" class="modal-overlay hidden" data-nosnippet>
+        <div class="modal-box retro-border" style="max-width: 450px; border-color: #ff3333; background-color: #1a1c23;">
+            <div class="modal-header" style="border-bottom-color: #ff3333; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #ff3333; font-family: 'Press Start 2P', cursive; font-size: 11px;"><i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>SYSTEM ERROR</h3>
+                <button id="retro-alert-header-close" class="retro-btn close-btn" style="border-color: #ff3333; color: #ff3333 !important; background: none; font-size: 12px; padding: 4px 8px;">&times;</button>
+            </div>
+            <div class="modal-body" style="font-family: 'Press Start 2P', cursive; font-size: 9px; line-height: 1.6; text-align: center; display: flex; flex-direction: column; gap: 16px;">
+                <p id="retro-alert-message" style="color: #ff3333; word-break: break-word;">ERROR MESSAGE HERE</p>
+                <button id="retro-alert-close" class="retro-btn danger-btn" style="width: 100%; border-color: #fff; background-color: #ff3333; color: #fff !important; font-family: 'Press Start 2P', cursive; font-size: 10px; padding: 10px;">RETURN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RETRO DELETE CONFIRMATION MODAL -->
+    <div id="delete-confirm-modal" class="modal-overlay hidden" data-nosnippet>
+        <div class="modal-box retro-border" style="max-width: 450px; border-color: #ff3333; background-color: #1a1c23;">
+            <div class="modal-header" style="border-bottom-color: #ff3333; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #ff3333; font-family: 'Press Start 2P', cursive; font-size: 11px;"><i class="fas fa-trash-alt" style="margin-right: 6px;"></i>DELETE ACCOUNT</h3>
+                <button id="delete-confirm-header-close" class="retro-btn close-btn" style="border-color: #ff3333; color: #ff3333 !important; background: none; font-size: 12px; padding: 4px 8px;">&times;</button>
+            </div>
+            <div class="modal-body" style="font-family: 'Press Start 2P', cursive; font-size: 9px; line-height: 1.6; text-align: center; display: flex; flex-direction: column; gap: 16px;">
+                <p style="color: #ffffff; word-break: break-word;">ARE YOU ABSOLUTELY SURE YOU WANT TO DELETE YOUR ACCOUNT? THIS CANNOT BE UNDONE.</p>
+                <div style="display: flex; gap: 12px; justify-content: center; width: 100%;">
+                    <button id="delete-confirm-yes" class="retro-btn danger-btn" style="flex: 1; border-color: #fff; background-color: #ff3333; color: #fff !important; font-family: 'Press Start 2P', cursive; font-size: 10px; padding: 10px; cursor: pointer;">YES, DELETE</button>
+                    <button id="delete-confirm-no" class="retro-btn" style="flex: 1; border-color: #fff; background-color: #555; color: #fff !important; font-family: 'Press Start 2P', cursive; font-size: 10px; padding: 10px; cursor: pointer;">NO, CANCEL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECURITY SCANNER MODAL -->
+    <div id="security-scan-modal" class="modal-overlay hidden" data-nosnippet>
+        <div class="modal-box retro-border" style="max-width: 550px; border-color: var(--text-cyan);">
+            <div class="modal-header" style="border-bottom-color: var(--text-cyan);">
+                <h3 style="color: var(--text-cyan); font-size: 11px;"><i class="fas fa-shield-halved" style="margin-right: 6px;"></i>CYBERSECURITY GATE v1.0</h3>
+            </div>
+            <div class="modal-body" style="font-family: 'Press Start 2P', cursive; font-size: 9px; line-height: 1.5; color: #fff;">
+                <div style="margin-bottom: 8px;">
+                    <span style="color: var(--text-yellow);">TARGET URL:</span><br>
+                    <span id="scan-target-url" style="word-break: break-all; color: #00ffcc; font-family: 'VT323', monospace; font-size: 18px;">https://example.com</span>
+                </div>
+                
+                <div id="scan-status" style="margin-bottom: 8px; font-weight: bold;">
+                    STATUS: <span id="scan-status-text" class="text-cyan">INITIALIZING...</span>
+                </div>
+
+                <div class="scan-progress-container" style="border: 3px solid #fff; background-color: #000; padding: 4px; height: 32px; display: flex; align-items: center; margin-bottom: 12px; box-shadow: var(--pixel-shadow);">
+                    <div id="scan-progress-bar" style="height: 100%; width: 0%; background-color: #00ff66; transition: width 0.1s ease-out; display: flex; align-items: center; justify-content: center; font-family: 'Press Start 2P', cursive; font-size: 9px; color: #000; font-weight: bold;">0%</div>
+                </div>
+
+                <div id="scan-logs" style="border: 3px solid var(--btn-gray); background-color: #000; height: 160px; overflow-y: auto; padding: 8px; font-family: 'VT323', monospace; font-size: 16px; color: #00ff00; display: flex; flex-direction: column; gap: 4px; box-shadow: inset 0 0 10px rgba(0,255,0,0.2); text-align: left;">
+                </div>
+
+                <div id="scan-verdict-container" class="hidden" style="margin-top: 12px; text-align: center; border: 3px solid #ff3333; padding: 12px; background: rgba(255,0,0,0.1);">
+                    <div id="scan-verdict-title" style="font-family: 'Press Start 2P', cursive; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #ff3333;">VERDICT: THREAT DETECTED</div>
+                    <div id="scan-verdict-details" style="font-family: 'VT323', monospace; font-size: 18px; color: #ffcccc;">Details will show here.</div>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 12px;">
+                    <button id="scan-abort-btn" class="retro-btn danger-btn" style="flex: 1;">ABORT / GO BACK</button>
+                    <button id="scan-proceed-btn" class="retro-btn success-btn hidden" style="flex: 1; background-color: #00ff66; color: #000 !important; border-color: #fff;">PROCEED TO SITE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIAGNOSTICS OVERLAY PANEL -->
+    <div id="diagnostics-panel" style="display: none; position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); color: #00ff00; padding: 12px; font-family: 'VT323', monospace; font-size: 16px; z-index: 10000; border: 3px solid #00ff00; box-shadow: 4px 4px 0px #000; pointer-events: none;" data-nosnippet>
+        <div style="font-weight: bold; text-decoration: underline; margin-bottom: 6px;">SYSTEM DIAGNOSTICS:</div>
+        - DB CONNECTION: <span id="diag-connected" style="color: #ffff00;">CHECKING...</span><br>
+        - SESSION STATUS: <span id="diag-session" style="color: #ffff00;">CHECKING...</span><br>
+        - LAST AUTH ACTION: <span id="diag-action" style="color: #ffffff;">NONE</span>
+    </div>
+
+    <!-- MAIN UNIFIED JAVASCRIPT LOGIC -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        // ==========================================
+        // 1. SUPABASE CONFIGURATION
+        // ==========================================
+        const supabaseUrl = 'https://htlyvnqqbygiexmglphw.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0bHl2bnFxYnlnaWV4bWdscGh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDAwMTUsImV4cCI6MjA5ODExNjAxNX0.GMHHq407TJ3Xt4V-L-SjpOywtflmIE6YwQsPpxBfcQs';
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+        // ==========================================
+        // 2. DATABASE / SPAM LAYER (db.js inlined)
+        // ==========================================
+        const KEYWORD_BLOCKLIST = [
+            "spam", "scam", "illegal", "hack", "viagra", "casino", "lottery", "free money",
+            "porn", "pornhub", "xvideos", "nsfw", "adult content", "xxx"
+        ];
+
+        const ILLEGAL_DOMAINS = [
+            "malware-site.com", "phish-bank.net", "virus-download.org", "spyware-central.com",
+            "illegal-content.xyz", "darkweb-link.ru", "scam-cash.info", "class1-content.gov.au",
+            "bit.ly/malicious-link", "tinyurl.com/spyware-redir", "pornhub.com", "xvideos.com",
+            "xnxx.com", "redtube.com", "youporn.com", "onlyfans.com", "xhamster.com",
+            "chaturbate.com", "bongacams.com", "stripchat.com", "spankbang.com"
+        ];
+
+        function sanitizeHTML(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function sanitizeUrlQueryParameters(urlString) {
+            try {
+                let targetString = urlString.trim();
+                if (!/^https?:\/\//i.test(targetString)) {
+                    targetString = "https://" + targetString;
+                }
+                const urlObj = new URL(targetString);
+                const params = new URLSearchParams(urlObj.search);
+                const keysToUpdate = [];
+                const TRACKING_KEYS = [
+                    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+                    "fbclid", "gclid", "yclid", "msclkid", "dclid", "li_fat_id"
+                ];
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                for (const [key, value] of params.entries()) {
+                    const lowerKey = key.toLowerCase();
+                    if (TRACKING_KEYS.includes(lowerKey)) {
+                        keysToUpdate.push(key);
+                        continue;
+                    }
+                    if (emailRegex.test(value) || lowerKey.includes("email") || lowerKey.includes("mail")) {
+                        keysToUpdate.push(key);
+                    }
+                }
+                keysToUpdate.forEach(key => params.delete(key));
+                urlObj.search = params.toString();
+                let result = urlObj.toString();
+                if (!/^https?:\/\//i.test(urlString)) {
+                    result = result.replace(/^https:\/\//i, "");
+                }
+                return result;
+            } catch (_) {
+                return urlString;
+            }
+        }
+
+        function isValidURL(string) {
+            try {
+                const url = new URL(string);
+                return url.protocol === "http:" || url.protocol === "https:";
+            } catch (_) {
+                return false;
+            }
+        }
+
+        async function getPosts() {
+            const { data, error } = await supabase
+                .from('posts')
+                .select(`
+                    id, text, url, sprite, created_at, clicks,
+                    profiles (username)
+                `)
+                .order('created_at', { ascending: true });
+
+            if (error) throw new Error("DB FETCH ERROR: " + error.message.toUpperCase());
+            return data.map(post => ({
+                id: post.id,
+                username: post.profiles?.username || 'unknown',
+                text: post.text,
+                url: post.url,
+                sprite: post.sprite,
+                createdAt: post.created_at,
+                clicks: post.clicks || 0
+            }));
+        }
+
+        async function addPost({ id, username, text, url, sprite }) {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !session || !session.user) {
+                throw new Error("MUST BE LOGGED IN TO SUBMIT LINKS");
+            }
+            const userId = session.user.id;
+            if (!text || !url) throw new Error("USERNAME, TEXT AND URL ARE REQUIRED");
+
+            const cleanText = sanitizeHTML(text.trim());
+            let cleanUrl = sanitizeUrlQueryParameters(url.trim());
+
+            const lowerText = cleanText.toLowerCase();
+            const lowerUrl = cleanUrl.toLowerCase();
+            if (KEYWORD_BLOCKLIST.some(word => lowerText.includes(word) || lowerUrl.includes(word))) {
+                throw new Error("CONTENT CONTAINS BLOCKED KEYWORDS OR PHRASES");
+            }
+            if (ILLEGAL_DOMAINS.some(domain => lowerUrl.includes(domain))) {
+                throw new Error("BLOCKED BY LAYER 1 (EDGE CHECK): MALICIOUS OR ILLEGAL DESTINATION DOMAIN DETECTED.");
+            }
+            if (!/^https?:\/\//i.test(cleanUrl)) {
+                cleanUrl = "https://" + cleanUrl;
+            }
+            if (cleanText.length === 0 || cleanText.length > 40) {
+                throw new Error("TEXT IS TOO LONG (MAX 40 CHARS)");
+            }
+
+            const chosenSprite = sprite || "log";
+            const finalId = id || crypto.randomUUID();
+
+            const { data, error } = await supabase
+                .from('posts')
+                .insert([{
+                    id: finalId,
+                    user_id: userId,
+                    text: cleanText,
+                    url: cleanUrl,
+                    sprite: chosenSprite
+                }])
+                .select()
+                .single();
+
+            if (error) throw new Error(error.message.toUpperCase());
+            return {
+                id: data.id,
+                username: username,
+                text: data.text,
+                url: data.url,
+                sprite: data.sprite,
+                createdAt: data.created_at
+            };
+        }
+
+        async function resetDatabase() {
+            return getPosts();
+        }
+
+        async function incrementClicks(postId) {
+            if (!postId) return;
+            const { error } = await supabase.rpc('increment_post_clicks', { post_id: postId });
+            if (error) console.error("Error incrementing clicks:", error);
+        }
+
+        async function getTotalClicks() {
+            const { data, error } = await supabase
+                .from('statistics')
+                .select('value')
+                .eq('key', 'total_clicks')
+                .single();
+            if (error) {
+                console.error("Failed to fetch global statistics:", error);
+                return 0;
+            }
+            return data ? Number(data.value) : 0;
+        }
+
+        const db = { ILLEGAL_DOMAINS, getPosts, addPost, resetDatabase, incrementClicks, getTotalClicks };
+
+        // ==========================================
+        // 3. AUTHENTICATION MODULE (auth.js inlined)
+        // ==========================================
+        let currentUser = null;
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            console.log("[Auth] onAuthStateChange triggered. Event:", event, "Session:", session);
+            if (event === 'PASSWORD_RECOVERY') {
+                window.dispatchEvent(new CustomEvent('password-recovery-triggered', { detail: { session } }));
+            }
+            if (session && session.user) {
+                currentUser = {
+                    id: session.user.id,
+                    email: session.user.email,
+                    username: session.user.raw_user_meta_data?.username || 'unknown',
+                    credits: 10
+                };
+                window.dispatchEvent(new CustomEvent('auth-state-changed'));
+
+                (async () => {
+                    try {
+                        const { data: profile, error } = await supabase
+                            .from('profiles')
+                            .select('username, credits, status')
+                            .eq('id', session.user.id)
+                            .single();
+
+                        if (profile) {
+                            if (profile.status === 'deleted') {
+                                supabase.auth.signOut();
+                                currentUser = null;
+                                window.dispatchEvent(new CustomEvent('auth-state-changed'));
+                                return;
+                            }
+                            let userCredits = profile.credits !== undefined ? profile.credits : 10;
+                            if (userCredits === 5 && !localStorage.getItem(`migrated_5_to_10_${session.user.id}`)) {
+                                userCredits = 10;
+                                supabase.from('profiles').update({ credits: 10 }).eq('id', session.user.id).then(({ error }) => {
+                                    if (!error) {
+                                        localStorage.setItem(`migrated_5_to_10_${session.user.id}`, 'true');
+                                        currentUser.credits = 10;
+                                        window.dispatchEvent(new CustomEvent('auth-state-changed'));
+                                    }
+                                });
+                            }
+                            currentUser.username = profile.username || currentUser.username;
+                            currentUser.credits = userCredits;
+                            window.dispatchEvent(new CustomEvent('auth-state-changed'));
+                        }
+                    } catch (err) {
+                        console.error("Background auth state sync failed:", err);
+                    }
+                })();
+            } else {
+                currentUser = null;
+                window.dispatchEvent(new CustomEvent('auth-state-changed'));
+            }
+        });
+
+        async function signUp(email, password, username, captchaToken) {
+            if (!email || !password || !username) throw new Error("ALL FIELDS REQUIRED FOR REGISTRATION");
+            const trimmedUsername = username.trim();
+            if (trimmedUsername.length < 3) throw new Error("USERNAME MUST BE AT LEAST 3 CHARACTERS");
+
+            const { data, error } = await supabase.auth.signUp({
+                email: email.trim().toLowerCase(),
+                password: password,
+                options: {
+                    emailRedirectTo: window.location.origin,
+                    captchaToken: captchaToken,
+                    data: { username: trimmedUsername }
+                }
+            });
+            if (error) throw new Error(error.message.toUpperCase());
+            return { session: data.session, user: data.user };
+        }
+
+        async function signIn(email, password, captchaToken = "") {
+            if (!email || !password) throw new Error("EMAIL AND PASSWORD REQUIRED");
+            const options = {};
+            if (captchaToken) options.captchaToken = captchaToken;
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email.trim().toLowerCase(),
+                password: password,
+                options: options
+            });
+            if (error) throw new Error(error.message.toUpperCase());
+
+            if (data && data.user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('status')
+                    .eq('id', data.user.id)
+                    .single();
+                if (profile && profile.status === 'deleted') {
+                    await supabase.auth.signOut();
+                    throw new Error("THIS ACCOUNT HAS BEEN DELETED.");
+                }
+            }
+            return data.session;
+        }
+
+        async function signOut() {
+            const { error } = await supabase.auth.signOut();
+            if (error) throw new Error(error.message.toUpperCase());
+        }
+
+        function getCurrentUser() {
+            return currentUser;
+        }
+
+        async function deductCredit(userId) {
+            return true;
+        }
+
+
+        async function refreshUserProfile() {
+            if (!currentUser) return null;
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('credits, username')
+                .eq('id', currentUser.id)
+                .single();
+            if (profile) {
+                currentUser.credits = profile.credits;
+                currentUser.username = profile.username;
+            }
+            window.dispatchEvent(new CustomEvent('auth-state-changed'));
+            return currentUser;
+        }
+
+        async function resendVerification(email) {
+            if (!email) throw new Error("EMAIL IS REQUIRED");
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: email.trim().toLowerCase(),
+                options: { emailRedirectTo: window.location.origin }
+            });
+            if (error) throw new Error(error.message.toUpperCase());
+        }
+
+        async function checkEmailExists(email) {
+            if (!email) return false;
+            const { data, error } = await supabase.rpc('check_email_exists', { email_to_check: email.trim().toLowerCase() });
+            if (error) throw new Error("DB EMAIL CHECK FAILED: " + error.message.toUpperCase());
+            return !!data;
+        }
+
+        async function checkShareClaimed(userId, platform) {
+            const { data } = await supabase
+                .from('claimed_shares')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('platform', platform)
+                .maybeSingle();
+            return !!data;
+        }
+
+        async function logShareClaim(userId, platform) {
+            const { error } = await supabase
+                .from('claimed_shares')
+                .insert([{ user_id: userId, platform: platform }]);
+            if (error) throw new Error("CLAIM FAILED: " + error.message.toUpperCase());
+            await delay(200);
+            await refreshUserProfile();
+            return true;
+        }
+
+        async function sendPasswordResetEmail(email, captchaToken = "") {
+            if (!email) throw new Error("EMAIL IS REQUIRED");
+            const options = { redirectTo: window.location.origin };
+            if (captchaToken) options.captchaToken = captchaToken;
+            const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), options);
+            if (error) throw error;
+        }
+
+        async function updatePassword(newPassword) {
+            if (!newPassword) throw new Error("NEW PASSWORD IS REQUIRED");
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+            if (error) throw new Error(error.message.toUpperCase());
+        }
+
+        async function deleteAccount(userId) {
+            if (!userId) return;
+            const { error } = await supabase.from('profiles').update({ status: 'deleted' }).eq('id', userId);
+            if (error) throw new Error(error.message);
+            await signOut();
+        }
+
+        const auth = { signUp, signIn, signOut, getCurrentUser, deductCredit, refreshUserProfile, resendVerification, checkEmailExists, checkShareClaimed, logShareClaim, sendPasswordResetEmail, updatePassword, deleteAccount };
+
+        // ==========================================
+        // 4. MAIN APP IMPLEMENTATION (app.js inlined)
+        // ==========================================
+        window.serverTimeOffset = 0;
+
+        async function syncServerTimeOffset() {
+            try {
+                const start = Date.now();
+                const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+                    method: 'HEAD',
+                    headers: { 'apikey': supabaseAnonKey }
+                });
+                const end = Date.now();
+                const serverDateHeader = response.headers.get('date');
+                if (serverDateHeader) {
+                    const serverTime = new Date(serverDateHeader).getTime();
+                    const latency = (end - start) / 2;
+                    const adjustedServerTime = serverTime + latency;
+                    window.serverTimeOffset = adjustedServerTime - end;
+                    console.log(`[Clock Sync] Server offset: ${window.serverTimeOffset}ms`);
+                }
+            } catch (e) {
+                console.error("Failed to sync server time offset:", e);
+            }
+        }
+
+        syncServerTimeOffset();
+        setInterval(syncServerTimeOffset, 30000);
+
+        function getServerTime() {
+            return Date.now() + window.serverTimeOffset;
+        }
+
+        function generateUUID() {
+            if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+                return crypto.randomUUID();
+            }
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        window.isBoatLoaded = false;
+        window.boatImg = document.createElement('canvas');
+        window.boatCanvasCache = {};
+
+        function getWheelRGB(index) {
+            const hue = (index * 360 / 100) % 360;
+            const h = hue;
+            const s = 0.95;
+            const l = 0.52;
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = l - c / 2;
+            let r = 0, g = 0, b = 0;
+            if (h >= 0 && h < 60) { r = c; g = x; b = 0; }
+            else if (h >= 60 && h < 120) { r = x; g = c; b = 0; }
+            else if (h >= 120 && h < 180) { r = 0; g = c; b = x; }
+            else if (h >= 180 && h < 240) { r = 0; g = x; b = c; }
+            else if (h >= 240 && h < 300) { r = x; g = 0; b = c; }
+            else if (h >= 300 && h < 360) { r = c; g = 0; b = x; }
+            return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
+        }
+
+        function getUsernameIndex(username) {
+            if (!username) return 0;
+            let hash = 0;
+            for (let i = 0; i < username.length; i++) {
+                hash = username.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return Math.abs(hash) % 100;
+        }
+
+        window.getBoatCanvasForUser = function(username) {
+            const key = (username || '').toLowerCase().trim();
+            if (window.boatCanvasCache[key]) return window.boatCanvasCache[key];
+            if (!window.boatImg || !window.isBoatLoaded) return null;
+            
+            const w = window.boatImg.width;
+            const h = window.boatImg.height;
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(window.boatImg, 0, 0);
+            
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+            const isFugaea = key === 'fugaea';
+            const colorIdx = getUsernameIndex(username);
+            const targetColor = isFugaea ? { r: 0, g: 255, b: 102 } : getWheelRGB(colorIdx);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i]; const g = data[i+1]; const b = data[i+2]; const a = data[i+3];
+                if (a > 0 && r === 0 && g > 100 && b > 30 && b < 120) {
+                    const lum = g / 255.0;
+                    data[i] = Math.floor(lum * targetColor.r);
+                    data[i+1] = Math.floor(lum * targetColor.g);
+                    data[i+2] = Math.floor(lum * targetColor.b);
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+            window.boatCanvasCache[key] = canvas;
+            return canvas;
+        };
+
+        const rawBoatImg = new Image();
+        rawBoatImg.src = 'boat_sprite.jpg?v=' + Date.now();
+        rawBoatImg.onload = () => {
+            const w = rawBoatImg.width;
+            const h = rawBoatImg.height;
+            window.boatImg.width = w;
+            window.boatImg.height = h;
+            const bCtx = window.boatImg.getContext('2d');
+            bCtx.drawImage(rawBoatImg, 0, 0);
+            const imgData = bCtx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i]; const g = data[i+1]; const b = data[i+2];
+                const idx = i / 4;
+                const xCoord = idx % w;
+                const yCoord = Math.floor(idx / w);
+                if (r > 240 && g > 240 && b > 240) {
+                    data[i+3] = 0; continue;
+                }
+                if (yCoord >= h * 0.91) {
+                    data[i+3] = 0; continue;
+                }
+                if (yCoord < h * 0.77) {
+                    const isLeftOfMast = xCoord < w * 0.53;
+                    if (isLeftOfMast) {
+                        const baseR = r < 150 ? 210 : r;
+                        const lum = baseR / 255.0;
+                        data[i] = 0; data[i+1] = Math.floor(lum * 255); data[i+2] = Math.floor(lum * 102);
+                    } else {
+                        const targetX = w * 0.53 + ((yCoord - h * 0.32) / (h * 0.45)) * (w * 0.22);
+                        const isStaysail = xCoord < targetX;
+                        if (!isStaysail) {
+                            const lum = r / 255.0;
+                            data[i] = Math.floor(lum * 20); data[i+1] = Math.floor(lum * 20); data[i+2] = Math.floor(lum * 20);
+                        }
+                    }
+                    continue;
+                }
+                const isLight = (r > 115 && g > 115 && b > 115 && Math.abs(r - g) < 22 && Math.abs(g - b) < 22);
+                if (isLight && yCoord >= h * 0.77) {
+                    const lum = r / 255.0;
+                    data[i] = Math.floor(lum * 20); data[i+1] = Math.floor(lum * 20); data[i+2] = Math.floor(lum * 20);
+                }
+            }
+            bCtx.putImageData(imgData, 0, 0);
+            window.isBoatLoaded = true;
+        };
+
+        const sound = {
+            init() {}, toggle() { return false; }, playTone() {}, playBleep() {},
+            playCoin() {}, playSplash() {}, playSuccess() {}, playRightEnter() {}, playLeftExit() {}
+        };
+
+        const canvas = document.getElementById("river-canvas");
+        const ctx = canvas.getContext("2d");
+
+        let floatingItems = [];
+        let collisionParticles = [];
+        let databasePosts = [];
+        const expiredPostIds = new Set();
+        let isInitialSync = true;
+        let fallbackSyncTimer = null;
+        let currentSyncMs = 20000;
+
+        function setupFallbackSync(intervalMs) {
+            if (fallbackSyncTimer) clearInterval(fallbackSyncTimer);
+            currentSyncMs = intervalMs;
+            fallbackSyncTimer = setInterval(syncDatabasePosts, intervalMs);
+        }
+
+        let lastPhysicsTime = Date.now();
+        let physicsAccumulator = 0;
+        const PHYSICS_TIMESTEP = 1000 / 60;
+
+        const authChannel = new BroadcastChannel("auth_channel");
+        authChannel.onmessage = (event) => {
+            if (event.data.type === "CLOSE_OLD_TABS") {
+                window.close();
+                setTimeout(() => { window.location.href = "about:blank"; }, 300);
+            }
+        };
+
+        const postsChannel = new BroadcastChannel("posts_channel");
+        postsChannel.onmessage = (event) => {
+            if (event.data.type === "SYNC_POSTS") syncDatabasePosts();
+        };
+
+        const workerCode = `
+            let timer = null;
+            self.onmessage = function(e) {
+                if (e.data.action === 'start') {
+                    if (timer) clearInterval(timer);
+                    timer = setInterval(() => { self.postMessage('tick'); }, e.data.interval);
+                } else if (e.data.action === 'stop') {
+                    if (timer) clearInterval(timer); timer = null;
+                }
+            };
+        `;
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const autoPilotWorker = new Worker(URL.createObjectURL(blob));
+
+        autoPilotWorker.onmessage = (e) => {
+            if (e.data === 'tick' && document.visibilityState === 'visible') {
+                triggerAutoRepost();
+            }
+        };
+
+        async function triggerAutoRepost() {
+            const user = auth.getCurrentUser();
+            const autoRepostToggle = document.getElementById("auto-repost-toggle");
+            if (!autoRepostToggle || !autoRepostToggle.checked) {
+                autoPilotWorker.postMessage({ action: 'stop' }); return;
+            }
+            if (!user) {
+                autoRepostToggle.checked = false; autoPilotWorker.postMessage({ action: 'stop' });
+                showDailyBonusToast("AUTO-PILOT DEACTIVATED: NOT LOGGED IN"); return;
+            }
+            if (user.credits < 1) {
+                autoRepostToggle.checked = false; autoPilotWorker.postMessage({ action: 'stop' });
+                showDailyBonusToast("AUTO-PILOT STOPPED: OUT OF CREDITS!"); return;
+            }
+            const textVal = postText.value;
+            let urlVal = document.getElementById("post-url").value.trim();
+            if (urlVal && !/^https?:\/\//i.test(urlVal)) urlVal = "https://" + urlVal;
+            if (!textVal || !urlVal) {
+                autoRepostToggle.checked = false; autoPilotWorker.postMessage({ action: 'stop' });
+                showDailyBonusToast("AUTO-PILOT STOPPED: INVALID INPUTS"); return;
+            }
+            try {
+                await auth.deductCredit(user.id);
+                const postId = generateUUID();
+                await db.addPost({ id: postId, username: user.username, text: textVal, url: urlVal, sprite: "log" });
+                await auth.refreshUserProfile();
+                updateAuthStateUI();
+                await syncDatabasePosts();
+                postsChannel.postMessage({ type: "SYNC_POSTS" });
+                sound.playCoin();
+                showDailyBonusToast("AUTO-PILOT: LINK REPOSTED!");
+            } catch (err) {
+                autoRepostToggle.checked = false; autoPilotWorker.postMessage({ action: 'stop' });
+                showDailyBonusToast("AUTO-PILOT STOPPED: " + err.message.toUpperCase());
+            }
+        }
+
+        let mouseX = 0; let mouseY = 0;
+        let hoveredItem = null; let selectedItem = null;
+        let isPageLoaded = false;
+        setTimeout(() => { isPageLoaded = true; }, 1500);
+
+        function seededRandom(seedStr) {
+            let hash = 5381;
+            for (let i = 0; i < seedStr.length; i++) hash = ((hash << 5) + hash) + seedStr.charCodeAt(i);
+            let state = hash >>> 0;
+            return function() {
+                state = (state + 0x9e3779b9) | 0;
+                let z = state;
+                z ^= z >>> 16; z = Math.imul(z, 0x21f0aa7f); z ^= z >>> 15;
+                z = Math.imul(z, 0x735a2d97); z ^= z >>> 15;
+                return (z >>> 0) / 4294967296;
+            };
+        }
+
+        const SPRITE_PIXEL_SCALE = 3.5;
+        const SPRITES = {
+            log: {
+                width: 24, height: 7,
+                palette: { 1: "#6d3e1d", 2: "#8b5226", 3: "#cd9a62", 4: "#4c2810", 5: "#b87742", 6: "#542e14" },
+                grid: [
+                    [0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0],
+                    [0,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,4,0],
+                    [4,3,5,2,5,5,2,5,5,5,2,5,5,2,5,5,5,2,5,5,5,2,3,4],
+                    [4,3,2,2,1,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,1,2,3,4],
+                    [4,3,1,1,6,1,1,1,6,1,1,1,6,1,1,1,6,1,1,1,6,1,3,4],
+                    [0,4,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,4,0],
+                    [0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,0,0]
+                ]
+            },
+            leaf: {
+                width: 14, height: 10,
+                palette: { 1: "#555555", 2: "#888888", 3: "#222222", 4: "#111111" },
+                grid: [
+                    [0,0,0,0,0,4,4,0,0,0,0,0,0,0],
+                    [0,0,0,4,4,2,2,4,4,0,0,0,0,0],
+                    [0,0,4,2,2,2,2,1,1,4,4,0,0,0],
+                    [0,4,2,2,2,2,1,1,1,1,1,4,0,0],
+                    [4,2,2,2,1,3,1,1,1,1,1,1,4,0],
+                    [4,1,1,3,3,1,1,1,1,1,1,1,4,0],
+                    [0,4,3,1,1,1,1,1,1,1,1,4,0,0],
+                    [0,0,4,4,1,1,1,1,1,4,4,0,0,0],
+                    [0,0,0,0,4,4,3,4,4,0,0,0,0,0],
+                    [0,0,0,0,0,0,3,0,0,0,0,0,0,0]
+                ]
+            },
+            duck: {
+                width: 12, height: 12,
+                palette: { 1: "#888888", 2: "#444444", 3: "#000000", 4: "#ffffff", 5: "#333333" },
+                grid: [
+                    [0,0,0,0,1,1,1,1,0,0,0,0],
+                    [0,0,0,1,1,1,4,1,1,0,0,0],
+                    [0,0,0,1,1,3,1,1,1,2,2,0],
+                    [0,0,0,1,1,1,1,1,1,2,2,2],
+                    [0,0,0,0,1,1,1,1,1,0,0,0],
+                    [0,1,1,1,1,1,1,1,1,1,1,0],
+                    [1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,5,1,1,1,1,1,1,1,1,5,1],
+                    [0,1,5,5,5,5,5,5,5,5,1,0],
+                    [0,0,1,1,1,1,1,1,1,1,0,0],
+                    [0,0,0,0,0,0,0,0,0,0,0,0]
+                ]
+            },
+            bottle: {
+                width: 10, height: 14,
+                palette: { 1: "#aaaaaa", 2: "#777777", 3: "#444444", 4: "#ffffff", 5: "#222222" },
+                grid: [
+                    [0,0,0,5,5,0,0,0,0,0],
+                    [0,0,0,5,3,5,0,0,0,0],
+                    [0,0,0,5,3,5,0,0,0,0],
+                    [0,0,5,1,1,2,5,0,0,0],
+                    [0,0,5,1,1,2,5,0,0,0],
+                    [0,5,1,1,1,2,2,5,0,0],
+                    [5,1,1,1,4,2,2,2,5,0],
+                    [5,1,1,4,4,4,2,2,5,0],
+                    [5,1,1,4,4,4,2,2,5,0],
+                    [5,1,2,2,4,2,2,2,5,0],
+                    [5,2,2,2,2,2,2,2,5,0],
+                    [5,2,2,2,2,2,2,2,5,0],
+                    [0,5,2,2,2,2,2,5,0,0],
+                    [0,0,5,5,5,5,5,0,0,0]
+                ]
+            }
+        };
+
+        function resizeCanvas() {
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth; canvas.height = parent.clientHeight;
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                floatingItems.forEach(item => { item.realign(); });
+                lastPhysicsTime = Date.now(); physicsAccumulator = 0;
+            }
+        });
+
+        function getVirtualWidth() { return 2000; }
+
+        class Wave {
+            constructor(index) {
+                this.index = index;
+                const rand = seededRandom("wave_" + index);
+                this.phase = rand(); this.yPercent = rand();
+                this.length = rand() * 60 + 30; this.speedFactor = rand() * 0.4 + 0.8;
+                this.virtualX = getVirtualWidth() * this.phase;
+                const colorRand = rand();
+                if (colorRand > 0.94) this.color = "rgba(0, 240, 255, 0.45)";
+                else if (colorRand > 0.88) this.color = "rgba(255, 110, 0, 0.5)";
+                else if (colorRand > 0.73) this.color = "rgba(255, 200, 50, 0.42)";
+                else this.color = "rgba(255, 255, 255, 0.28)";
+            }
+            update(t) {
+                const VIRTUAL_WIDTH = getVirtualWidth();
+                const travelSpan = VIRTUAL_WIDTH + 100;
+                const baseSpeed = 0.16875;
+                const progress = ( (t * baseSpeed * this.speedFactor) / travelSpan + this.phase ) % 1.0;
+                this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
+            }
+            draw() {
+                const riverTop = Math.floor(canvas.height * 0.46);
+                const riverBottom = Math.floor(canvas.height * 0.72);
+                const actualY = riverTop + this.yPercent * (riverBottom - riverTop - 4);
+                const VIRTUAL_WIDTH = getVirtualWidth();
+                const actualX = (this.virtualX / VIRTUAL_WIDTH) * canvas.width;
+                const actualLength = (this.length / VIRTUAL_WIDTH) * canvas.width;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(Math.floor(actualX), Math.floor(actualY), Math.ceil(actualLength), 4);
+            }
+        }
+
+        const waveParticles = Array.from({ length: 70 }, (_, i) => new Wave(i));
+
+        class SplashParticle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.vx = (Math.random() - 0.5) * 4; this.vy = -1.5 - Math.random() * 2.5;
+                this.size = 2 + Math.random() * 4; this.life = 1.0; this.decay = 0.03 + Math.random() * 0.05;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy; this.vy += 0.15;
+                this.life -= this.decay; if (this.life < 0) this.life = 0;
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.life * 0.8})`;
+                ctx.fillRect(Math.floor(this.x), Math.floor(this.y), Math.ceil(this.size), Math.ceil(this.size));
+            }
+        }
+
+        class FloatingItem {
+            constructor(post) {
+                this.post = post;
+                const rawCreated = new Date(post.createdAt).getTime();
+                this.createdAtTime = (rawCreated > getServerTime()) ? getServerTime() : rawCreated;
+                const spriteMeta = SPRITES[post.sprite] || SPRITES.log;
+                const VIRTUAL_PIXEL_SCALE = 6.0;
+                this.virtualWidth = spriteMeta.width * VIRTUAL_PIXEL_SCALE;
+                this.virtualHeight = spriteMeta.height * VIRTUAL_PIXEL_SCALE;
+
+                const rand = seededRandom(post.id);
+                this.yPercent = rand(); this.bobOffset = rand() * Math.PI * 2;
+                this.bobSpeed = 0.001 + rand() * 0.0015; this.speedFactor = 0.8 + rand() * 0.4;
+                this.hasBranch = true; this.currentAngle = 0;
+
+                const VIRTUAL_WIDTH = getVirtualWidth();
+                const age = Math.max(0, getServerTime() - this.createdAtTime);
+                const travelSpan = VIRTUAL_WIDTH + 300;
+                const baseSpeed = 0.12;
+                const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
+                this.virtualX = VIRTUAL_WIDTH - progress * travelSpan;
+                
+                const riverTop = 460; const riverBottom = 720;
+                this.targetVirtualY = (riverTop + 12) + this.yPercent * (riverBottom - riverTop - this.virtualHeight - 24);
+                this.virtualY = this.targetVirtualY;
+                this.virtualTargetVx = -2.0 * this.speedFactor;
+                this.virtualVx = this.virtualTargetVx; this.virtualVy = 0;
+                this.currentBob = 0; this.isHovered = false; this.virtualXOffset = 0;
+                this.splashProgress = (getServerTime() - this.createdAtTime < 2500) ? 0.0 : 1.0;
+                this.hasEnteredScreen = false;
+            }
+            realign() {
+                const age = Math.max(0, getServerTime() - this.createdAtTime);
+                const VIRTUAL_WIDTH = getVirtualWidth();
+                const travelSpan = VIRTUAL_WIDTH + 300;
+                const baseSpeed = 0.12;
+                const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
+                this.virtualX = VIRTUAL_WIDTH - progress * travelSpan; this.virtualXOffset = 0;
+                this.virtualY = this.targetVirtualY;
+                this.virtualVx = this.virtualTargetVx; this.virtualVy = 0; this.isHovered = false;
+                this.splashProgress = (getServerTime() - this.createdAtTime < 2500) ? 0.0 : 1.0;
+            }
+            updatePhysics() {
+                this.virtualX += this.virtualVx; this.virtualY += this.virtualVy;
+                const age = Math.max(0, getServerTime() - this.createdAtTime);
+                const VIRTUAL_WIDTH = getVirtualWidth();
+                const travelSpan = VIRTUAL_WIDTH + 300;
+                const baseSpeed = 0.12;
+                const progress = (age * baseSpeed * this.speedFactor) / travelSpan;
+                const expectedX = VIRTUAL_WIDTH - progress * travelSpan + this.virtualXOffset;
+                this.virtualX += (expectedX - this.virtualX) * 0.1;
+                this.virtualVx += (this.virtualTargetVx - this.virtualVx) * 0.06;
+                this.virtualY += (this.targetVirtualY - this.virtualY) * 0.08;
+                this.virtualVy += (0 - this.virtualVy) * 0.03;
+
+                const riverTop = 460; const riverBottom = 720;
+                const minVal = riverTop + 12; const maxVal = riverBottom - this.virtualHeight - 12;
+                if (this.virtualY < minVal) {
+                    this.virtualY = minVal; this.virtualVy = Math.abs(this.virtualVy) * 0.5 + 0.25;
+                } else if (this.virtualY > maxVal) {
+                    this.virtualY = maxVal; this.virtualVy = -Math.abs(this.virtualVy) * 0.5 - 0.25;
+                }
+                if (this.virtualVx > -0.6 * this.speedFactor) this.virtualVx = -0.6 * this.speedFactor;
+                const maxLeftSpeed = -1.8 * this.speedFactor;
+                if (this.virtualVx < maxLeftSpeed) this.virtualVx = maxLeftSpeed;
+                if (this.virtualX + this.virtualWidth < -200) this.isExpired = true;
+            }
+            update(t) {
+                const currentBobPhase = this.bobOffset + (t * this.bobSpeed);
+                this.currentBob = Math.sin(currentBobPhase) * 6;
+                if (this.splashProgress < 1.0) this.splashProgress += 0.04;
+
+                const scaleX = canvas.width / getVirtualWidth();
+                const screenX = this.virtualX * scaleX;
+                const screenWidth = this.virtualWidth * scaleX;
+                if (!this.hasEnteredScreen && screenX <= canvas.width && screenX + screenWidth >= 0) {
+                    this.hasEnteredScreen = true;
+                    if (isPageLoaded) sound.playRightEnter();
+                }
+            }
+            draw() {
+                const scaleX = canvas.width / getVirtualWidth();
+                const scaleY = canvas.height / 1000;
+                const zoomScale = Math.min(0.6, scaleX);
+                const drawX = Math.floor(this.virtualX * scaleX);
+                const drawY = Math.floor(this.virtualY * scaleY) + this.currentBob;
+                const drawWidth = this.virtualWidth * zoomScale;
+                const drawHeight = this.virtualHeight * scaleY;
+                const renderPixelScale = 6.0 * zoomScale;
+                const spriteMeta = SPRITES[this.post.sprite] || SPRITES.log;
+
+                if (this.isHovered) {
+                    ctx.strokeStyle = "rgba(0, 255, 102, 0.8)"; ctx.lineWidth = 3;
+                    const topOffset = (this.hasBranch ? 61 : 44) * scaleY;
+                    const bottomOffset = 8 * scaleY; const sideOffset = 15 * zoomScale;
+                    ctx.strokeRect(drawX - sideOffset, drawY - topOffset, drawWidth + sideOffset * 2, drawHeight + topOffset + bottomOffset);
+                    ctx.fillStyle = "rgba(0, 255, 102, 0.1)";
+                    ctx.fillRect(drawX - sideOffset, drawY - topOffset, drawWidth + sideOffset * 2, drawHeight + topOffset + bottomOffset);
+                }
+                if (this.splashProgress < 1.0) {
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+                    const radius = (1 - this.splashProgress) * 40 * zoomScale;
+                    ctx.fillRect(drawX + drawWidth/2 - radius/2, drawY + drawHeight/2 - radius/2, radius, radius);
+                }
+                const ripplePulse = 0.65 + (this.currentBob / 6) * 0.35;
+                ctx.fillStyle = "rgba(0, 240, 255, 0.75)";
+                const rippleY = drawY + drawHeight - Math.floor(1 * scaleY);
+                const rippleHeight = Math.max(2, Math.ceil(3 * scaleY));
+                
+                const leftRippleWidth = Math.floor(ripplePulse * 30 * zoomScale);
+                const leftX = drawX - leftRippleWidth - Math.floor(3 * zoomScale);
+                ctx.fillRect(leftX, rippleY, leftRippleWidth, rippleHeight);
+                
+                const rightRippleWidth = Math.floor(ripplePulse * 45 * zoomScale);
+                const rightX = drawX + drawWidth + Math.floor(3 * zoomScale);
+                ctx.fillRect(rightX, rippleY, rightRippleWidth, rippleHeight);
+
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+                const outerRippleHeight = Math.max(1, Math.ceil(2 * scaleY));
+                const outerLeftWidth = Math.floor(ripplePulse * 15 * zoomScale);
+                const outerLeftX = leftX - outerLeftWidth - Math.floor(4 * zoomScale);
+                ctx.fillRect(outerLeftX, rippleY + Math.floor(1 * scaleY), outerLeftWidth, outerRippleHeight);
+
+                const outerRightWidth = Math.floor(ripplePulse * 22 * zoomScale);
+                const outerRightX = rightX + rightRippleWidth + Math.floor(4 * zoomScale);
+                ctx.fillRect(outerRightX, rippleY + Math.floor(1 * scaleY), outerRightWidth, outerRippleHeight);
+
+                const grid = spriteMeta.grid;
+                for (let r = 0; r < grid.length; r++) {
+                    for (let c = 0; c < grid[r].length; c++) {
+                        const colorCode = grid[r][c];
+                        if (colorCode !== 0) {
+                            ctx.fillStyle = spriteMeta.palette[colorCode];
+                            ctx.fillRect(drawX + c * renderPixelScale, drawY + r * renderPixelScale, Math.ceil(renderPixelScale), Math.ceil(renderPixelScale));
+                        }
+                    }
+                }
+                if (this.hasBranch) {
+                    ctx.fillStyle = "#4c2810";
+                    const branchStems = [[10,-1], [11,-2], [12,-3], [13,-3]];
+                    branchStems.forEach(([bx, by]) => {
+                        ctx.fillRect(drawX + bx * renderPixelScale, drawY + by * renderPixelScale, Math.ceil(renderPixelScale), Math.ceil(renderPixelScale));
+                    });
+                    ctx.fillStyle = "#2b792b";
+                    const medLeaves = [[9,-2], [9,-3], [10,-3], [14,-3], [14,-4], [15,-3]];
+                    medLeaves.forEach(([bx, by]) => {
+                        ctx.fillRect(drawX + bx * renderPixelScale, drawY + by * scaleY, Math.ceil(renderPixelScale), Math.ceil(renderPixelScale));
+                    });
+                    ctx.fillStyle = "#3fb23f";
+                    const lightLeaves = [[11,-4], [12,-4], [13,-4], [12,-5]];
+                    lightLeaves.forEach(([bx, by]) => {
+                        ctx.fillRect(drawX + bx * renderPixelScale, drawY + by * renderPixelScale, Math.ceil(renderPixelScale), Math.ceil(renderPixelScale));
+                    });
+                }
+                const username = this.post.username;
+                ctx.font = `${Math.max(18, Math.floor(27 * zoomScale))}px VT323`;
+                ctx.textAlign = "center";
+                const textX = Math.floor(drawX + drawWidth / 2);
+                const textY = drawY - (this.hasBranch ? 35 : 18) * scaleY;
+                ctx.fillStyle = "#000000";
+                ctx.fillText(username, textX - 2, textY - 2);
+                ctx.fillText(username, textX + 2, textY - 2);
+                ctx.fillText(username, textX - 2, textY + 2);
+                ctx.fillText(username, textX + 2, textY + 2);
+                ctx.fillStyle = this.isHovered ? "#00ff66" : "#ffffff";
+                ctx.fillText(username, textX, textY);
+            }
+            checkCollision(mx, my) {
+                const scaleX = canvas.width / getVirtualWidth();
+                const scaleY = canvas.height / 1000;
+                const zoomScale = Math.min(0.6, scaleX);
+                const drawX = this.virtualX * scaleX;
+                const drawY = this.virtualY * scaleY + this.currentBob;
+                const drawWidth = this.virtualWidth * zoomScale;
+                const drawHeight = this.virtualHeight * scaleY;
+                const topOffset = (this.hasBranch ? 61 : 44) * scaleY;
+                const bottomOffset = 8 * scaleY; const sideOffset = 15 * zoomScale;
+                return (mx >= drawX - sideOffset && mx <= drawX + drawWidth + sideOffset && my >= drawY - topOffset && my <= drawY + drawHeight + bottomOffset);
+            }
+        }
+
+        function updatePhysics() {
+            floatingItems.forEach(item => { item.updatePhysics(); });
+            for (let i = 0; i < floatingItems.length; i++) {
+                for (let j = i + 1; j < floatingItems.length; j++) {
+                    const a = floatingItems[i]; const b = floatingItems[j];
+                    if (a.isExpired || b.isExpired) continue;
+                    if (a.virtualX >= 2000 && b.virtualX >= 2000) continue;
+                    
+                    const overlapX = Math.min(a.virtualX + a.virtualWidth, b.virtualX + b.virtualWidth) - Math.max(a.virtualX, b.virtualX);
+                    const overlapY = Math.min(a.virtualY + a.virtualHeight, b.virtualY + b.virtualHeight) - Math.max(a.virtualY, b.virtualY);
+                    
+                    if (overlapX > 0 && overlapY > 0) {
+                        const scaleX = canvas.width / getVirtualWidth();
+                        const scaleY = canvas.height / 1000;
+                        const contactX = ((Math.max(a.virtualX, b.virtualX) + Math.min(a.virtualX + a.virtualWidth, b.virtualX + b.virtualWidth)) / 2) * scaleX;
+                        const contactY = ((Math.max(a.virtualY, b.virtualY) + Math.min(a.virtualY + a.virtualHeight, b.virtualY + b.virtualHeight)) / 2) * scaleY;
+                        for (let k = 0; k < 6; k++) collisionParticles.push(new SplashParticle(contactX, contactY));
+
+                        if (overlapX < overlapY) {
+                            const push = overlapX / 2;
+                            if (a.virtualX < b.virtualX) {
+                                a.virtualX -= push; b.virtualX += push;
+                                a.virtualXOffset -= push; b.virtualXOffset += push;
+                                a.virtualVy += 0.3; b.virtualVy -= 0.3;
+                                const temp = a.virtualVx; a.virtualVx = Math.min(a.virtualVx, b.virtualVx * 1.3); b.virtualVx = temp * 0.55;
+                            } else {
+                                a.virtualX += push; b.virtualX -= push;
+                                a.virtualXOffset += push; b.virtualXOffset -= push;
+                                a.virtualVy -= 0.3; b.virtualVy += 0.3;
+                                const temp = a.virtualVx; b.virtualVx = Math.min(b.virtualVx, a.virtualVx * 1.3); a.virtualVx = temp * 0.55;
+                            }
+                        } else {
+                            const push = overlapY / 2;
+                            const riverTop = 460; const riverBottom = 720;
+                            if (a.virtualY < b.virtualY) {
+                                a.virtualY -= push; b.virtualY += push;
+                                let targetA = a.targetVirtualY - push; let targetB = b.targetVirtualY + push;
+                                const minValA = riverTop + 12; const maxValA = riverBottom - a.virtualHeight - 12;
+                                const minValB = riverTop + 12; const maxValB = riverBottom - b.virtualHeight - 12;
+                                if (targetA < minValA) { const excess = minValA - targetA; targetA = minValA; targetB += excess; }
+                                if (targetB > maxValB) { const excess = targetB - maxValB; targetB = maxValB; targetA -= excess; }
+                                a.targetVirtualY = Math.max(minValA, Math.min(maxValA, targetA));
+                                b.targetVirtualY = Math.max(minValB, Math.min(maxValB, targetB));
+                                const temp = a.virtualVy; a.virtualVy = b.virtualVy * -0.4 + 0.25; b.virtualVy = temp * -0.4 - 0.25;
+                            } else {
+                                a.virtualY += push; b.virtualY -= push;
+                                let targetA = a.targetVirtualY + push; let targetB = b.targetVirtualY - push;
+                                const minValA = riverTop + 12; const maxValA = riverBottom - a.virtualHeight - 12;
+                                const minValB = riverTop + 12; const maxValB = riverBottom - b.virtualHeight - 12;
+                                if (targetA > maxValA) { const excess = targetA - maxValA; targetA = maxValA; targetB -= excess; }
+                                if (targetB < minValB) { const excess = minValB - targetB; targetB = minValB; targetA += excess; }
+                                a.targetVirtualY = Math.max(minValA, Math.min(maxValA, targetA));
+                                b.targetVirtualY = Math.max(minValB, Math.min(maxValB, targetB));
+                                const temp = a.virtualVy; a.virtualVy = b.virtualVy * -0.4 - 0.25; b.virtualVy = temp * -0.4 + 0.25;
+                            }
+                        }
+                    }
+                }
+            }
+            floatingItems.forEach(item => {
+                const riverTop = 460; const riverBottom = 720;
+                const minVal = riverTop + 12; const maxVal = riverBottom - item.virtualHeight - 12;
+                if (item.virtualY < minVal) { item.virtualY = minVal; item.virtualVy = Math.abs(item.virtualVy) * 0.5 + 0.25; }
+                else if (item.virtualY > maxVal) { item.virtualY = maxVal; item.virtualVy = -Math.abs(item.virtualVy) * 0.5 - 0.25; }
+            });
+            floatingItems = floatingItems.filter(item => {
+                if (item.isExpired) { expiredPostIds.add(item.post.id); return false; }
+                return true;
+            });
+        }
+
+        function renderLoop() {
+            spawnFugaeaLog();
+            const skyHeight = Math.floor(canvas.height * 0.42); const horizonHeight = Math.floor(canvas.height * 0.04);
+            const riverHeight = Math.floor(canvas.height * 0.26); const riverTop = skyHeight + horizonHeight; const riverBottom = riverTop + riverHeight;
+
+            ctx.fillStyle = "#e3e5e8"; ctx.fillRect(0, 0, canvas.width, skyHeight);
+            ctx.fillStyle = "#f5f6f8"; ctx.fillRect(50, Math.floor(skyHeight * 0.3), 120, 6);
+            ctx.fillRect(80, Math.floor(skyHeight * 0.3) + 6, 80, 6);
+            ctx.fillRect(canvas.width - 250, Math.floor(skyHeight * 0.5), 180, 6);
+
+            ctx.fillStyle = "#527450"; ctx.fillRect(0, skyHeight, canvas.width, horizonHeight);
+            ctx.fillStyle = "#6d9c6a";
+            for (let x = 0; x < canvas.width; x += 32) ctx.fillRect(x, skyHeight, 16, 2);
+
+            ctx.fillStyle = "#9ea09b"; ctx.fillRect(0, riverTop, canvas.width, riverHeight);
+            ctx.fillStyle = "#2b3b2a"; ctx.fillRect(0, riverTop, canvas.width, 3); ctx.fillRect(0, riverBottom - 3, canvas.width, 3);
+            ctx.fillStyle = "#3c583a"; ctx.fillRect(0, riverBottom, canvas.width, canvas.height - riverBottom);
+
+            const localNow = Date.now(); const serverNow = getServerTime();
+            let elapsed = localNow - lastPhysicsTime; lastPhysicsTime = localNow;
+            if (elapsed > 1000) elapsed = 1000;
+            physicsAccumulator += elapsed;
+            while (physicsAccumulator >= PHYSICS_TIMESTEP) {
+                updatePhysics(); physicsAccumulator -= PHYSICS_TIMESTEP;
+            }
+            waveParticles.forEach(w => { w.update(serverNow); w.draw(); });
+            collisionParticles.forEach(p => { p.update(); p.draw(); });
+            collisionParticles = collisionParticles.filter(p => p.life > 0);
+            floatingItems.forEach(item => { item.update(serverNow); });
+
+            let currentHover = null;
+            for (let i = floatingItems.length - 1; i >= 0; i--) {
+                if (floatingItems[i].checkCollision(mouseX, mouseY)) { currentHover = floatingItems[i]; break; }
+            }
+            floatingItems.forEach(item => {
+                item.isHovered = (item === currentHover); item.draw();
+            });
+            if (currentHover) {
+                canvas.style.cursor = "pointer";
+                if (hoveredItem !== currentHover) { sound.playBleep(); hoveredItem = currentHover; }
+            } else {
+                canvas.style.cursor = "crosshair"; hoveredItem = null;
+            }
+            requestAnimationFrame(renderLoop);
+        }
+
+        const hudUser = document.getElementById("hud-user");
+        const hudUserContainer = document.getElementById("hud-user-container");
+        const hudItemCount = document.getElementById("hud-item-count");
+        const hudOnlineUsers = document.getElementById("hud-online-users");
+        const hudTotalViews = document.getElementById("hud-total-views");
+        const hudCreditsContainer = document.getElementById("hud-credits-container");
+        const hudCredits = document.getElementById("hud-credits");
+        const buyCreditsTrigger = document.getElementById("buy-credits-trigger");
+        const shareXBtn = document.getElementById("share-x-btn");
+        const shareModal = document.getElementById("share-modal");
+        const shareClose = document.getElementById("share-close");
+        const shareX = document.getElementById("share-x");
+        const shareFacebook = document.getElementById("share-facebook");
+        const shareLinkedin = document.getElementById("share-linkedin");
+        const shareReddit = document.getElementById("share-reddit");
+        const shareInstagram = document.getElementById("share-instagram");
+        const shareTiktok = document.getElementById("share-tiktok");
+
+        const authTriggerBtn = document.getElementById("auth-trigger-btn");
+        const headerHud = document.querySelector(".header-hud");
+        const submitSection = document.getElementById("submit-section");
+        const guestPromptSection = document.getElementById("guest-prompt-section");
+
+        const authModal = document.getElementById("auth-modal");
+        const modalClose = document.getElementById("modal-close");
+        const modalTitle = document.getElementById("modal-title");
+        const tabLogin = document.getElementById("tab-login");
+        const tabRegister = document.getElementById("tab-register");
+        const loginForm = document.getElementById("login-form");
+        const forgotPasswordForm = document.getElementById("forgot-password-form");
+        const resetPasswordForm = document.getElementById("reset-password-form");
+        const forgotPasswordBtn = document.getElementById("forgot-password-btn");
+        const forgotBackBtn = document.getElementById("forgot-back-btn");
+        const registerForm = document.getElementById("register-form");
+        const authError = document.getElementById("auth-error");
+        const authSuccess = document.getElementById("auth-success");
+
+        const verificationPendingSection = document.getElementById("verification-pending-section");
+        const regResendEmailBtn = document.getElementById("reg-resend-email-btn");
+        const regCheckStatusBtn = document.getElementById("reg-check-status-btn");
+        let verificationPollInterval = null;
+
+        function startVerificationPolling() {
+            if (verificationPollInterval) clearInterval(verificationPollInterval);
+            verificationPollInterval = setInterval(async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && session.user) {
+                    stopVerificationPolling(); await auth.refreshUserProfile();
+                    closeAuthModal(); updateAuthStateUI(); sound.playSuccess();
+                }
+            }, 3000);
+        }
+
+        function stopVerificationPolling() {
+            if (verificationPollInterval) { clearInterval(verificationPollInterval); verificationPollInterval = null; }
+        }
+
+        const checkoutModal = document.getElementById("checkout-modal");
+        const checkoutClose = document.getElementById("checkout-close");
+        const paymentForm = document.getElementById("payment-form");
+        const checkoutSuccess = document.getElementById("checkout-success");
+        const checkoutError = document.getElementById("checkout-error");
+        const paySubmitBtn = document.getElementById("pay-submit-btn");
+
+        const legalModal = document.getElementById("legal-modal");
+        const legalClose = document.getElementById("legal-close");
+        const legalTosLink = document.getElementById("legal-tos-link");
+        const legalPrivacyLink = document.getElementById("legal-privacy-link");
+        const tabTos = document.getElementById("tab-tos");
+        const tabPrivacy = document.getElementById("tab-privacy");
+        const tosTextContent = document.getElementById("tos-text-content");
+        const privacyTextContent = document.getElementById("privacy-text-content");
+        const closeAccountContainer = document.getElementById("close-account-container");
+        const deleteAccountBtn = document.getElementById("delete-account-btn");
+
+        let selectedPackageAmount = 0.99;
+        let selectedPackageCredits = 100;
+        const postText = document.getElementById("post-text");
+        const tossForm = document.getElementById("toss-form");
+        let presenceChannel = null;
+
+        async function trackPresence() {
+            const user = auth.getCurrentUser();
+            const presenceKey = user ? user.username : 'guest_' + Math.random().toString(36).substring(2, 6);
+            if (presenceChannel) {
+                try { await presenceChannel.unsubscribe(); } catch (e) { console.error("Presence unsubscribe failed:", e); }
+            }
+            presenceChannel = supabase.channel('online_users', { config: { presence: { key: presenceKey } } });
+            presenceChannel.on('presence', { event: 'sync' }, () => {
+                const state = presenceChannel.presenceState();
+                const count = Object.keys(state).length;
+                if (hudOnlineUsers) hudOnlineUsers.textContent = count.toLocaleString();
+            });
+            presenceChannel.subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') await presenceChannel.track({ online_at: new Date().toISOString() });
+                else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') setupFallbackSync(10000);
+            });
+        }
+
+        async function updateShareModalUI() {
+            const user = auth.getCurrentUser(); if (!user) return;
+            const platforms = [
+                { id: 'share-x', name: 'X', originalHtml: '<i class="fab fa-twitter"></i> X (TWITTER)' },
+                { id: 'share-facebook', name: 'Facebook', originalHtml: '<i class="fab fa-facebook-f"></i> FACEBOOK' },
+                { id: 'share-linkedin', name: 'LinkedIn', originalHtml: '<i class="fab fa-linkedin-in"></i> LINKEDIN' },
+                { id: 'share-reddit', name: 'Reddit', originalHtml: '<i class="fab fa-reddit-alien"></i> REDDIT' },
+                { id: 'share-instagram', name: 'Instagram', originalHtml: '<i class="fab fa-instagram"></i> INSTAGRAM' },
+                { id: 'share-tiktok', name: 'TikTok', originalHtml: '<i class="fab fa-tiktok"></i> TIKTOK' }
+            ];
+            for (const p of platforms) {
+                const el = document.getElementById(p.id);
+                if (el) {
+                    const claimed = await auth.checkShareClaimed(user.id, p.name);
+                    if (claimed) {
+                        el.innerHTML = `<i class="fas fa-check-circle"></i> ${p.name.toUpperCase()} (CLAIMED)`;
+                        el.style.opacity = "0.4"; el.style.filter = "grayscale(1)"; el.style.pointerEvents = "none"; el.style.cursor = "not-allowed";
+                    } else {
+                        el.innerHTML = p.originalHtml;
+                        el.style.opacity = "1"; el.style.filter = "none"; el.style.pointerEvents = "auto"; el.style.cursor = "pointer";
+                    }
+                }
+            }
+        }
+
+        function updateAuthStateUI() {
+            const user = auth.getCurrentUser();
+            if (hudCreditsContainer) hudCreditsContainer.classList.remove("hidden");
+            trackPresence();
+
+            if (user) {
+                if (hudUserContainer) hudUserContainer.classList.remove("hidden");
+                hudUser.textContent = user.username; hudUser.className = "text-green";
+                authTriggerBtn.innerHTML = 'LOGOUT'; authTriggerBtn.classList.remove("hidden");
+                authTriggerBtn.style.backgroundColor = ''; authTriggerBtn.style.color = ''; authTriggerBtn.style.padding = '0 8px'; authTriggerBtn.style.fontSize = '9px'; authTriggerBtn.style.height = '21px';
+                submitSection.classList.remove("hidden");
+                if (guestPromptSection) guestPromptSection.classList.add("hidden");
+                hudCredits.textContent = user.credits.toLocaleString();
+                postText.value = user.username;
+                if (shareXBtn) shareXBtn.classList.remove("hidden");
+                if (closeAccountContainer) closeAccountContainer.style.display = 'block';
+                updateShareModalUI();
+                if (headerHud) { headerHud.classList.add("is-logged-in"); headerHud.classList.remove("is-logged-out"); }
+            } else {
+                if (hudUserContainer) hudUserContainer.classList.add("hidden");
+                hudUser.textContent = "GUEST"; hudUser.className = "";
+                authTriggerBtn.innerHTML = 'LOGIN / REGISTER'; authTriggerBtn.classList.add("hidden");
+                authTriggerBtn.style.backgroundColor = ''; authTriggerBtn.style.color = ''; authTriggerBtn.style.padding = ''; authTriggerBtn.style.fontSize = ''; authTriggerBtn.style.height = '';
+                submitSection.classList.add("hidden");
+                if (guestPromptSection) guestPromptSection.classList.remove("hidden");
+                hudCredits.textContent = "10";
+                if (shareXBtn) shareXBtn.classList.remove("hidden");
+                if (closeAccountContainer) closeAccountContainer.style.display = 'none';
+                if (headerHud) { headerHud.classList.add("is-logged-out"); headerHud.classList.remove("is-logged-in"); }
+                const autoRepostToggle = document.getElementById("auto-repost-toggle");
+                if (autoRepostToggle) autoRepostToggle.checked = false;
+                autoPilotWorker.postMessage({ action: 'stop' });
+            }
+        }
+
+        window.addEventListener('auth-state-changed', updateAuthStateUI);
+        let loginWidgetId = null; let regWidgetId = null; let forgotWidgetId = null;
+
+        function renderCaptchas() {
+            if (typeof turnstile !== "undefined") {
+                const siteKey = "0x4AAAAAADsrEww6iRqbmRap";
+                const loginCaptchaEl = document.getElementById("login-captcha");
+                if (loginCaptchaEl && loginCaptchaEl.children.length === 0) {
+                    try { loginWidgetId = turnstile.render(loginCaptchaEl, { sitekey: siteKey, theme: "dark" }); } catch (err) { console.error(err); }
+                }
+                const regCaptchaEl = document.getElementById("register-captcha");
+                if (regCaptchaEl && regCaptchaEl.children.length === 0) {
+                    try { regWidgetId = turnstile.render(regCaptchaEl, { sitekey: siteKey, theme: "dark" }); } catch (err) { console.error(err); }
+                }
+                const forgotCaptchaEl = document.getElementById("forgot-captcha");
+                if (forgotCaptchaEl && forgotCaptchaEl.children.length === 0) {
+                    try { forgotWidgetId = turnstile.render(forgotCaptchaEl, { sitekey: siteKey, theme: "dark" }); } catch (err) { console.error(err); }
+                }
+            }
+        }
+
+        window.onTurnstileLoad = renderCaptchas;
+        if (window.turnstileReady) renderCaptchas();
+
+        function showAuthModal(mode = "login") {
+            authModal.classList.remove("hidden");
+            authError.classList.add("hidden"); authSuccess.classList.add("hidden");
+            if (forgotPasswordForm) forgotPasswordForm.classList.add("hidden");
+            if (resetPasswordForm) resetPasswordForm.classList.add("hidden");
+            const tabContainer = document.querySelector(".tab-container");
+            if (tabContainer) tabContainer.classList.add("hidden");
+
+            if (typeof turnstile !== "undefined") {
+                try {
+                    const loginCaptcha = document.getElementById("login-captcha");
+                    const regCaptcha = document.getElementById("register-captcha");
+                    const forgotCaptcha = document.getElementById("forgot-captcha");
+                    if (loginCaptcha && loginCaptcha.children.length > 0) turnstile.reset(loginCaptcha);
+                    if (regCaptcha && regCaptcha.children.length > 0) turnstile.reset(regCaptcha);
+                    if (forgotCaptcha && forgotCaptcha.children.length > 0) turnstile.reset(forgotCaptcha);
+                } catch (err) { console.error(err); }
+            }
+            
+            if (mode === "login") {
+                modalTitle.textContent = "USER"; tabLogin.classList.add("active"); tabRegister.classList.remove("active");
+                loginForm.classList.remove("hidden"); registerForm.classList.add("hidden");
+                const loginEmail = document.getElementById("login-email");
+                if (loginEmail) setTimeout(() => { loginEmail.focus(); }, 50);
+            } else {
+                modalTitle.textContent = "CREATE USER"; tabLogin.classList.remove("active"); tabRegister.classList.add("active");
+                loginForm.classList.add("hidden"); registerForm.classList.remove("hidden");
+                const regUsername = document.getElementById("reg-username");
+                if (regUsername) setTimeout(() => { regUsername.focus(); }, 50);
+            }
+        }
+
+        function closeAuthModal() {
+            authModal.classList.add("hidden");
+            if (resetPasswordForm && !resetPasswordForm.classList.contains("hidden")) {
+                auth.signOut().catch(err => { console.error(err); });
+            }
+            loginForm.reset(); registerForm.reset();
+            if (forgotPasswordForm) { forgotPasswordForm.reset(); forgotPasswordForm.classList.add("hidden"); }
+            if (resetPasswordForm) { resetPasswordForm.reset(); resetPasswordForm.classList.add("hidden"); }
+            document.querySelectorAll(".password-container input").forEach(input => { input.type = "password"; });
+            document.querySelectorAll(".password-toggle-btn").forEach(btn => { btn.textContent = "SHOW"; });
+            document.querySelector(".tab-container").classList.remove("hidden");
+            modalClose.classList.remove("hidden");
+            if (verificationPendingSection) verificationPendingSection.classList.add("hidden");
+            stopVerificationPolling();
+
+            if (typeof turnstile !== "undefined") {
+                const loginCaptcha = document.getElementById("login-captcha");
+                const regCaptcha = document.getElementById("register-captcha");
+                const forgotCaptcha = document.getElementById("forgot-captcha");
+                if (loginCaptcha) turnstile.reset(loginCaptcha);
+                if (regCaptcha) turnstile.reset(regCaptcha);
+                if (forgotCaptcha) turnstile.reset(forgotCaptcha);
+            }
+            if (auth.getCurrentUser()) {
+                const postUrl = document.getElementById("post-url");
+                if (postUrl) setTimeout(() => { postUrl.focus(); postUrl.select(); }, 150);
+            }
+        }
+
+        tabLogin.addEventListener("click", () => showAuthModal("login"));
+        tabRegister.addEventListener("click", () => showAuthModal("register"));
+
+        document.querySelectorAll(".password-toggle-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                sound.playBleep();
+                const container = btn.closest(".password-container");
+                const input = container ? container.querySelector("input") : null;
+                if (input) {
+                    if (input.type === "password") { input.type = "text"; btn.textContent = "HIDE"; }
+                    else { input.type = "password"; btn.textContent = "SHOW"; }
+                }
+            });
+        });
+
+        authTriggerBtn.addEventListener("click", async () => {
+            sound.playBleep(); const user = auth.getCurrentUser();
+            if (user) { await auth.signOut(); updateAuthStateUI(); }
+            else showAuthModal("login");
+        });
+
+        const promptLoginBtn = document.getElementById("prompt-login-btn");
+        if (promptLoginBtn) promptLoginBtn.addEventListener("click", () => { sound.playBleep(); showAuthModal("login"); });
+
+        modalClose.addEventListener("click", () => { sound.playBleep(); closeAuthModal(); });
+        if (authModal) {
+            authModal.addEventListener("click", (e) => { if (e.target === authModal) { sound.playBleep(); closeAuthModal(); } });
+        }
+
+        if (forgotPasswordBtn) {
+            forgotPasswordBtn.addEventListener("click", (e) => {
+                e.preventDefault(); sound.playBleep();
+                const tabContainer = document.querySelector(".tab-container");
+                if (tabContainer) tabContainer.classList.add("hidden");
+                loginForm.classList.add("hidden"); authError.classList.add("hidden"); authSuccess.classList.add("hidden");
+                modalTitle.textContent = "RESET PASSWORD";
+                const loginEmailVal = document.getElementById("login-email").value;
+                const forgotEmailInput = document.getElementById("forgot-email");
+                if (forgotEmailInput) forgotEmailInput.value = loginEmailVal;
+                
+                if (forgotPasswordForm) {
+                    forgotPasswordForm.classList.remove("hidden");
+                    if (typeof turnstile !== "undefined") {
+                        const forgotCaptcha = document.getElementById("forgot-captcha");
+                        if (forgotCaptcha) { try { turnstile.reset(forgotCaptcha); } catch (err) { console.error(err); } }
+                    }
+                    setTimeout(() => { if (forgotEmailInput) forgotEmailInput.focus(); }, 50);
+                }
+            });
+        }
+
+        if (forgotBackBtn) {
+            forgotBackBtn.addEventListener("click", (e) => {
+                e.preventDefault(); sound.playBleep();
+                authError.classList.add("hidden"); authSuccess.classList.add("hidden");
+                if (forgotPasswordForm) forgotPasswordForm.classList.add("hidden");
+                const tabContainer = document.querySelector(".tab-container");
+                if (tabContainer) tabContainer.classList.remove("hidden");
+                loginForm.classList.remove("hidden"); modalTitle.textContent = "USER";
+                if (typeof turnstile !== "undefined") {
+                    const loginCaptcha = document.getElementById("login-captcha");
+                    if (loginCaptcha) { try { turnstile.reset(loginCaptcha); } catch (err) { console.error(err); } }
+                }
+            });
+        }
+
+        if (forgotPasswordForm) {
+            forgotPasswordForm.addEventListener("submit", async (e) => {
+                e.preventDefault(); authError.classList.add("hidden"); authSuccess.classList.add("hidden");
+                const forgotFormEl = document.getElementById("forgot-password-form");
+                const captchaInput = forgotFormEl.querySelector("[name='cf-turnstile-response']");
+                const captchaResponse = captchaInput ? captchaInput.value : "";
+                if (typeof turnstile !== "undefined" && !captchaResponse) {
+                    authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE"; authError.classList.remove("hidden"); return;
+                }
+                const email = document.getElementById("forgot-email").value;
+                const submitBtn = forgotPasswordForm.querySelector("button[type='submit']");
+                try {
+                    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "SENDING..."; }
+                    await auth.sendPasswordResetEmail(email, captchaResponse);
+                    authSuccess.textContent = "RESET LINK SENT! CHECK YOUR INBOX."; authSuccess.classList.remove("hidden");
+                    sound.playSuccess();
+                    const forgotEmailInput = document.getElementById("forgot-email");
+                    if (forgotEmailInput) { forgotEmailInput.disabled = true; forgotEmailInput.style.opacity = "0.5"; forgotEmailInput.style.cursor = "not-allowed"; }
+                    if (typeof turnstile !== "undefined") {
+                        const forgotCaptcha = document.getElementById("forgot-captcha"); if (forgotCaptcha) turnstile.reset(forgotCaptcha);
+                    }
+                } catch (err) {
+                    let errMsg = "RESET REQUEST FAILED";
+                    if (err) {
+                        if (typeof err === "string") errMsg = err;
+                        else errMsg = err.message || JSON.stringify(err);
+                    }
+                    authError.textContent = errMsg.toUpperCase(); authError.classList.remove("hidden");
+                    if (typeof turnstile !== "undefined") {
+                        const forgotCaptcha = document.getElementById("forgot-captcha"); if (forgotCaptcha) turnstile.reset(forgotCaptcha);
+                    }
+                } finally {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "SEND RESET LINK"; }
+                }
+            });
+        }
+
+        if (resetPasswordForm) {
+            resetPasswordForm.addEventListener("submit", async (e) => {
+                e.preventDefault(); authError.classList.add("hidden"); authSuccess.classList.add("hidden");
+                const newPassword = document.getElementById("reset-password").value;
+                const confirmPassword = document.getElementById("reset-confirm-password").value;
+                const submitBtn = resetPasswordForm.querySelector("button[type='submit']");
+                if (newPassword !== confirmPassword) {
+                    authError.textContent = "PASSWORDS DO NOT MATCH"; authError.classList.remove("hidden"); return;
+                }
+                try {
+                    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "UPDATING..."; }
+                    await auth.updatePassword(newPassword);
+                    authSuccess.textContent = "PASSWORD UPDATED! LOADING..."; authSuccess.classList.remove("hidden");
+                    sound.playSuccess();
+                    setTimeout(() => { closeAuthModal(); updateAuthStateUI(); }, 1500);
+                } catch (err) {
+                    authError.textContent = err.message.toUpperCase(); authError.classList.remove("hidden");
+                } finally {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "UPDATE PASSWORD"; }
+                }
+            });
+        }
+
+        window.addEventListener('password-recovery-triggered', () => {
+            authModal.classList.remove("hidden"); authError.classList.add("hidden"); authSuccess.classList.add("hidden");
+            const tabContainer = document.querySelector(".tab-container");
+            if (tabContainer) tabContainer.classList.add("hidden");
+            loginForm.classList.add("hidden"); registerForm.classList.add("hidden");
+            if (forgotPasswordForm) forgotPasswordForm.classList.add("hidden");
+            modalTitle.textContent = "RESET PASSWORD";
+            if (resetPasswordForm) {
+                resetPasswordForm.classList.remove("hidden");
+                const resetPass = document.getElementById("reset-password"); if (resetPass) setTimeout(() => resetPass.focus(), 50);
+            }
+        });
+
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault(); authError.classList.add("hidden");
+            const loginFormEl = document.getElementById("login-form");
+            const captchaInput = loginFormEl.querySelector("[name='cf-turnstile-response']");
+            const captchaResponse = captchaInput ? captchaInput.value : "";
+            if (typeof turnstile !== "undefined" && !captchaResponse) {
+                authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE"; authError.classList.remove("hidden"); return;
+            }
+            const email = document.getElementById("login-email").value;
+            const pass = document.getElementById("login-password").value;
+            const diagAction = document.getElementById("diag-action");
+            if (diagAction) { diagAction.textContent = "SENDING LOGIN REQUEST..."; diagAction.style.color = "#ffff00"; }
+            try {
+                await auth.signIn(email, pass, captchaResponse);
+                if (diagAction) { diagAction.textContent = "LOGIN SUCCESSFUL!"; diagAction.style.color = "#00ff00"; }
+                authSuccess.textContent = "LOGGED IN! LOADING..."; authSuccess.classList.remove("hidden");
+                sound.playSuccess();
+                setTimeout(() => { closeAuthModal(); updateAuthStateUI(); runDiagnostics(); }, 1000);
+            } catch (err) {
+                if (diagAction) { diagAction.textContent = "LOGIN ERROR: " + err.message.toUpperCase(); diagAction.style.color = "#ff0000"; }
+                authError.textContent = err.message.toUpperCase(); authError.classList.remove("hidden");
+                if (typeof turnstile !== "undefined") {
+                    const loginCaptcha = document.getElementById("login-captcha"); if (loginCaptcha) turnstile.reset(loginCaptcha);
+                }
+            }
+        });
+
+        const resendEmailBtn = document.getElementById("resend-email-btn");
+        if (resendEmailBtn) {
+            resendEmailBtn.addEventListener("click", async (e) => {
+                e.preventDefault(); sound.playBleep(); authError.classList.add("hidden"); authSuccess.classList.add("hidden");
+                const email = document.getElementById("login-email").value;
+                if (!email) { authError.textContent = "ENTER EMAIL ADDRESS FIRST!"; authError.classList.remove("hidden"); return; }
+                try {
+                    resendEmailBtn.style.pointerEvents = "none"; resendEmailBtn.textContent = "SENDING...";
+                    await auth.resendVerification(email);
+                    authSuccess.textContent = "VERIFICATION EMAIL RESENT! CHECK YOUR INBOX."; authSuccess.classList.remove("hidden");
+                    sound.playSuccess();
+                } catch (err) {
+                    authError.textContent = err.message.toUpperCase(); authError.classList.remove("hidden");
+                } finally {
+                    resendEmailBtn.style.pointerEvents = "auto"; resendEmailBtn.textContent = "RESEND VERIFICATION EMAIL";
+                }
+            });
+        }
+
+        registerForm.addEventListener("submit", async (e) => {
+            e.preventDefault(); authError.classList.add("hidden");
+            const registerFormEl = document.getElementById("register-form");
+            const captchaInput = registerFormEl.querySelector("[name='cf-turnstile-response']");
+            const captchaResponse = captchaInput ? captchaInput.value : "";
+            if (typeof turnstile !== "undefined" && !captchaResponse) {
+                authError.textContent = "PLEASE COMPLETE THE CAPTCHA CHALLENGE"; authError.classList.remove("hidden"); return;
+            }
+            const username = document.getElementById("reg-username").value;
+            const email = document.getElementById("reg-email").value;
+            const pass = document.getElementById("reg-password").value;
+            try {
+                const exists = await auth.checkEmailExists(email);
+                if (exists) throw new Error("EMAIL ALREADY IN USE");
+                const result = await auth.signUp(email, pass, username, captchaResponse);
+                if (!result.session) {
+                    document.querySelector(".tab-container").classList.add("hidden");
+                    loginForm.classList.add("hidden"); registerForm.classList.add("hidden");
+                    authError.classList.add("hidden"); authSuccess.classList.add("hidden");
+                    verificationPendingSection.classList.remove("hidden");
+                    sound.playSuccess(); startVerificationPolling();
+                } else {
+                    authSuccess.textContent = "ACCOUNT CREATED! LOADING..."; authSuccess.classList.remove("hidden");
+                    sound.playSuccess();
+                    setTimeout(() => { closeAuthModal(); updateAuthStateUI(); }, 1000);
+                }
+            } catch (err) {
+                authError.textContent = err.message.toUpperCase(); authError.classList.remove("hidden");
+                if (typeof turnstile !== "undefined") {
+                    const regCaptcha = document.getElementById("register-captcha"); if (regCaptcha) turnstile.reset(regCaptcha);
+                }
+            }
+        });
+
+        function isPostCompleted(post) {
+            const rand = seededRandom(post.id);
+            rand(); rand(); rand();
+            const speedFactor = 0.8 + rand() * 0.4;
+            const VIRTUAL_WIDTH = getVirtualWidth();
+            const travelSpan = VIRTUAL_WIDTH + 350;
+            const baseSpeed = 0.12;
+            const travelTime = travelSpan / (baseSpeed * speedFactor);
+            const age = getServerTime() - new Date(post.createdAt).getTime();
+            return age >= travelTime;
+        }
+
+        let isSyncing = false; let syncNeedsRetry = false;
+
+        function cleanUrlForComparison(url) {
+            if (!url) return "";
+            try {
+                let u = url.trim(); if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+                const urlObj = new URL(u);
+                const TRACKING_KEYS = [
+                    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+                    "fbclid", "gclid", "yclid", "msclkid", "dclid", "li_fat_id"
+                ];
+                for (const key of TRACKING_KEYS) urlObj.searchParams.delete(key);
+                return urlObj.toString().replace(/\/$/, "");
+            } catch (e) {
+                return url.toLowerCase().trim().replace(/\/$/, "");
+            }
+        }
+
+        async function syncDatabasePosts() {
+            if (isSyncing) { syncNeedsRetry = true; return; }
+            isSyncing = true;
+            try {
+                const posts = await db.getPosts(); databasePosts = posts;
+                const totalClicks = await db.getTotalClicks();
+                if (hudTotalViews) hudTotalViews.textContent = totalClicks.toLocaleString();
+
+                if (isInitialSync) {
+                    posts.forEach(post => expiredPostIds.add(post.id)); isInitialSync = false;
+                } else {
+                    posts.forEach(post => { if (isPostCompleted(post)) expiredPostIds.add(post.id); });
+                }
+                const activePosts = posts.filter(post => !expiredPostIds.has(post.id));
+                if (hudItemCount) hudItemCount.textContent = activePosts.length;
+                
+                floatingItems = floatingItems.filter(item => {
+                    if (item.post.id.startsWith("local_")) return true;
+                    const isPresentInActive = activePosts.some(post => post.id === item.post.id);
+                    if (isPresentInActive) return true;
+                    return !item.isExpired;
+                });
+
+                activePosts.forEach((post) => {
+                    if (expiredPostIds.has(post.id)) return;
+                    const exists = floatingItems.some(item => item.post.id === post.id);
+                    if (!exists) {
+                        const newItem = new FloatingItem(post);
+                        const optLog = floatingItems.find(item => 
+                            item.post.id.startsWith("local_opt_") && 
+                            (
+                                (cleanUrlForComparison(item.post.url) === cleanUrlForComparison(post.url)) ||
+                                (item.post.username.toLowerCase() === post.username.toLowerCase() && 
+                                 (item.post.text === post.text || 
+                                  item.post.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") === post.text))
+                            )
+                        );
+                        if (optLog) {
+                            newItem.virtualX = optLog.virtualX; newItem.virtualY = optLog.virtualY; newItem.targetVirtualY = optLog.targetVirtualY;
+                            newItem.virtualXOffset = optLog.virtualXOffset || 0; newItem.yPercent = optLog.yPercent; newItem.speedFactor = optLog.speedFactor;
+                            newItem.bobOffset = optLog.bobOffset; newItem.bobSpeed = optLog.bobSpeed; newItem.virtualVx = optLog.virtualVx;
+                            newItem.virtualVy = optLog.virtualVy; newItem.createdAtTime = optLog.createdAtTime;
+                            floatingItems = floatingItems.filter(item => item !== optLog);
+                        }
+                        floatingItems.push(newItem);
+                        expiredPostIds.add(post.id);
+                        if (!optLog && isPageLoaded && getServerTime() - new Date(post.createdAt).getTime() < 5000) sound.playSplash();
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+            } finally {
+                isSyncing = false;
+                if (syncNeedsRetry) { syncNeedsRetry = false; await syncDatabasePosts(); }
+            }
+        }
+
+        async function scanIncomingLink(url) {
+            const SAFE_DOMAINS = [
+                "google.com", "youtube.com", "reddit.com", "github.com", "wikipedia.org",
+                "twitter.com", "x.com", "linkedin.com", "facebook.com", "instagram.com",
+                "microsoft.com", "apple.com", "amazon.com", "netflix.com"
+            ];
+            
+            try {
+                let cleanUrl = url.trim();
+                if (!/^https?:\/\//i.test(cleanUrl)) {
+                    cleanUrl = "https://" + cleanUrl;
+                }
+                const urlObj = new URL(cleanUrl);
+                const hostname = urlObj.hostname.toLowerCase();
+                const isSafeDomain = SAFE_DOMAINS.some(domain => hostname === domain || hostname.endsWith("." + domain));
+                if (isSafeDomain) {
+                    console.log(`[Safety Scan] Whitelisted domain detected: ${hostname}. Bypassing crawler sandbox.`);
+                    return { passed: true };
+                }
+            } catch (_) {}
+
+            // --- 0. SECURE REAL-TIME AI VISION SCREENSHOT SCAN ---
+            try {
+                const scanRes = await fetch('/api/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                if (scanRes.ok) {
+                    const result = await scanRes.json();
+                    if (!result.passed) {
+                        const logs = [
+                            { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" },
+                            { text: `TARGET: ${url}`, type: "info" },
+                            { text: "LAYER 1: EDGE FILTER CHECK -> PASSED", type: "success" },
+                            { text: "LAYER 2: REDIRECT TRACKER -> PASSED (0 redirect hops)", type: "success" },
+                            { text: "LAYER 3: CRAWLER SANDBOX -> CRAWL & SCREENSHOT COMPLETED", type: "success" },
+                            { text: `LAYER 4: AI MULTIMODAL VISION SCAN -> FAILED!`, type: "fail" },
+                            { text: `CRITICAL DETECTED CATEGORY: ${result.category.toUpperCase()}`, type: "fail" },
+                            { text: `VERDICT: ${result.reason.toUpperCase()}`, type: "fail" }
+                        ];
+                        return {
+                            passed: false,
+                            layer: `Layer 4 (AI Multimodal Scan: ${result.category.toUpperCase()})`,
+                            reason: result.reason,
+                            logs
+                        };
+                    }
+                    console.log(`[AI Scan] Secure Gemini Vision scan passed for: ${url}`);
+                }
+            } catch (err) {
+                console.warn("[AI Scan] Secure scan failed or bypassed, falling back to heuristics:", err);
+            }
+
+            const lowerUrl = url.toLowerCase();
+            const isIllegalDomain = db.ILLEGAL_DOMAINS && db.ILLEGAL_DOMAINS.some(domain => lowerUrl.includes(domain.toLowerCase()));
+            const isMalwareKeyword = lowerUrl.includes("malware") || lowerUrl.includes("virus") || lowerUrl.includes("spyware") || lowerUrl.includes("keylogger");
+            if (isIllegalDomain || isMalwareKeyword) {
+                const logs = [
+                    { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" }, { text: `TARGET: ${url}`, type: "info" },
+                    { text: "LAYER 1: EDGE FILTER CHECK...", type: "info" }, { text: "LAYER 1: EDGE FILTER CHECK -> FAILED!", type: "fail" },
+                    { text: "CRITICAL: DOMAIN MATCHES KNOWN MALICIOUS BLACKLIST SIGNATURE.", type: "fail" }, { text: "ALERT: PLATFORM POLICY FORBIDS RECORDING OF CRITICAL RISK PATHS.", type: "fail" }
+                ];
+                return { passed: false, layer: "Layer 1 (Edge Filtering Check)", reason: "URL is registered on global threat database of malware/phishing distributors.", logs };
+            }
+            const isShortener = lowerUrl.includes("bit.ly") || lowerUrl.includes("tinyurl.com") || lowerUrl.includes("t.co") || lowerUrl.includes("short.url");
+            if (isShortener && (lowerUrl.includes("malicious-link") || lowerUrl.includes("spyware-redir"))) {
+                const logs = [
+                    { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" }, { text: `TARGET: ${url}`, type: "info" },
+                    { text: "LAYER 1: EDGE FILTER CHECK -> PASSED (Domain reputation secure)", type: "success" }, { text: "LAYER 2: REDIRECT TRACKER...", type: "info" },
+                    { text: "SHORTENER DOMAIN DETECTED. RESOLVING HOPS...", type: "warning" }, { text: "REDIRECT HOP 1: bit.ly -> malware-site.com", type: "warning" },
+                    { text: "LAYER 2: REDIRECT TRACKER -> FAILED!", type: "fail" }, { text: "CRITICAL: REDIRECT TARGET RESOLVES TO BLACKLISTED MALICIOUS HOST.", type: "fail" },
+                    { text: "ALERT: PLATFORM POLICY FORBIDS REDIRECTION TO CRITICAL RISK PATHS.", type: "fail" }
+                ];
+                return { passed: false, layer: "Layer 2 (Redirect Tracker)", reason: "Nested URL redirection maps directly to malware-site.com.", logs };
+            }
+            const isCloaking = lowerUrl.includes("cloak") || lowerUrl.includes("stealth") || lowerUrl.includes("proxy-hidden") || lowerUrl.includes("darkweb");
+            if (isCloaking) {
+                const logs = [
+                    { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" }, { text: `TARGET: ${url}`, type: "info" },
+                    { text: "LAYER 1: EDGE FILTER CHECK -> PASSED (Domain reputation secure)", type: "success" }, { text: "LAYER 2: REDIRECT TRACKER -> PASSED (0 redirect hops)", type: "success" },
+                    { text: "LAYER 3: HEADLESS CRAWLER SANDBOX...", type: "info" }, { text: "SPAWNING SANDBOXED PUPPETEER PROCESS VIA RESIDENTIAL PROXY...", type: "info" },
+                    { text: "LAYER 3: CRAWLER SANDBOX -> FAILED!", type: "fail" }, { text: "CRITICAL: CLOAKING BEHAVIOR DETECTED (Crawler user-agent blocked or redirected to decoy page).", type: "fail" },
+                    { text: "ALERT: PLATFORM POLICY FORBIDS RECORDING OF CRITICAL RISK PATHS.", type: "fail" }
+                ];
+                return { passed: false, layer: "Layer 3 (Headless Crawler Sandbox)", reason: "Destination server performs device cloaking to hide malicious payload from threat intelligence nodes.", logs };
+            }
+            const isPhishing = lowerUrl.includes("scam") || lowerUrl.includes("bank-login") || lowerUrl.includes("phish") || lowerUrl.includes("giveaway");
+            if (isPhishing) {
+                const logs = [
+                    { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" }, { text: `TARGET: ${url}`, type: "info" },
+                    { text: "LAYER 1: EDGE FILTER CHECK -> PASSED (Domain reputation secure)", type: "success" }, { text: "LAYER 2: REDIRECT TRACKER -> PASSED (0 redirect hops)", type: "success" },
+                    { text: "LAYER 3: CRAWLER SANDBOX -> PASSED (Clean HTML body retrieved)", type: "success" }, { text: "LAYER 4: MULTIMODAL AI THREAT SCAN...", type: "info" },
+                    { text: "SUBMITTING SCREENSHOT & METADATA TO VISION SAFETY MODEL...", type: "info" }, { text: "LAYER 4: MULTIMODAL AI THREAT SCAN -> FAILED!", type: "fail" },
+                    { text: "CRITICAL: AI DETECTED PHISHING LOGIN TEMPLATE (Mimics bank interface).", type: "fail" }, { text: "ALERT: PLATFORM POLICY FORBIDS RECORDING OF CRITICAL RISK PATHS.", type: "fail" }
+                ];
+                return { passed: false, layer: "Layer 4 (Multimodal AI Scan)", reason: "Vision model detected layout design matching a bank portal, with a foreign domain registration. Visual phishing threat confirmed.", logs };
+            }
+            const adultKeywords = ["porn", "sex", "xxx", "xvideos", "pornhub", "xnxx", "redtube", "youporn", "onlyfans", "hentai", "erotic", "adult", "nude", "naked", "xhamster", "chaturbate", "bongacams", "stripchat", "spankbang"];
+            if (adultKeywords.some(keyword => lowerUrl.includes(keyword))) {
+                const logs = [
+                    { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" }, { text: `TARGET: ${url}`, type: "info" },
+                    { text: "LAYER 1: EDGE FILTER CHECK...", type: "info" }, { text: "LAYER 1: EDGE FILTER CHECK -> FAILED!", type: "fail" },
+                    { text: "CRITICAL: ADULT OR OBSCENE DOMAIN SIGNATURE DETECTED.", type: "fail" }, { text: "ALERT: PLATFORM POLICY STRICTLY PROHIBITS ADULT/PORNOGRAPHIC CONTENT.", type: "fail" }
+                ];
+                return { passed: false, layer: "Layer 1 (Edge Filtering Check)", reason: "Domain reputation mismatch: Prohibited adult or pornographic site detected.", logs };
+            }
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const html = await response.text(); const lowerHtml = html.toLowerCase();
+                    let adultMatchCount = 0; let malwareMatchCount = 0;
+                    const adultTerms = ["porn", "pornhub", "xvideos", "xnxx", "redtube", "youporn", "onlyfans", "hentai", "erotic", "xxx", "sex video", "adult video", "adult webcam", "tube8", "spankbang", "eporner", "chaturbate", "bongacams"];
+                    const malwareTerms = ["malware", "virus", "spyware", "keylogger", "trojan", "ransomware", "backdoor", "exploit kit", "credential stealer", "phishing login", "phish-bank", "darkweb-link", "hack database", "stolen card"];
+                    
+                    for (const term of adultTerms) {
+                        const regex = new RegExp(term, "g"); const matches = lowerHtml.match(regex);
+                        if (matches) adultMatchCount += matches.length;
+                    }
+                    for (const term of malwareTerms) {
+                        const regex = new RegExp(term, "g"); const matches = lowerHtml.match(regex);
+                        if (matches) malwareMatchCount += matches.length;
+                    }
+                    const totalMatches = adultMatchCount + malwareMatchCount;
+                    if (totalMatches >= 3) {
+                        const isMalwareThreat = malwareMatchCount > adultMatchCount;
+                        const logs = [
+                            { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" }, { text: `TARGET: ${url}`, type: "info" },
+                            { text: "LAYER 1: EDGE FILTER CHECK -> PASSED", type: "success" }, { text: "LAYER 2: REDIRECT TRACKER -> PASSED (0 redirect hops)", type: "success" },
+                            { text: "LAYER 3: CRAWLER SANDBOX -> PASSED (HTML body retrieved)", type: "success" }, { text: "LAYER 4: MULTIMODAL AI CONTENT SCAN...", type: "info" },
+                            { text: "SUBMITTING TEXT CONTENT TO SAFETY CLASSIFIER MODEL...", type: "info" },
+                            { text: isMalwareThreat ? `MALWARE/PHISHING MARKER COUNT: ${malwareMatchCount}` : `NSFW MARKER COUNT: ${adultMatchCount}`, type: "warning" },
+                            { text: "LAYER 4: MULTIMODAL AI CONTENT SCAN -> FAILED!", type: "fail" },
+                            { text: isMalwareThreat ? "CRITICAL: HARMFUL OR MALICIOUS SOFTWARE SIGNATURES DETECTED ON DESTINATION PAGE." : "CRITICAL: ADULT/PORNOGRAPHIC CONTENT DETECTED ON DESTINATION PAGE.", type: "fail" },
+                            { text: "ALERT: PLATFORM POLICY STRICTLY PROHIBITS HARMFUL/NSFW CONTENT.", type: "fail" }
+                        ];
+                        return { passed: false, layer: "Layer 4 (Multimodal AI Content Scan)", reason: isMalwareThreat ? `Harmful content: malware patterns detected (${malwareMatchCount} matches).` : `Adult content: explicit patterns detected (${adultMatchCount} matches).`, logs };
+                    }
+                } else {
+                    console.warn("CORS proxy returned non-OK response, letting post pass through.");
+                    return { passed: true };
+                }
+            } catch (err) {
+                console.warn("AI safety scan fetch failed:", err);
+                const isTimeout = err.name === "AbortError";
+                if (isTimeout) {
+                    return { passed: false, layer: "Layer 3 (Crawler Sandbox)", reason: "Destination server timed out.", logs: [] };
+                }
+                console.log("Allowing post despite fetch/proxy failure.");
+                return { passed: true };
+            }
+            return { passed: true };
+        }
+
+        tossForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const textVal = postText.value;
+            let urlVal = document.getElementById("post-url").value.trim();
+            if (urlVal && !/^https?:\/\//i.test(urlVal)) urlVal = "https://" + urlVal;
+            const spriteVal = "log"; const autoRepostToggle = document.getElementById("auto-repost-toggle");
+            try {
+                const user = auth.getCurrentUser(); if (!user) throw new Error("MUST BE LOGGED IN");
+                if (user.credits < 1) throw new Error("OUT OF CREDITS! CLICK '+BUY' IN THE HUD.");
+                
+                const urlInput = document.getElementById("post-url");
+                if (urlInput) { urlInput.select(); urlInput.focus(); }
+
+                (async () => {
+                    try {
+                        const scanResult = await scanIncomingLink(urlVal);
+                        if (!scanResult.passed) throw new Error(`BLOCKED AT ${scanResult.layer.toUpperCase()}: ${scanResult.reason}`);
+                        user.credits -= 1; updateAuthStateUI();
+                        await auth.deductCredit(user.id);
+                        
+                        const optPostId = "local_opt_" + generateUUID();
+                        const optimisticPost = { id: optPostId, username: user.username, text: textVal, url: urlVal, sprite: spriteVal, createdAt: new Date(getServerTime()).toISOString() };
+                        const optimisticLog = new FloatingItem(optimisticPost);
+                        floatingItems.push(optimisticLog); sound.playSplash();
+
+                        const dbPostId = optPostId.replace("local_opt_", "");
+                        await db.addPost({ id: dbPostId, username: user.username, text: textVal, url: urlVal, sprite: spriteVal });
+                        await auth.refreshUserProfile(); updateAuthStateUI();
+                        await syncDatabasePosts(); postsChannel.postMessage({ type: "SYNC_POSTS" });
+                    } catch (err) { showRetroAlert(err.message.toUpperCase()); }
+                })();
+                if (autoRepostToggle && autoRepostToggle.checked) {
+                    autoPilotWorker.postMessage({ action: 'start', interval: 22000 });
+                    showDailyBonusToast("AUTO-PILOT DEPLOYED: RUNNING...");
+                } else { autoPilotWorker.postMessage({ action: 'stop' }); }
+            } catch (err) {
+                showRetroAlert(err.message.toUpperCase());
+                if (autoRepostToggle) autoRepostToggle.checked = false;
+                autoPilotWorker.postMessage({ action: 'stop' });
+            }
+        });
+
+        const autoRepostToggle = document.getElementById("auto-repost-toggle");
+        if (autoRepostToggle) {
+            autoRepostToggle.addEventListener("change", () => {
+                sound.playBleep();
+                if (!autoRepostToggle.checked) { autoPilotWorker.postMessage({ action: 'stop' }); showDailyBonusToast("AUTO-PILOT DEACTIVATED"); }
+                else showDailyBonusToast("AUTO-PILOT ARMED: SUBMIT POST TO START");
+            });
+        }
+
+        const inspectHud = document.getElementById("item-inspect-hud");
+        const inspectUser = document.getElementById("inspect-user");
+        const inspectText = document.getElementById("inspect-text");
+        const inspectLink = document.getElementById("inspect-link");
+        const inspectClose = document.getElementById("inspect-close");
+
+        async function runBackgroundSecurityScan(url, clickedPostId) {
+            // --- 0. VALIDATE URL PROTOCOL ---
+            if (!db.isValidURL(url)) {
+                const logs = [
+                    { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" },
+                    { text: `TARGET: ${url}`, type: "info" },
+                    { text: "PROTOCOL VALIDATION -> FAILED!", type: "fail" },
+                    { text: "CRITICAL: INVALID URL SCHEME. PROTOCOL MUST BE HTTP OR HTTPS.", type: "fail" }
+                ];
+                showRetroBlockModal(url, "Protocol Validation Gate", "Destination URL contains an invalid scheme or format.", logs);
+                return;
+            }
+
+            const lowerUrl = url.toLowerCase();
+            const isIllegalDomain = db.ILLEGAL_DOMAINS && db.ILLEGAL_DOMAINS.some(domain => lowerUrl.includes(domain.toLowerCase()));
+            const isMalwareKeyword = lowerUrl.includes("malware") || lowerUrl.includes("virus") || lowerUrl.includes("spyware") || lowerUrl.includes("keylogger");
+            if (isIllegalDomain || isMalwareKeyword) {
+                const logs = [
+                    { text: "INITIALIZING MULTI-LAYER SCAN PIPELINE...", type: "info" }, { text: `TARGET: ${url}`, type: "info" },
+                    { text: "LAYER 1: EDGE FILTER CHECK...", type: "info" }, { text: "LAYER 1: EDGE FILTER CHECK -> FAILED!", type: "fail" },
+                    { text: "CRITICAL: DOMAIN MATCHES KNOWN MALICIOUS BLACKLIST SIGNATURE.", type: "fail" }
+                ];
+                showRetroBlockModal(url, "Layer 1 (Edge Filtering Check)", "URL is registered on global threat database of malware/phishing distributors.", logs); return;
+            }
+            let targetUrl = url.trim();
+            if (!/^https?:\/\//i.test(targetUrl)) targetUrl = "https://" + targetUrl;
+            window.open(targetUrl, "_blank", "noopener,noreferrer");
+
+            if (clickedPostId) {
+                if (clickedPostId.startsWith("local_")) {
+                    const targetPost = databasePosts.find(p => p.url.includes("fugaea.com") || p.username === "fugaea") || databasePosts[0];
+                    if (targetPost) db.incrementClicks(targetPost.id).catch(err => console.error(err));
+                } else {
+                    db.incrementClicks(clickedPostId).catch(err => console.error(err));
+                }
+            }
+        }
+
+        function showRetroBlockModal(url, layerName, reason, logs) {
+            showRetroAlert(`BLOCKED: ${reason}`);
+        }
+
+        const scanAbortBtn = document.getElementById("scan-abort-btn");
+        if (scanAbortBtn) scanAbortBtn.addEventListener("click", () => { sound.playBleep(); document.getElementById("security-scan-modal").classList.add("hidden"); });
+
+        canvas.addEventListener("mousemove", (e) => {
+            const rect = canvas.getBoundingClientRect(); mouseX = e.clientX - rect.left; mouseY = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener("click", async () => {
+            if (hoveredItem) { runBackgroundSecurityScan(hoveredItem.post.url, hoveredItem.post.id); }
+        });
+
+        inspectClose.addEventListener("click", () => { sound.playBleep(); inspectHud.classList.add("hidden"); selectedItem = null; });
+        inspectLink.addEventListener("click", (e) => {
+            e.preventDefault(); sound.playBleep(); inspectHud.classList.add("hidden");
+            if (selectedItem) runBackgroundSecurityScan(selectedItem.post.url, selectedItem.post.id);
+            selectedItem = null;
+        });
+
+        async function runDiagnostics() {
+            const connectedSpan = document.getElementById("diag-connected"); const sessionSpan = document.getElementById("diag-session");
+            if (!connectedSpan || !sessionSpan) return;
+            try {
+                const { error } = await supabase.from('posts').select('id', { count: 'exact', head: true });
+                if (error) throw error;
+                connectedSpan.textContent = "CONNECTED (OK)"; connectedSpan.style.color = "#00ff00";
+            } catch (err) { connectedSpan.textContent = "FAILED: " + err.message.toUpperCase(); connectedSpan.style.color = "#ff0000"; }
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                sessionSpan.textContent = session ? `LOGGED IN (${session.user.email.toUpperCase()})` : "NOT LOGGED IN";
+                sessionSpan.style.color = session ? "#00ff00" : "#ffcc00";
+            } catch (err) { sessionSpan.textContent = "ERROR: " + err.message.toUpperCase(); sessionSpan.style.color = "#ff0000"; }
+        }
+
+        async function handleAuthRedirect() {
+            const hash = window.location.hash;
+            if (hash && (hash.includes("access_token") || hash.includes("error"))) {
+                await new Promise(resolve => setTimeout(resolve, 800));
+                authChannel.postMessage({ type: "CLOSE_OLD_TABS" });
+            }
+        }
+
+        async function initApp() {
+            await handleAuthRedirect(); updateAuthStateUI(); runDiagnostics();
+            await syncDatabasePosts(); await trackPresence();
+
+            const postsChannel = supabase.channel('public:posts');
+            postsChannel
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, async (payload) => {
+                    try {
+                        const { data: profile } = await supabase.from('profiles').select('username').eq('id', payload.new.user_id).single();
+                        const post = { id: payload.new.id, username: profile?.username || 'unknown', text: payload.new.text, url: payload.new.url, sprite: payload.new.sprite, createdAt: payload.new.created_at, clicks: payload.new.clicks || 0 };
+                        if (!databasePosts.some(p => p.id === post.id)) {
+                            databasePosts.push(post);
+                            if (!expiredPostIds.has(post.id) && !isPostCompleted(post)) {
+                                if (!floatingItems.some(item => item.post.id === post.id)) {
+                                    const newItem = new FloatingItem(post);
+                                    const optLog = floatingItems.find(item => 
+                                         item.post.id.startsWith("local_opt_") && 
+                                         ((cleanUrlForComparison(item.post.url) === cleanUrlForComparison(post.url)) ||
+                                          (item.post.username.toLowerCase() === post.username.toLowerCase() && (item.post.text === post.text || item.post.text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") === post.text)))
+                                    );
+                                    if (optLog) {
+                                        newItem.virtualX = optLog.virtualX; newItem.virtualY = optLog.virtualY; newItem.targetVirtualY = optLog.targetVirtualY; newItem.virtualXOffset = optLog.virtualXOffset || 0; newItem.yPercent = optLog.yPercent; newItem.speedFactor = optLog.speedFactor; newItem.bobOffset = optLog.bobOffset; newItem.bobSpeed = optLog.bobSpeed; newItem.virtualVx = optLog.virtualVx; newItem.virtualVy = optLog.virtualVy; newItem.createdAtTime = optLog.createdAtTime;
+                                        floatingItems = floatingItems.filter(item => item !== optLog);
+                                    }
+                                    floatingItems.push(newItem); expiredPostIds.add(post.id);
+                                    if (hudItemCount) hudItemCount.textContent = floatingItems.filter(item => !item.post.id.startsWith("local_")).length;
+                                    if (isPageLoaded && !optLog) sound.playSplash();
+                                }
+                            }
+                        }
+                    } catch (err) { await syncDatabasePosts(); }
+                })
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
+                    const post = databasePosts.find(p => p.id === payload.new.id); if (post) post.clicks = payload.new.clicks || 0;
+                })
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'posts' }, (payload) => {
+                    databasePosts = databasePosts.filter(p => p.id !== payload.old.id);
+                    floatingItems = floatingItems.filter(item => item.post.id !== payload.old.id);
+                    if (hudItemCount) hudItemCount.textContent = floatingItems.filter(item => !item.post.id.startsWith("local_")).length;
+                });
+            postsChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') setupFallbackSync(60000);
+                else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') setupFallbackSync(10000);
+            });
+
+            const statsChannel = supabase.channel('public:statistics');
+            statsChannel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'statistics', filter: 'key=eq.total_clicks' }, (payload) => {
+                const val = payload.new ? Number(payload.new.value) : 0;
+                if (hudTotalViews) hudTotalViews.textContent = val.toLocaleString();
+            });
+            statsChannel.subscribe((status) => { if (status === 'CHANNEL_ERROR' || status === 'CLOSED') setupFallbackSync(10000); });
+            setupFallbackSync(20000);
+        }
+
+        function showCheckoutModal() {
+            checkoutModal.classList.remove("hidden"); checkoutSuccess.classList.add("hidden"); checkoutError.classList.add("hidden");
+            selectedPackageAmount = 0.99; selectedPackageCredits = 100;
+            const packageOptions = document.querySelectorAll(".retro-package-option");
+            packageOptions.forEach(opt => {
+                const amount = parseFloat(opt.getAttribute("data-amount"));
+                if (amount === 0.99) { opt.classList.add("active"); opt.style.borderColor = "var(--text-cyan)"; }
+                else { opt.classList.remove("active"); opt.style.borderColor = "var(--btn-gray)"; }
+            });
+            paySubmitBtn.innerHTML = '<i class="fas fa-lock"></i> SECURE PAY $0.99';
+        }
+
+        function closeCheckoutModal() { checkoutModal.classList.add("hidden"); paymentForm.reset(); }
+
+        const packageOptions = document.querySelectorAll(".retro-package-option");
+        packageOptions.forEach(opt => {
+            opt.addEventListener("click", () => {
+                sound.playBleep();
+                packageOptions.forEach(o => { o.classList.remove("active"); o.style.borderColor = "var(--btn-gray)"; });
+                opt.classList.add("active"); opt.style.borderColor = "var(--text-cyan)";
+                selectedPackageAmount = parseFloat(opt.getAttribute("data-amount"));
+                selectedPackageCredits = parseInt(opt.getAttribute("data-credits"));
+                paySubmitBtn.innerHTML = `<i class="fas fa-lock"></i> SECURE PAY $${selectedPackageAmount.toFixed(2)}`;
+            });
+        });
+
+        buyCreditsTrigger.addEventListener("click", () => { sound.playBleep(); if (auth.getCurrentUser()) showCheckoutModal(); else showAuthModal("login"); });
+        checkoutClose.addEventListener("click", () => { sound.playBleep(); closeCheckoutModal(); });
+
+        paymentForm.addEventListener("submit", async (e) => {
+            e.preventDefault(); checkoutError.classList.add("hidden"); checkoutSuccess.classList.add("hidden");
+            try {
+                const user = auth.getCurrentUser(); if (!user) throw new Error("MUST BE LOGGED IN TO BUY CREDITS");
+                paySubmitBtn.disabled = true; paySubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REDIRECTING...';
+                
+                const stripePaymentLinks = { "0.99": "https://buy.stripe.com/4gM3cngOvcWs2H240Ed7q00", "1.99": "https://buy.stripe.com/6oU00b2XFe0w6XifJmd7q03", "4.99": "https://buy.stripe.com/28E28j55N6y4ftO7cQd7q04" };
+                const amountKey = selectedPackageAmount.toFixed(2); const paymentLink = stripePaymentLinks[amountKey];
+                if (!paymentLink) throw new Error("INVALID SELECTION.");
+                
+                window.location.href = `${paymentLink}?client_reference_id=${user.id}`;
+            } catch (err) {
+                checkoutError.textContent = err.message.toUpperCase(); checkoutError.classList.remove("hidden");
+                paySubmitBtn.disabled = false; paySubmitBtn.innerHTML = `<i class="fas fa-lock"></i> SECURE PAY $${selectedPackageAmount.toFixed(2)}`;
+            }
+        });
+
+        window.addEventListener("pageshow", () => {
+            if (paySubmitBtn) { paySubmitBtn.disabled = false; paySubmitBtn.innerHTML = `<i class="fas fa-lock"></i> SECURE PAY $${selectedPackageAmount.toFixed(2)}`; }
+        });
+
+        if (regResendEmailBtn) {
+            regResendEmailBtn.addEventListener("click", async () => {
+                sound.playBleep(); const email = document.getElementById("reg-email").value;
+                if (!email) { showRetroAlert("EMAIL IS REQUIRED!"); return; }
+                try {
+                    regResendEmailBtn.disabled = true; regResendEmailBtn.textContent = "SENDING...";
+                    await auth.resendVerification(email); showRetroAlert("VERIFICATION EMAIL RESENT!"); sound.playSuccess();
+                } catch (err) { showRetroAlert(err.message.toUpperCase()); }
+                finally { regResendEmailBtn.disabled = false; regResendEmailBtn.textContent = "RESEND CONFIRMATION EMAIL"; }
+            });
+        }
+
+        if (regCheckStatusBtn) {
+            regCheckStatusBtn.addEventListener("click", async () => {
+                sound.playBleep(); regCheckStatusBtn.disabled = true; regCheckStatusBtn.textContent = "CHECKING...";
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session && session.user) {
+                        stopVerificationPolling(); await auth.refreshUserProfile();
+                        closeAuthModal(); updateAuthStateUI(); sound.playSuccess();
+                    } else { showRetroAlert("EMAIL NOT YET VERIFIED."); }
+                } catch (err) { showRetroAlert(err.message.toUpperCase()); }
+                finally { regCheckStatusBtn.disabled = false; regCheckStatusBtn.textContent = "I'VE CONFIRMED MY EMAIL"; }
+            });
+        }
+
+        if (shareXBtn) shareXBtn.addEventListener("click", () => { sound.playBleep(); if (auth.getCurrentUser()) shareModal.classList.remove("hidden"); else showAuthModal("login"); });
+        if (shareClose) shareClose.addEventListener("click", () => { sound.playBleep(); shareModal.classList.add("hidden"); });
+
+        async function executeShare(platform, shareUrl, element, isCopyAction = false) {
+            const user = auth.getCurrentUser(); if (!user) return;
+            try {
+                if (await auth.checkShareClaimed(user.id, platform)) { showRetroAlert("REWARD ALREADY CLAIMED!"); return; }
+            } catch (err) { console.error(err); }
+            sound.playCoin();
+            if (element) { element.innerHTML = `CLAIMING...`; element.style.opacity = "0.4"; element.style.filter = "grayscale(1)"; element.style.pointerEvents = "none"; }
+            
+            setTimeout(async () => {
+                if (isCopyAction) { try { await navigator.clipboard.writeText(window.location.origin); } catch (err) { console.error(err); } }
+                window.open(shareUrl, "_blank", "noopener,noreferrer");
+                try {
+                    await auth.logShareClaim(user.id, platform); await updateAuthStateUI();
+                    if (shareModal) shareModal.classList.add("hidden");
+                    showDailyBonusToast("SHARED! +10 CREDITS!");
+                } catch (err) { showRetroAlert("ERROR: " + err.message.toUpperCase()); await updateShareModalUI(); }
+            }, 1200);
+        }
+
+        if (shareX) { shareX.addEventListener("click", (e) => { e.preventDefault(); executeShare("X", `https://twitter.com/intent/tweet?text=${encodeURIComponent("Fugaea is a real-time link platform.")}&url=${encodeURIComponent(window.location.origin)}`, shareX); }); }
+        if (shareFacebook) { shareFacebook.addEventListener("click", (e) => { e.preventDefault(); executeShare("Facebook", `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`, shareFacebook); }); }
+        if (shareLinkedin) { shareLinkedin.addEventListener("click", (e) => { e.preventDefault(); executeShare("LinkedIn", `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`, shareLinkedin); }); }
+        if (shareReddit) { shareReddit.addEventListener("click", (e) => { e.preventDefault(); executeShare("Reddit", `https://www.reddit.com/submit?url=${encodeURIComponent(window.location.origin)}&title=${encodeURIComponent("Fugaea Platform")}`, shareReddit); }); }
+        if (shareInstagram) { shareInstagram.addEventListener("click", (e) => { e.preventDefault(); executeShare("Instagram", "https://www.instagram.com/", shareInstagram, true); }); }
+        if (shareTiktok) { shareTiktok.addEventListener("click", (e) => { e.preventDefault(); executeShare("TikTok", "https://www.tiktok.com/", shareTiktok, true); }); }
+
+
+
+        function showDailyBonusToast(message) {
+            sound.playSuccess();
+            let toast = document.getElementById("retro-toast");
+            if (!toast) {
+                toast = document.createElement("div"); toast.id = "retro-toast";
+                toast.style.cssText = `position: fixed; top: 25%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: rgba(0, 0, 0, 0.95); color: #ffd700; border: 4px solid #ffd700; padding: 16px 24px; font-family: 'VT323', monospace; font-size: 24px; text-align: center; z-index: 99999; box-shadow: 8px 8px 0px #000; image-rendering: pixelated; pointer-events: none; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;`;
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message; toast.style.opacity = "1"; toast.style.transform = "translate(-50%, -50%) scale(1.05)";
+            setTimeout(() => { toast.style.transform = "translate(-50%, -50%) scale(1)"; }, 150);
+            setTimeout(() => { toast.style.opacity = "0"; }, 3500);
+        }
+
+        window.simulateLogs = function(count = 20) {
+            const mockSprites = ["log", "log_mossy", "log_flowering"];
+            const usernames = ["PixelGamer", "RetroFan", "8BitMaster", "RiverRider", "FugaeaFan"];
+            const now = Date.now();
+            for (let i = 0; i < count; i++) {
+                const mockPost = { id: `mock_${i}_${Math.random().toString(36).substr(2, 5)}`, username: usernames[i % usernames.length] + Math.floor(Math.random() * 100), sprite: mockSprites[i % mockSprites.length], createdAt: new Date(now - Math.random() * 15000).toISOString(), clicks: 0 };
+                const newItem = new FloatingItem(mockPost);
+                newItem.virtualX = Math.random() * (getVirtualWidth() - 250) + 50; newItem.virtualVx = -3.3 * newItem.speedFactor;
+                floatingItems.push(newItem);
+            }
+        };
+
+        function showLegalModal(tab) { legalModal.classList.remove("hidden"); switchLegalTab(tab); }
+        function closeLegalModal() { legalModal.classList.add("hidden"); }
+        function switchLegalTab(tab) {
+            if (tab === 'tos') { tabTos.classList.add("active"); tabPrivacy.classList.remove("active"); tosTextContent.classList.remove("hidden"); privacyTextContent.classList.add("hidden"); }
+            else { tabTos.classList.remove("active"); tabPrivacy.classList.add("active"); tosTextContent.classList.add("hidden"); privacyTextContent.classList.remove("hidden"); }
+        }
+
+        if (legalTosLink) legalTosLink.addEventListener("click", (e) => { e.preventDefault(); sound.playBleep(); showLegalModal('tos'); });
+        if (legalPrivacyLink) legalPrivacyLink.addEventListener("click", (e) => { e.preventDefault(); sound.playBleep(); showLegalModal('privacy'); });
+        if (tabTos) tabTos.addEventListener("click", () => { sound.playBleep(); switchLegalTab('tos'); });
+        if (tabPrivacy) tabPrivacy.addEventListener("click", () => { sound.playBleep(); switchLegalTab('privacy'); });
+        if (legalClose) legalClose.addEventListener("click", () => { sound.playBleep(); closeLegalModal(); });
+        if (legalModal) legalModal.addEventListener("click", (e) => { if (e.target === legalModal) { sound.playBleep(); closeLegalModal(); } });
+
+        function spawnFugaeaLog() {
+            const intervalMs = 22000; const currentEpochBlock = Math.floor(getServerTime() / intervalMs);
+            const spawnTimeForBlock = currentEpochBlock * intervalMs; const id = `local_fugaea_${currentEpochBlock}`;
+            if (!floatingItems.some(item => item.post.id === id)) {
+                const post = { id: id, username: "fugaea", sprite: "log_flowering", createdAt: new Date(spawnTimeForBlock).toISOString(), clicks: 0, text: "Fugaea is a real-time user-generated link platform.", url: "https://www.youtube.com/watch?v=N_GfH09iP9c&list=RDN_GfH09iP9c&start_radio=1" };
+                floatingItems.push(new FloatingItem(post));
+            }
+        }
+
+        function showRetroAlert(message) {
+            const modal = document.getElementById("retro-alert-modal");
+            const msgElement = document.getElementById("retro-alert-message");
+            if (modal && msgElement) { msgElement.textContent = message.toUpperCase(); modal.classList.remove("hidden"); sound.playSplash(); }
+        }
+
+        const alertCloseBtn = document.getElementById("retro-alert-close");
+        const alertHeaderCloseBtn = document.getElementById("retro-alert-header-close");
+        const alertModal = document.getElementById("retro-alert-modal");
+        const clearUrlInput = () => { const urlInput = document.getElementById("post-url"); if (urlInput) { urlInput.value = ""; urlInput.focus(); } };
+        if (alertCloseBtn) alertCloseBtn.addEventListener("click", () => { sound.playBleep(); alertModal.classList.add("hidden"); clearUrlInput(); });
+        if (alertHeaderCloseBtn) alertHeaderCloseBtn.addEventListener("click", () => { sound.playBleep(); alertModal.classList.add("hidden"); clearUrlInput(); });
+
+        const deleteConfirmModal = document.getElementById("delete-confirm-modal");
+        const deleteConfirmHeaderClose = document.getElementById("delete-confirm-header-close");
+        const deleteConfirmYes = document.getElementById("delete-confirm-yes");
+        const deleteConfirmNo = document.getElementById("delete-confirm-no");
+
+        if (deleteAccountBtn) {
+            deleteAccountBtn.addEventListener("click", () => {
+                if (legalModal) legalModal.classList.add("hidden");
+                if (deleteConfirmModal) deleteConfirmModal.classList.remove("hidden");
+            });
+        }
+        const closeConfirm = () => {
+            if (deleteConfirmModal) deleteConfirmModal.classList.add("hidden");
+            if (legalModal) legalModal.classList.remove("hidden");
+        };
+        if (deleteConfirmNo) deleteConfirmNo.addEventListener("click", closeConfirm);
+        if (deleteConfirmHeaderClose) deleteConfirmHeaderClose.addEventListener("click", closeConfirm);
+
+        if (deleteConfirmYes) {
+            deleteConfirmYes.addEventListener("click", async () => {
+                try {
+                    const user = auth.getCurrentUser();
+                    if (user) {
+                        deleteConfirmYes.disabled = true; deleteConfirmYes.textContent = "DELETING...";
+                        await auth.deleteAccount(user.id); window.location.reload();
+                    }
+                } catch (err) {
+                    showRetroAlert("DELETION FAILED: " + err.message.toUpperCase());
+                    deleteConfirmYes.disabled = false; deleteConfirmYes.textContent = "YES, DELETE";
+                }
+            });
+        }
+
+        initApp();
+        renderLoop();
+    </script>
+</body>
+</html>

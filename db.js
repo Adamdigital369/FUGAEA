@@ -90,9 +90,14 @@ function sanitizeUrlQueryParameters(urlString) {
     }
 }
 
-// Validate URL format (Bypassed to allow wrong URLs)
-function isValidURL(string) {
-    return true;
+// Validate URL format
+export function isValidURL(string) {
+    try {
+        const url = new URL(string);
+        return url.protocol === "http:" || url.protocol === "https:";
+    } catch (_) {
+        return false;
+    }
 }
 
 /**

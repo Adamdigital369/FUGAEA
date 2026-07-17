@@ -69,8 +69,7 @@ supabase.auth.onAuthStateChange((event, session) => {
                     console.log("[Auth] Background profile loaded successfully:", currentUser);
                     window.dispatchEvent(new CustomEvent('auth-state-changed'));
                     
-                    // Dispatch custom event to trigger daily free credit check in app.js
-                    window.dispatchEvent(new CustomEvent('daily-claim-check', { detail: { userId: session.user.id } }));
+
                 }
             } catch (err) {
                 console.error("Background auth state change sync failed:", err);
@@ -205,38 +204,6 @@ export async function deductCredit(userId) {
     return true;
 }
 
-/**
- * Add credits to a user's account (simulated purchase)
- * @param {string} userId 
- * @param {number} amount 
- * @returns {Promise<number>} New credit count
- */
-export async function addCredits(userId, creditsAmount, paymentAmount) {
-    await delay(600); // Simulate network purchase delay
-    
-    // Insert purchase record into public.purchases (trigger updates profile credits)
-    const { error: insertError } = await supabase
-        .from('purchases')
-        .insert([
-            {
-                user_id: userId,
-                amount: paymentAmount,
-                credits: creditsAmount,
-                stripe_id: 'ch_' + Math.random().toString(36).substring(2, 10)
-            }
-        ]);
-        
-    if (insertError) {
-        throw new Error("SECURE TRANSACTION FAILED: " + insertError.message.toUpperCase());
-    }
-    
-    // Wait briefly for DB trigger to complete
-    await delay(200);
-    
-    // authoritatively refresh profile stats
-    const updatedUser = await refreshUserProfile();
-    return updatedUser ? updatedUser.credits : 0;
-}
 
 /**
  * Force refresh the local cached user profile details from the database
